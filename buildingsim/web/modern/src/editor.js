@@ -1,6 +1,7 @@
 function filterEquipment(roomName) {
   if (roomName !== undefined) _eqFilterRoom = roomName;
   const showAll = document.getElementById('showEquipment').checked;
+  const showCounts = document.getElementById('showPeopleCount')?.checked !== false;
   const activeRoom = _eqFilterRoom || (selectedRoom ? selectedRoom.name : null);
 
   // Items live in their rooms, laid out identically in 2D and 3D — show the
@@ -10,6 +11,9 @@ function filterEquipment(roomName) {
     if (!eg) return;
     eg.children.forEach(sprite => {
       const room = sprite.userData.eqRoom;
+      // Occupant counts answer "how many are in there", which is worth seeing
+      // without opening a room, so they follow their own checkbox.
+      if (sprite.userData.eqMode === 'count') { sprite.visible = showCounts; return; }
       if (showAll) sprite.visible = true;
       else if (activeRoom) sprite.visible = room === activeRoom;
       else sprite.visible = false;
@@ -739,6 +743,7 @@ document.getElementById('showElevators').addEventListener('change', (e) => {
   elevatorConnectors.visible = e.target.checked && is3DView; render();
 });
 document.getElementById('showEquipment').addEventListener('change', () => filterEquipment());
+document.getElementById('showPeopleCount').addEventListener('change', () => filterEquipment());
 
 // Edit buttons
 document.getElementById('btnUndo').addEventListener('click', ()=>{doUndo();});

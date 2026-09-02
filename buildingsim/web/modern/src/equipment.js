@@ -48,6 +48,56 @@ function createEquipmentSprite(x, y, z, size, canvas) {
   return sprite;
 }
 
+// ── occupant count badges ────────────────────────────────────────────────
+// The number of people a room holds, taken from the /api/occupancy document
+// the viewer already has: fifty occupants in a lecture hall are fifty icons in
+// a ring, which reads as "a crowd" but not as "fifty". Purely a rendering
+// addition; nothing about the API changes.
+//
+// Textures are cached per number. The equipment group is rebuilt on every
+// occupancy update and clearGroup disposes the materials it finds, but a
+// disposed material does not dispose the texture it points at, so the cache
+// stays valid and one texture serves every room showing the same number.
+const occupantBadgeTextures = new Map();
+
+function occupantBadgeTexture(count) {
+  const text = String(count);
+  const cached = occupantBadgeTextures.get(text);
+  if (cached) return cached;
+  const c = texCanvas(128, 64);
+  const x = c.getContext('2d');
+  x.font = 'bold 34px "Segoe UI", Helvetica, Arial, sans-serif';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  const w = Math.max(46, Math.min(120, x.measureText(text).width + 26));
+  x.fillStyle = 'rgba(8,14,26,0.72)';
+  const rx = 64 - w / 2;
+  x.beginPath();
+  if (x.roundRect) x.roundRect(rx, 14, w, 36, 10); else x.rect(rx, 14, w, 36);
+  x.fill();
+  x.strokeStyle = 'rgba(0,204,255,0.55)';
+  x.lineWidth = 2;
+  x.stroke();
+  x.fillStyle = '#e8f6ff';
+  x.fillText(text, 64, 33);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.minFilter = THREE.LinearFilter;
+  t.generateMipmaps = false;
+  occupantBadgeTextures.set(text, t);
+  return t;
+}
+
+function createOccupantCountBadge(wx, wy, count) {
+  const sprite = new THREE.Sprite(noTone(new THREE.SpriteMaterial({
+    map: occupantBadgeTexture(count), transparent: true, depthWrite: false, depthTest: false,
+  })));
+  sprite.position.set(wx, wy, 12);
+  sprite.scale.set(7, 3.5, 1);
+  sprite.renderOrder = 950;
+  return sprite;
+}
+
 // Keep old function signature for backward compat but it's no longer used
 function createCompressorSymbol(x, y, z, size, statusColor, status) {
   const group = new THREE.Group();
@@ -741,6 +791,17 @@ function buildEquipmentForLevel(level) {
     }
 
     const totalItems = allItems.length;
+
+    // === One badge per room with the number of people in it ===
+    const occupantCount = roomOcc
+      ? (roomOcc.persons ? roomOcc.persons.length : 0) + (roomOcc.aliens ? roomOcc.aliens.length : 0)
+      : 0;
+    if (occupantCount > 0) {
+      const badge = createOccupantCountBadge(wx, wy, occupantCount);
+      badge.userData.eqRoom = roomName;
+      badge.userData.eqMode = 'count';
+      eqGroup.add(badge);
+    }
 
     // === Expanded icons (same layout in 2D and 3D) ===
     for (let idx = 0; idx < totalItems; idx++) {
