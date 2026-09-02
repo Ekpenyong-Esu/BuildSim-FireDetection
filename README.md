@@ -12,3 +12,4 @@ This repository holds the technical material. Administrative material, grading, 
 - [Tutorials](tutorials/) — hands-on guides (diagrams as code, containers and tooling)
 - [Lab Assignment](lab-assignment/) — proposal and final-report templates, with worked examples
 - [BuildingSim](buildingsim/) — building simulation server
+- [Occupancy Simulator](occupancysim/) — simulates the people in the building and publishes where they are to BuildingSim
