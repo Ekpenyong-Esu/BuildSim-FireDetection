@@ -189,7 +189,6 @@ body.flying #sessionChip { opacity: 0; pointer-events: none; }
   background: rgba(88, 156, 244, 0.22); color: #eaf4ff;
   border-color: rgba(120, 180, 250, 0.5);
 }
-.hud-btn.small { font-variant-numeric: tabular-nums; min-width: 40px; justify-content: center; }
 .hud-btn.dim { opacity: 0.45; }
 .hud-sep { width: 1px; height: 22px; background: var(--hud-line); margin: 0 2px; flex: none; }
 
@@ -343,7 +342,7 @@ body.spreading, body.spreading #canvas { cursor: ns-resize; }
   background: transparent; border-color: transparent; color: #8fb8a5; padding: 6px 4px;
 }
 
-/* the old layer checkboxes become a popover off the Layers button */
+/* Geometry toggles and simulator-published room layers share one popover. */
 #controls {
   bottom: 74px; left: 50%; transform: translateX(-50%) translateY(8px);
   max-width: min(440px, calc(100vw - 24px));
@@ -362,6 +361,28 @@ body.spreading, body.spreading #canvas { cursor: ns-resize; }
   display: inline-flex; align-items: center;
 }
 #controls label:hover { background: rgba(122, 168, 228, 0.14); }
+.room-layer-picker {
+  width: 100%; padding: 2px 4px 9px; margin-bottom: 2px;
+  border-bottom: 1px solid rgba(126, 166, 224, 0.18);
+}
+.room-layer-heading {
+  margin: 1px 3px 7px; color: rgba(180, 200, 224, 0.68);
+  font-size: 9.5px; font-weight: 650; letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+.room-layer-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+.room-layer-btn {
+  padding: 6px 9px; border-radius: 8px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.045); color: #c9d9ec;
+  border: 1px solid rgba(126, 166, 224, 0.25);
+  font: inherit; font-size: 11px;
+}
+.room-layer-btn:hover { background: rgba(122, 168, 228, 0.16); color: #f0f7ff; }
+.room-layer-btn.on {
+  background: rgba(88, 156, 244, 0.28); color: #fff;
+  border-color: rgba(120, 180, 250, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(145, 198, 255, 0.12);
+}
 
 /* Find and Route hang the same drawer off their own button. Anchored from
    JS, so each one opens over the button that asked for it. */
@@ -468,7 +489,6 @@ body.spreading, body.spreading #canvas { cursor: ns-resize; }
   #hud-bar::-webkit-scrollbar { display: none; }
   .hud-btn { padding: 9px 9px; font-size: 11px; gap: 5px; }
   .hud-btn span { display: none; }
-  .hud-btn.small span, .hud-btn.small { display: inline-flex; }
   .hud-chip { padding: 9px 9px; font-size: 11px; }
   #heatLegend, #routeFlightChip { bottom: 68px; right: 8px; }
   #room-card { left: 8px; right: 8px; width: auto; bottom: 68px; max-height: 44vh; }

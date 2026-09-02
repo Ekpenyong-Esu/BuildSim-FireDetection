@@ -36,9 +36,27 @@ curl -X PUT http://127.0.0.1:9090/api/room-layers \
   }]'
 ```
 
-The values map uses canonical `<level>/<room>` keys. The layer button in the
-viewer cycles through published layers. If none are published, the viewer keeps
-the older sensor-derived temperature and CO₂ views available.
+The values map uses canonical `<level>/<room>` keys. Open **Layers** in the
+viewer and click a named room heatmap to display it; click **Off** to remove the
+overlay. Newly published layers appear in this list automatically. If none are
+published, the older sensor-derived temperature and CO₂ views remain available.
+
+Run the minimal temperature-heatmap example from the `buildingsim/` directory:
+
+```bash
+./examples/api/room-layers/set_temperature_heatmap.sh
+```
+
+Then open
+<http://127.0.0.1:9090/?layer=temperature&floor=level0>. The viewer linearly
+interpolates between adjacent palette colours after mapping each value onto the
+`minimum`–`maximum` range. Values outside that range use an endpoint colour;
+rooms omitted from `values` remain uncoloured. Keep the range fixed when
+publishing successive snapshots if colours must remain comparable over time.
+
+The `PUT` replaces the complete room-layer collection. A simulator that
+publishes several layers should therefore send all of them together rather
+than issuing one request per layer.
 
 Useful `source` descriptions include `simulation truth`, `sensor estimate`,
 `prediction`, and `decision-service estimate`. The field is descriptive: it

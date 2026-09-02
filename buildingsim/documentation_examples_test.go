@@ -421,6 +421,43 @@ func TestDocumentedVisualizationScenario(t *testing.T) {
 	}
 }
 
+func TestTemperatureHeatmapExample(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("temperature heatmap script requires a POSIX shell")
+	}
+	for _, executable := range []string{"bash", "curl"} {
+		if _, err := exec.LookPath(executable); err != nil {
+			t.Skipf("%s is unavailable", executable)
+		}
+	}
+	api, closeServer := newDocumentationAPI(t)
+	defer closeServer()
+
+	command := exec.Command("bash", "examples/api/room-layers/set_temperature_heatmap.sh", api.base)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("set_temperature_heatmap.sh: %v\n%s", err, output)
+	}
+
+	var layers []model.RoomLayer
+	api.json(http.MethodGet, "/api/room-layers", nil, &layers, http.StatusOK)
+	if len(layers) != 1 {
+		t.Fatalf("heatmap published %d room layers, want 1", len(layers))
+	}
+	layer := layers[0]
+	if layer.ID != "temperature" || layer.Unit != "°C" || layer.Source != "simulation truth" {
+		t.Fatalf("unexpected heatmap metadata: %+v", layer)
+	}
+	if layer.Minimum != 18 || layer.Maximum != 35 || layer.Opacity != 0.78 {
+		t.Fatalf("unexpected heatmap scale: min=%v max=%v opacity=%v", layer.Minimum, layer.Maximum, layer.Opacity)
+	}
+	if len(layer.Palette) != 5 || len(layer.Values) != 11 {
+		t.Fatalf("unexpected heatmap data: colors=%d rooms=%d", len(layer.Palette), len(layer.Values))
+	}
+	if value := layer.Values["level0/A109"]; value != 32.6 {
+		t.Fatalf("A109 temperature=%v, want 32.6", value)
+	}
+}
+
 func TestTutorialShellScriptsAgainstBuildSim(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("tutorial scripts require a POSIX shell")

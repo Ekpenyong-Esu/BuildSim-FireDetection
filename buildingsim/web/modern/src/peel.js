@@ -104,8 +104,6 @@ function gateOverlays() {
   if (typeof crossFloorGraphGroup !== 'undefined') crossFloorGraphGroup.visible = open && chk('showGraph');
   if (typeof stairConnectors !== 'undefined') stairConnectors.visible = open && is3DView && chk('showStairs');
   if (typeof elevatorConnectors !== 'undefined') elevatorConnectors.visible = open && is3DView && chk('showElevators');
-  if (typeof extWallGroup !== 'undefined') extWallGroup.visible = open && is3DView && showExtWalls;
-  if (typeof sunGroup !== 'undefined') sunGroup.visible = open && is3DView && sunActive;
   if (typeof beaconGroup !== 'undefined') beaconGroup.visible = open && is3DView;
   updateBuildingButton();
 }

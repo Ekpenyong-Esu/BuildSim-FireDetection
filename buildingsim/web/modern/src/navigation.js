@@ -14,7 +14,6 @@ function switchToFloor(level) {
   stairConnectors.visible = false;
   elevatorConnectors.visible = false;
   crossFloorGraphGroup.visible = false;
-  updateSunVisibility();
 
   if (editModeEnabled) document.getElementById('edit-tools').style.display = 'flex';
 
@@ -204,4 +203,3 @@ function buildCrossFloorGraphEdges() {
 
   crossFloorGraphGroup.visible = document.getElementById('showGraph').checked;
 }
-

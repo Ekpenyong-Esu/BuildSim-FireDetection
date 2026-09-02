@@ -156,6 +156,16 @@ must evolve temperature, smoke, gas, water, or other state and publish the next
 snapshot. The same principle applies to entity movement, room illumination,
 and current decision alerts.
 
+For a standalone heatmap example with values across several rooms, run:
+
+```bash
+./examples/api/room-layers/set_temperature_heatmap.sh
+```
+
+Open <http://127.0.0.1:9090/?layer=temperature&floor=level0>. Edit the
+`values` map in the script or publish a new complete snapshot from the physical
+simulator on every simulation tick.
+
 The complete runnable example also shows exact equipment positions, a moving
 person and cleaning robot, an illuminated room, an exterior entrance, a fire
 exit, and a locked room door:

@@ -34,12 +34,6 @@
   </button>
   <span id="hudFloors" class="hud-chips"></span>
   <span class="hud-sep"></span>
-  <button id="btnHeat" class="hud-btn" title="Sensor heatmap">
-    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 18a5 5 0 0 0 3.6-8.5C11.8 7.6 12.4 4.6 10 2c0 3-2 3.6-3.4 5.4A5.3 5.3 0 0 0 5 11a5 5 0 0 0 5 7z"/></svg>
-    <span>Heat</span>
-  </button>
-  <button id="btnMetric" class="hud-btn small dim" title="Switch metric">°C</button>
-  <span class="hud-sep"></span>
   <button id="btnFind" class="hud-btn" title="Find a room or a piece of equipment">
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.8" cy="8.8" r="5.6"/><path d="M12.9 12.9 17 17"/></svg>
     <span>Find</span>
@@ -112,6 +106,10 @@
 <div id="floor-selector" style="display:none"></div>
 
 <div id="controls">
+  <div id="roomLayerPicker" class="room-layer-picker">
+    <div class="room-layer-heading">Room heatmaps</div>
+    <div id="roomLayerButtons" class="room-layer-buttons" role="group" aria-label="Room heatmap layers"></div>
+  </div>
   <label><input type="checkbox" id="showWalls" checked> Walls</label>
   <label><input type="checkbox" id="showDoors" checked> Doors</label>
   <label><input type="checkbox" id="showRooms" checked> Rooms</label>
@@ -121,20 +119,6 @@
   <label><input type="checkbox" id="showStairs" checked> Stairs</label>
   <label><input type="checkbox" id="showElevators" checked> Elevators</label>
   <label><input type="checkbox" id="showEquipment" checked> Equipment</label>
-  <label><input type="checkbox" id="showExtWalls"> Exterior</label>
-  <label><input type="checkbox" id="showSun"> Sun</label>
-  <div id="sunSliders" style="display:none;margin-top:4px;padding:4px 0">
-    <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
-      <span style="font-size:10px;width:32px">Date</span>
-      <input type="date" id="sunDate" style="flex:1;height:20px;background:#1a1a3a;color:#ccc;border:1px solid #4a6fa5;border-radius:3px;font-size:10px;padding:0 4px">
-    </div>
-    <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
-      <span style="font-size:10px;width:32px">Time</span>
-      <input type="time" id="sunTime" style="flex:1;height:20px;background:#1a1a3a;color:#ccc;border:1px solid #4a6fa5;border-radius:3px;font-size:10px;padding:0 4px">
-    </div>
-    <div id="sunInfo" style="font-size:9px;color:#88aacc;margin-top:2px"></div>
-  </div>
-  <div id="sunLegend" style="display:none;font-size:9px;color:#99aabb;padding:4px 0"></div>
 </div>
 
 <div id="edit-tools" style="display:none">
@@ -187,8 +171,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 <include file="navigation.js"/>
 
 <include file="equipment.js"/>
-
-<include file="sun.js"/>
 
 <include file="editor.js"/>
 

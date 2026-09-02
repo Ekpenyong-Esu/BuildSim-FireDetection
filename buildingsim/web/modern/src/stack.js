@@ -34,8 +34,6 @@ function applyStackVisibility() {
   if (stackOn) {
     if (typeof shellGroup !== 'undefined') shellGroup.visible = false;
     if (typeof worldGroup !== 'undefined') worldGroup.visible = false;
-    if (typeof sunGroup !== 'undefined') sunGroup.visible = false;
-    if (typeof extWallGroup !== 'undefined') extWallGroup.visible = false;
   }
 }
 

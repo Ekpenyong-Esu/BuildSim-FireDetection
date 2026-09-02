@@ -270,6 +270,15 @@ The viewer also accepts renderer instructions for `fire`, `smoke`, `gas`, `sprin
 `water`, and `warning` effects. These instructions do not simulate anything: the physical
 model must still calculate how the phenomenon changes and publish each new snapshot.
 
+To see only a room-temperature heatmap, run this from the `buildingsim/` directory:
+
+```bash
+./examples/api/room-layers/set_temperature_heatmap.sh
+```
+
+Open <http://127.0.0.1:9090/?layer=temperature&floor=level0>. The script shows how
+room values, a fixed numeric range, and a colour palette form a comparable heatmap.
+
 Run the complete example from the `buildingsim/` directory:
 
 ```bash

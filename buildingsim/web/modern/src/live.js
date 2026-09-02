@@ -37,13 +37,6 @@ function selectedRoomLayer() {
   return layers.find(layer => layer.id === heatMetric) || layers[0] || LEGACY_LAYERS.temperature;
 }
 
-function cycleHeatMetric() {
-  const layers = activeRoomLayers();
-  if (!layers.length) return;
-  const current = Math.max(0, layers.findIndex(layer => layer.id === heatMetric));
-  setHeat(true, layers[(current + 1) % layers.length].id);
-}
-
 function colorForLayer(layer, value, out) {
   const palette = Array.isArray(layer.palette) && layer.palette.length >= 2
     ? layer.palette : LEGACY_LAYERS.temperature.palette;
@@ -160,8 +153,39 @@ function setHeat(on, metric) {
     if (is3DView) openBuilding({ frame: peelT < 0.5 });
     updateHeatmap();
   }
+  renderRoomLayerButtons();
   updateHeatLegend();
   render();
+}
+
+function renderRoomLayerButtons() {
+  const container = document.getElementById('roomLayerButtons');
+  if (!container) return;
+  container.replaceChildren();
+
+  const addButton = (label, layerID, title) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'room-layer-btn';
+    button.textContent = label;
+    button.title = title;
+    button.dataset.layerId = layerID;
+    const selected = layerID ? heatOn && heatMetric === layerID : !heatOn;
+    button.classList.toggle('on', selected);
+    button.setAttribute('aria-pressed', String(selected));
+    button.addEventListener('click', () => {
+      setHeat(Boolean(layerID), layerID || undefined);
+      if (typeof syncHud === 'function') syncHud();
+    });
+    container.appendChild(button);
+  };
+
+  addButton('Off', '', 'Hide room heatmaps');
+  for (const layer of activeRoomLayers()) {
+    const label = layer.label || layer.id;
+    const source = layer.source ? ` — ${layer.source}` : '';
+    addButton(label, layer.id, `${label}${source}`);
+  }
 }
 
 function updateHeatLegend() {
@@ -191,12 +215,6 @@ function updateHeatLegend() {
   element.append(title, source, ramp, scale);
 }
 
-function heatMetricBadge() {
-  const layer = selectedRoomLayer();
-  if (layer.unit) return layer.unit.length <= 4 ? layer.unit : layer.unit.slice(0, 4);
-  return (layer.label || layer.id || 'Layer').slice(0, 5);
-}
-
 async function fetchAndApplyRoomLayers() {
   try {
     const response = await fetch('/api/room-layers');
@@ -206,6 +224,7 @@ async function fetchAndApplyRoomLayers() {
       heatMetric = activeRoomLayers()[0]?.id || 'temperature';
     }
     if (heatOn) updateHeatmap();
+    renderRoomLayerButtons();
     if (typeof syncHud === 'function') syncHud();
     render();
   } catch (error) {

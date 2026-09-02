@@ -45,6 +45,16 @@ func TestEmbeddedViewersAndVendorAssets(t *testing.T) {
 		!strings.Contains(modern, `id="boot-loader"`) || !strings.Contains(modern, `id="sessionChip"`) {
 		t.Fatal("viewer modes are not distinct")
 	}
+	for _, marker := range []string{`id="roomLayerButtons"`, "renderRoomLayerButtons", "room-layer-btn"} {
+		if !strings.Contains(modern, marker) {
+			t.Errorf("modern viewer is missing clickable room-layer control %q", marker)
+		}
+	}
+	for _, removed := range []string{`id="showExtWalls"`, `id="showSun"`, `id="sunSliders"`, "// ---- sun.js ----"} {
+		if strings.Contains(modern, removed) {
+			t.Errorf("modern viewer still contains removed exterior/sun control %q", removed)
+		}
+	}
 	for _, filename := range []string{
 		"web/vendor/three.module.js",
 		"web/vendor/OrbitControls.js",

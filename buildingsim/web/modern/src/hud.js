@@ -2,8 +2,8 @@
 //
 // One bar, thumb-reachable on a phone and unobtrusive on a desktop: which
 // pose of the building you're looking at, which floor, and which live layers
-// are on. The older checkbox panel is kept intact behind a Layers button so
-// nothing that used to be reachable stopped being reachable.
+// are on. Geometry toggles and explicitly selectable room heatmaps sit behind
+// the Layers button.
 
 let hudBuilt = false;
 
@@ -33,11 +33,6 @@ function buildHud() {
   }
 
   btn('btnBuilding').addEventListener('click', () => { toggleBuilding(); syncHud(); });
-  btn('btnHeat').addEventListener('click', () => { setHeat(!heatOn); syncHud(); });
-  btn('btnMetric').addEventListener('click', () => {
-    cycleHeatMetric();
-    syncHud();
-  });
   btn('btnLayers').addEventListener('click', () => toggleHudPop('layers'));
   btn('btnFind').addEventListener('click', () => {
     toggleHudPop('find');
@@ -61,13 +56,7 @@ let hudChip3D = null;
 const hudChipFloor = [];
 
 function syncHud() {
-  const set = (id, on) => { const e = document.getElementById(id); if (e) e.classList.toggle('on', !!on); };
-  set('btnHeat', heatOn);
-  const m = document.getElementById('btnMetric');
-  if (m) {
-    m.textContent = heatMetricBadge();
-    m.classList.toggle('dim', !heatOn);
-  }
+  renderRoomLayerButtons();
   if (hudChip3D) hudChip3D.classList.toggle('on', is3DView);
   hudChipFloor.forEach((b, i) => {
     b.classList.toggle('on', !is3DView && currentLevel === LEVELS[i]);

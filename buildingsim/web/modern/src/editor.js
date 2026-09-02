@@ -52,7 +52,6 @@ function switchTo3D() {
     renderSmoothRoute(lastRouteResult, lastRouteLevelKey);
   }
 
-  updateSunVisibility();
   render();
 }
 
@@ -193,7 +192,6 @@ function deselectRoom() {
     selectedMesh.material.opacity = 0.4;
   }
   selectedMesh = null; selectedRoom = null; hideVertexHandles();
-  if (sunActive) calculateAndApplyIrradiance();
   _eqFilterRoom = null;
   filterEquipment();
   document.getElementById('btnRect').disabled = true;
@@ -260,7 +258,6 @@ function rebuildRoom() {
       op.push(op[0].clone()); c.geometry.dispose(); c.geometry = new THREE.BufferGeometry().setFromPoints(op);
     }
   });
-  invalidateSunCache();
 }
 
 // Undo
@@ -867,7 +864,6 @@ function splitRoom(direction) {
   outline.userData = {roomOutline:true, roomId:newId};
   fg.roomGroup.add(outline);
 
-  invalidateSunCache();
   showVertexHandles(); updateInfo(); isDirty=true; render();
 }
 

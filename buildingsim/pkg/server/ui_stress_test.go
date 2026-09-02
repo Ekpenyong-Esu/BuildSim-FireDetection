@@ -401,6 +401,11 @@ func runUIVisualizationStorm(t *testing.T, client *http.Client, baseURL string, 
 	stateExpression := `(() => {
 		const diagnostics = window._buildsimDiagnostics || {};
 		const counts = window.buildsim && window.buildsim.dev ? window.buildsim.dev.counts() : {};
+		const layerButton = document.querySelector('#roomLayerButtons [data-layer-id="stress-temperature"]');
+		if (layerButton && window.buildsim && window.buildsim.dev &&
+			(!window.buildsim.dev.heatOn || window.buildsim.dev.heatMetric !== 'stress-temperature')) {
+			layerButton.click();
+		}
 		return JSON.stringify({
 			ready: !!(window.buildsim && window.buildsim.ready()),
 			ws: diagnostics.websocketState || "",
@@ -413,12 +418,17 @@ func runUIVisualizationStorm(t *testing.T, client *http.Client, baseURL string, 
 			renderedEntities: counts.entities || 0,
 			renderedEffects: counts.effects || 0,
 			renderedDoors: counts.doors || 0,
-			renderedAlerts: counts.alerts || 0
+			renderedAlerts: counts.alerts || 0,
+			layerButton: !!layerButton,
+			heatOn: !!(window.buildsim && window.buildsim.dev && window.buildsim.dev.heatOn),
+			heatMetric: window.buildsim && window.buildsim.dev ? window.buildsim.dev.heatMetric : ''
 		});
 	})()`
 	type visualState struct {
 		Ready                                                            bool   `json:"ready"`
 		WS                                                               string `json:"ws"`
+		LayerButton, HeatOn                                              bool
+		HeatMetric                                                       string
 		Notifications, Refreshes                                         int64
 		Entities, Effects, Doors, Alerts                                 int
 		RenderedEntities, RenderedEffects, RenderedDoors, RenderedAlerts int
@@ -429,7 +439,8 @@ func runUIVisualizationStorm(t *testing.T, client *http.Client, baseURL string, 
 			final.Entities == entityCount && final.RenderedEntities == entityCount &&
 			final.Effects == effectCount && final.RenderedEffects == effectCount &&
 			final.Doors == doorCount && final.RenderedDoors == doorCount &&
-			final.Alerts == alertCount && final.RenderedAlerts == alertCount
+			final.Alerts == alertCount && final.RenderedAlerts == alertCount &&
+			final.LayerButton && final.HeatOn && final.HeatMetric == "stress-temperature"
 	}); err != nil {
 		t.Fatalf("modern viewer did not converge after visualization storm: %v; state=%+v", err, final)
 	}
