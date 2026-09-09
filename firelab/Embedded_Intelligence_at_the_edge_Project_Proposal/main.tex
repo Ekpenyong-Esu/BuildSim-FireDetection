@@ -1,0 +1,81 @@
+\documentclass[times, 10pt]{thesisMDH}
+\usepackage[useregional]{datetime2}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{parskip}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{mathtools}
+\usepackage{amsmath, amssymb}
+\usepackage[pdfborder={0 0 0},colorlinks=true,urlcolor=blue,citecolor=red,bookmarks=false]{hyperref}
+
+% Colors
+\definecolor{primaryblue}{RGB}{30, 80, 162}
+\definecolor{lightgray}{RGB}{245, 245, 245}
+\definecolor{tpgreen}{RGB}{0, 128, 0}
+\definecolor{fpred}{RGB}{200, 0, 0}
+\definecolor{fnred}{RGB}{200, 0, 0}
+\definecolor{tnblue}{RGB}{0, 0, 180}
+ 
+% Section formatting
+\titleformat{\section}{\large\bfseries\color{primaryblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{primaryblue}}{}{0em}{}
+ 
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{gray}{\small Project Proposal -- Fire Detection \& Autonomous Response}}
+\lhead{\textcolor{gray}{\small D7065E, Embedded Intelligence at the Edge}}
+\rfoot{\thepage}
+ 
+% Useful macros
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\T}{\top}
+
+
+\addbibresource{references.bib}
+
+% MASTER THESIS TEMPLATE MODIFIED FOR PROPOSAL BY HENRIK.FALK@MDH.SE
+
+\fancyHeader{Fire Detection \& Autonomous Response}{Ekpenyong}
+
+\university{Luleå Technical University}
+
+\department{School of Computer Science, Electrical and Space Engineering\\
+Luleå, Sweden}
+
+\subject{\textbf{Project Proposal\\ Group 14}\\ D7065E, Embedded Intelligence at the Edge}
+\thesisTitle{ Fire detection and autonomous response}
+
+
+
+\authorOne{Ekpenyong Esu Ekpenyong}{ekpekp-5@student.ltu.se}
+%\authorTwo{Sowmya Nelakurthi}{sownel-4@student.ltu.se}
+%\authorThree{Sreenidhi Thallam}{sretha-5@student.ltu.se}
+
+\examiner{Johan Kristiansson}{LTU, Luleå}
+%\supervisors{Supervisor\_Name (if any)\textsuperscript{1}}{University, location}
+%\companySupervisors{Supervisor\_Name (if any)\textsuperscript{1}}{Company name, location}
+
+\theDate{\today} 
+
+\begin{document}
+\titlePage
+%\tableofcontents
+
+\mainmatter
+% ===== Content: Modify the structure according to your needs =======
+
+\input{sections/Proposal}
+
+
+% ============================= References ============================
+%\newpage
+% No citations in the proposal; re-enable when references are added.
+%\printbibliography
+%\addcontentsline{toc}{section}{References}
+
+\end{document}

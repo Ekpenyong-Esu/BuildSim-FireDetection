@@ -1,0 +1,130 @@
+% ── 1. Project Topic ──────────────────────────────────────────────────────────
+\section{Project Topic}
+ 
+This project is about \textbf{detecting cars in snowy environments} using deep learning.
+Detecting vehicles in winter conditions is harder than normal conditions because snow
+can hide parts of a car, reduce contrast, and make roads and cars look similar in colour.
+This makes it an interesting and challenging problem to solve.
+ 
+We will use the \textbf{Nordic Vehicle Dataset (NVD)}, a dataset created specifically for
+this purpose by researchers at LTU (Luleå University of Technology). The dataset contains
+videos and images of vehicles captured in cold, snowy Nordic weather conditions.
+More information about the dataset can be found at:
+\url{https://nvd.ltu-ai.dev/}
+ 
+% ── 2. Intended Approach ─────────────────────────────────────────────────────
+\section{Intended Approach}
+ 
+\subsection{Type of Problem}
+ 
+This is an \textbf{object detection} problem. Object detection means we want the model to:
+\begin{enumerate}
+    \item Find \textit{where} a car is in an image (draw a bounding box around it).
+    \item Confirm \textit{what} it is (classify it as a ``car'' or ``vehicle'').
+\end{enumerate}
+Unlike simple image classification (which only says ``is there a car?''), object detection
+tells us both the location and the identity of each object in the image.
+ 
+\subsection{Dataset Split}
+ 
+We will follow the official data split provided in the project description:
+ 
+\begin{center}
+\begin{tabular}{>{\bfseries}ll}
+\toprule
+Split & Recording \\
+\midrule
+Train      & 2022-12-04 Hjenberg 02 \\
+           & 2022-12-23 Asjo 01\_HD 5x stab \\
+           & 2022-12-02 Asjo 01\_stabilized \\
+Validation & 2022-12-03 Nyland 01\_stabilized \\
+Test       & 2022-12-23 Bjenberg-02 \\
+\bottomrule
+\end{tabular}
+\end{center}
+ 
+\subsection{Model Architecture}
+ 
+We will use \textbf{YOLOv9} (You Only Look Once, version 9) as our base model.
+YOLO is a popular family of object detection models that is:
+\begin{itemize}
+    \item \textbf{Fast} -- it processes the whole image in one pass (hence ``You Only Look Once'').
+    \item \textbf{Accurate} -- recent versions like YOLOv9 achieve very good detection results.
+    \item \textbf{Well-supported} -- there are pre-trained versions we can fine-tune on our data.
+\end{itemize}
+ 
+We plan to start with a \textbf{pre-trained YOLOv9 model} (trained on a large general dataset
+such as COCO) and then \textbf{fine-tune} it on the NVD training split. Fine-tuning means
+we take a model that already knows what cars look like in normal conditions and teach it
+to also recognise them in snowy conditions. This usually works better and faster than
+training from scratch.
+ 
+\subsection{Loss Function}
+ 
+YOLOv9 uses a combination of loss functions to train the model. In simple terms:
+ 
+\begin{itemize}
+    \item \textbf{Bounding box regression loss} -- penalises the model when the predicted box
+          does not match the true box. We will use \textit{CIoU loss} (Complete Intersection
+          over Union), which measures how well two boxes overlap.
+    \item \textbf{Classification loss} -- penalises the model when it misidentifies an object.
+          We will use \textit{Binary Cross-Entropy (BCE) loss}.
+    \item \textbf{Objectness loss} -- penalises the model when it misses an object or detects
+          something that is not there. This is also BCE loss.
+\end{itemize}
+ 
+These losses are added together during training to guide the model to make better predictions.
+ 
+\subsection{Evaluation Metrics}
+ 
+We will measure how well our model works using the following standard metrics:
+ 
+\begin{itemize}
+    \item \textbf{mAP (mean Average Precision)} -- the main metric for object detection.
+          It summarises how precise the model is across different detection thresholds.
+          We will report \textbf{mAP@0.5} (IoU threshold of 0.5) and
+          \textbf{mAP@0.5:0.95} (averaged over multiple thresholds).
+ 
+    \item \textbf{Precision} -- of all boxes the model predicts, what fraction are correct?
+ 
+    \item \textbf{Recall} -- of all real cars in the images, what fraction did the model find?
+ 
+    \item \textbf{F1-Score} -- the harmonic mean of Precision and Recall, giving a single
+          balanced score.
+ 
+    \item \textbf{Inference speed (FPS)} -- how many frames per second the model can process,
+          which matters for real-time applications like dashcams or traffic cameras.
+\end{itemize}
+ 
+\subsection{Implementation Plan}
+ 
+\begin{enumerate}
+    \item \textbf{Week 1} -- Download and explore the NVD dataset. Understand the annotation
+          format and visualise some examples with bounding boxes.
+    \item \textbf{Week 2} -- Set up the YOLOv9 environment (PyTorch), prepare the dataset in
+          YOLO format, and run a baseline experiment.
+    \item \textbf{Week 3} -- Fine-tune the model, experiment with data augmentation (e.g.\
+          adding artificial snow, brightness adjustments) to improve robustness.
+    \item \textbf{Week 4} -- Evaluate on the test set, analyse failure cases, and prepare
+          the final presentation and GitHub repository.
+\end{enumerate}
+ 
+\subsection{Tools and Frameworks}
+ 
+We plan to use:
+\begin{itemize}
+    \item \textbf{Python} with \textbf{PyTorch} as the main deep learning framework.
+    \item \textbf{YOLOv9} official implementation from GitHub.
+    \item \textbf{Roboflow / custom scripts} for dataset preparation and annotation conversion.
+    \item \textbf{GitHub} for version control and sharing the final code, model, and results.
+\end{itemize}
+ 
+% ── End ───────────────────────────────────────────────────────────────────────
+\vspace{2em}
+\hrule
+\vspace{0.5em}
+\footnotesize
+\textit{Reference: Mokayed et al., ``Nordic Vehicle Dataset (NVD): Performance of Vehicle Detectors
+Using Newly Developed Dataset,'' CVPRW 2023.
+\url{https://openaccess.thecvf.com/content/CVPR2023W/AICity/html/Mokayed_Nordic_Vehicle_Dataset_NVD_Performance_of_Vehicle_Detectors_Using_Newly_CVPRW_2023_paper.html}}
+ 

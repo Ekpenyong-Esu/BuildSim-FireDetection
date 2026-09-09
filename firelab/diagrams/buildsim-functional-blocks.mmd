@@ -1,0 +1,149 @@
+flowchart TB
+
+    EXT["<b>External producers</b><br/>your firelab services<br/>physics · sensors · detector<br/>agent · actuators · routing"]
+
+    subgraph CLI["1 — Process &amp; CLI · cmd/main.go"]
+        direction TB
+        C1["cobra commands<br/>start · version · health"]
+        C2["start flags<br/>host · port · ui<br/>edit · edit-output<br/>all-interfaces · log-file"]
+        C3["lifecycle<br/>SIGINT / SIGTERM<br/>graceful shutdown"]
+    end
+
+    subgraph HTTP["2 — HTTP transport · pkg/server/server.go"]
+        direction TB
+        H1["gin engine + Router()"]
+        H2["middleware<br/>Logger · Recovery<br/>localCORSMiddleware"]
+        H3["GET /healthz<br/>GET /api/config<br/>GET /api/icons/:name"]
+        H4["static file servers<br/>/vendor/* · /*"]
+    end
+
+    subgraph HND["3 — API handlers · pkg/server/handlers/"]
+        direction TB
+        HB["<b>BuildingHandlers</b><br/>GetBuilding · GetFloor<br/>GetCrossFloorEdges"]
+        HG["<b>GraphHandlers</b><br/>GetGraph · GetRoute<br/>excludes blocked/jammed doors"]
+        HE["<b>EquipmentHandlers</b><br/>Create · BulkCreate · List<br/>Get · Update · Delete · Notify"]
+        HS["<b>SensorHandlers</b><br/>AddSensor · ListSensors<br/>GetSensor · DeleteSensor<br/>SetValue"]
+        HA["<b>ActuatorHandlers</b><br/>AddActuator · ListActuators<br/>GetActuator · DeleteActuator<br/>SetState"]
+        HV["<b>VisualizationHandlers</b><br/>RoomLayers · Effects · Entities<br/>RoomAppearance · Alerts · Doors"]
+        HO["<b>Occupancy + CoverageHandlers</b><br/>global Get / Set"]
+        HX["<b>SessionHandlers</b><br/>List · Create · Get · Delete<br/>Viewport · Highlights · Occupancy<br/>Route · Coverage · HandleWebSocket"]
+        HP["shared pipeline<br/>bind → normalise → validate<br/>→ store → broadcast → respond"]
+    end
+
+    subgraph WS["4 — Realtime hub · pkg/server/websocket/hub.go"]
+        direction TB
+        W1["Hub<br/>SendToSession · BroadcastToAll"]
+        W2["per-client goroutines<br/>read pump · write pump<br/>ping 30 s · read timeout 60 s"]
+        W3["message envelope<br/>type · data · version"]
+        W4["event types<br/>viewport · highlights · occupancy<br/>coverage · room_layers · effects<br/>entities · room_appearance<br/>alerts · doors"]
+        W5["session purger<br/>tick 5 min · max age 1 h"]
+    end
+
+    subgraph ST["5 — State store · pkg/store/memory.go"]
+        direction TB
+        S1["MemoryStore<br/>RWMutex · deep copies<br/>volatile, no persistence"]
+        S2["building + floors<br/>SetBuilding · SetFloorData<br/>CrossFloorEdges · MultiFloorGraph"]
+        S3["equipment tree<br/>equipment → sensors → actuators"]
+        S4["visualization state<br/>layers · effects · entities<br/>appearance · alerts · doors"]
+        S5["occupancy · coverage"]
+        S6["sessions<br/>create · touch · purge"]
+        S7["per-collection int64<br/>version counters"]
+    end
+
+    subgraph MOD["6 — Domain model · pkg/model/"]
+        direction TB
+        M1["building.go<br/>Building · Level · FloorData<br/>Room · Label · CrossFloorEdge"]
+        M2["equipment.go<br/>Equipment · Sensor · Actuator"]
+        M3["visualization.go<br/>RoomLayer · VisualEffect<br/>MobileEntity · DecisionAlert<br/>Door · RoomAppearance"]
+        M4["session.go<br/>Session · Viewport<br/>RoomHighlight · CoverageZone"]
+        M5["person.go<br/>Person · Alien · RoomOccupancy"]
+        M6["graph.go<br/>NavGraph · NavNode · NavEdge<br/>RouteResult · RouteNode"]
+    end
+
+    subgraph GR["7 — Navigation engine · pkg/graph/"]
+        direction TB
+        G1["dijkstra.go<br/>ShortestPath<br/>ShortestPathByName<br/>ShortestPathByQualifiedName"]
+        G2["multifloor.go<br/>BuildMultiFloorGraph<br/>global node renumbering"]
+        G3["graph variants<br/>adjacency · walkable<br/>multi-floor"]
+        G4["cross-floor weights<br/>elevator 10 · stair 20"]
+    end
+
+    subgraph EMB["8 — Embedded assets · embed.go"]
+        direction TB
+        E1["DataFS — data/"]
+        E2["abuilding/level0..2/<br/>floorplan_data.json<br/>cross_floor_edges.json"]
+        E3["equipment/icons/<br/>~50 SVG icons"]
+        E4["WebFS — web/"]
+        E5["loadBuildingData()<br/>sync.Once at startup"]
+    end
+
+    subgraph UI["9 — Browser UI · web/"]
+        direction TB
+        U1["modern — 3D WebGL<br/>built by cmd/buildweb"]
+        U2["render<br/>world · interior · viewer<br/>floors · peel · photocam · flight"]
+        U3["overlay<br/>visualization · route<br/>equipment · stack · hud"]
+        U4["transport<br/>init · session · state · live"]
+        U5["classic — lightweight variant"]
+        U6["editor.js — edit mode only"]
+    end
+
+    subgraph SDK["10 — Go client SDK · pkg/client/"]
+        direction TB
+        K1["Client — net/http, 10 s timeout"]
+        K2["Building · Floor · Equipment<br/>Sensor · Actuator<br/>Session · Occupancy · Coverage<br/>Viewport · Highlights"]
+    end
+
+    EXT -->|"REST JSON"| H1
+    SDK -->|"REST JSON"| H1
+    K1 --- K2
+
+    C1 --> H1
+    C2 --> H1
+    C3 --> H1
+
+    H1 --> H2 --> HND
+    H1 --> H3
+    H1 --> H4
+    E4 --> H4
+    E1 --> H3
+
+    HND --> HP
+    HP -->|"read / mutate"| S1
+    HG -->|"route queries"| G1
+    HP -->|"emit event"| W1
+
+    S1 --- S2
+    S1 --- S3
+    S1 --- S4
+    S1 --- S5
+    S1 --- S6
+    S1 --- S7
+
+    G1 --- G3
+    G2 --- G3
+    G2 --- G4
+    S2 <-->|"NavGraph"| G2
+
+    MOD -.->|"types used by"| HND
+    MOD -.-> ST
+    MOD -.-> GR
+
+    E5 --> E2
+    E2 --> S2
+    E3 --> H3
+
+    W1 --> W3 --> W4
+    W1 --- W2
+    W1 --- W5
+    W5 -->|"purge"| S6
+
+    W4 ==>|"WebSocket /ws/:id"| U4
+    H4 -->|"HTML · JS · CSS"| U1
+    U1 --- U2
+    U1 --- U3
+    U1 --- U6
+    U4 -->|"REST bootstrap"| H1
+    U5 -.-> H1
+
+    classDef ext fill:#fce8e6,stroke:#d93025,stroke-width:2px
+    class EXT ext

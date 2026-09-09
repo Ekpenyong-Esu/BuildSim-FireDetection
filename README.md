@@ -13,3 +13,8 @@ This repository holds the technical material. Administrative material, grading, 
 - [Lab Assignment](lab-assignment/) — proposal and final-report templates, with worked examples
 - [BuildingSim](buildingsim/) — building simulation server
 - [Occupancy Simulator](occupancysim/) — simulates the people in the building and publishes where they are to BuildingSim
+
+go´´´rm go.work go.work.sum
+
+make run
+´´´´
