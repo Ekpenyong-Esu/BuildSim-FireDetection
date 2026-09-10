@@ -1,0 +1,100 @@
+"""Evacuation: ask BuildSim for escape routes and walk people along them.
+
+The only reason this is not in `domain/` is the route lookup, which is a
+network call. Everything else here delegates to `domain.occupants`.
+"""
+
+from ..adapters.buildsim import BuildSim, BuildSimError
+from ..adapters.world_builder import key_of
+from ..domain import occupants as occupants_mod
+from ..domain.physics import World
+
+
+def path_length(path: list[dict]) -> float:
+    """Total walking distance of a route: add up the gaps between waypoints."""
+    return sum(
+        ((b["x"] - a["x"]) ** 2 + (b["y"] - a["y"]) ** 2) ** 0.5
+        for a, b in zip(path, path[1:])
+    )
+
+
+class Evacuation:
+    """Works out where people should go, and moves them there tick by tick."""
+
+    def __init__(self, client: BuildSim) -> None:
+        self.client = client
+        self.display_route: list[dict] = []  # the one route drawn in the viewer
+        # Everyone leaving the same room takes the same way out, so the answer
+        # is cached instead of asking BuildSim once per person.
+        self._cache: dict[str, list[dict]] = {}
+
+    def reset(self) -> None:
+        """Forget every planned route, ready for a fresh run."""
+        self._cache.clear()
+        self.display_route = []
+
+    async def plan(
+        self,
+        people: list[occupants_mod.Occupant],
+        world: World,
+        danger: set[str],
+        exits: dict[str, list[str]],
+    ) -> None:
+        """Give every threatened occupant without a route a path to an exit."""
+        if not danger:
+            return
+        for occupant in people:
+            if occupant.safe or occupant.route:
+                continue  # already out, or already walking
+            # Once someone starts evacuating they keep going, even if their room
+            # is later declared safe.
+            if occupant.status != "evacuating" and occupant.space not in danger:
+                continue
+            occupant.status = "evacuating"
+            path = await self._path(occupant.space, world, danger, exits)
+            if not path:
+                occupant.status = "no route"  # trapped: this counts against the run
+                continue
+            level = occupant.space.split("/")[0]
+            # Two parallel lists: where to walk, and which room that point is in.
+            occupant.route = [[node["x"], node["y"]] for node in path]
+            occupant.route_spaces = [self._space_key(world, level, node) for node in path]
+
+    def advance(self, people: list[occupants_mod.Occupant], distance: float) -> None:
+        """Move everyone who is evacuating `distance` further along their route."""
+        for occupant in people:
+            if occupant.status != "evacuating" or occupant.safe or not occupant.route:
+                continue
+            occupants_mod.advance(occupant, distance * occupant.speed)
+
+    async def _path(
+        self, space_key: str, world: World, danger: set[str], exits: dict[str, list[str]]
+    ) -> list[dict]:
+        """The shortest safe way out. Sending everyone to the first listed exit
+        piles the whole building into one room."""
+        if space_key in self._cache:
+            return list(self._cache[space_key])  # a copy: the caller consumes it
+        space = world.spaces.get(space_key)
+        if space is None:
+            return []
+        best: list[dict] = []
+        for exit_name in exits.get(space.level, []):
+            if key_of(space.level, exit_name) in danger:
+                continue  # never route people through a burning room
+            try:
+                result = await self.client.route(space.name, exit_name, space.level)
+            except BuildSimError:
+                continue  # this exit is unreachable; try the next one
+            path = (result or {}).get("path") or []
+            if path and (not best or path_length(path) < path_length(best)):
+                best = path
+        if best:
+            self._cache[space_key] = best
+            self.display_route = best
+        return list(best)
+
+    @staticmethod
+    def _space_key(world: World, level: str, node: dict) -> str:
+        """A route node names a room only sometimes; "" means "stay put"."""
+        key = key_of(level, node.get("name") or "")
+        return key if key in world.spaces else ""

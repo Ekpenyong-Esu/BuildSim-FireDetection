@@ -4,7 +4,7 @@ BUILDTIME ?= $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 LDFLAGS := -s -w -X main.version=$(VERSION) -X main.buildTime=$(BUILDTIME)
 STRESS_DURATION ?= 30s
 
-.PHONY: all web build test docs-test race stress stress-ui run run-classic run-edit docker-build release checksums clean
+.PHONY: all web build test docs-test race stress stress-ui run run-classic run-edit stop docker-build release checksums clean
 
 all: build
 
@@ -43,6 +43,12 @@ run-classic: build
 
 run-edit: build
 	./bin/buildsim start --host 127.0.0.1 --port 9090 --ui modern --edit
+
+# For servers with no terminal to interrupt. The bracket stops pkill matching its
+# own command line, and pkill returns 1 when nothing matched, which make would treat
+# as a failure.
+stop:
+	@pkill -f "[b]in/buildsim start" && echo "buildsim stopped" || echo "buildsim was not running"
 
 docker-build:
 	docker build -t buildingsim:local .

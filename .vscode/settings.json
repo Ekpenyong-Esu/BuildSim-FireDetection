@@ -29,5 +29,6 @@
     }
   ],
   "latex-workshop.latex.recipe.default": "first",
-  "latex-workshop.latex.autoBuild.run": "never"
+  "latex-workshop.latex.autoBuild.run": "never",
+  "python.defaultInterpreterPath": "${workspaceFolder}/firelab/.venv/bin/python"
 }
