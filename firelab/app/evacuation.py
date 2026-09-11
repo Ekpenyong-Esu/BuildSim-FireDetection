@@ -5,17 +5,10 @@ network call. Everything else here delegates to `domain.occupants`.
 """
 
 from ..adapters.buildsim import BuildSim, BuildSimError
+from ..adapters.publisher import path_length
 from ..adapters.world_builder import key_of
 from ..domain import occupants as occupants_mod
-from ..domain.physics import World
-
-
-def path_length(path: list[dict]) -> float:
-    """Total walking distance of a route: add up the gaps between waypoints."""
-    return sum(
-        ((b["x"] - a["x"]) ** 2 + (b["y"] - a["y"]) ** 2) ** 0.5
-        for a, b in zip(path, path[1:])
-    )
+from ..domain.world import World
 
 
 class Evacuation:

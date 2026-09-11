@@ -1,9 +1,8 @@
 <script>
-  import { store, api } from './store.svelte.js';
+  import { store } from './store.svelte.js';
+  import DeviceList from './DeviceList.svelte';
 
   let { selected = $bindable('') } = $props();
-
-  const FAULTS = ['none', 'stuck', 'dropout', 'drift', 'dead'];
 
   let onlyActive = $state(false);
   let level = $state('all');
@@ -105,31 +104,8 @@
             </td>
           </tr>
           {#if expanded === space.key}
-            <!-- One row per device. The dropdown breaks a sensor mid-run, without pausing. -->
             <tr class="devices">
-              <td colspan="10">
-                {#if space.devices.length}
-                  <div class="row">
-                    {#each space.devices as device (device.id)}
-                      <div class="device">
-                        <span class="modality">{device.modality}</span>
-                        <span class="mono">{device.reading ?? '—'}</span>
-                        <select
-                          value={device.fault}
-                          onchange={(e) =>
-                            api.fault({ device_id: device.id, fault: e.currentTarget.value })}
-                        >
-                          {#each FAULTS as fault (fault)}
-                            <option value={fault}>{fault}</option>
-                          {/each}
-                        </select>
-                      </div>
-                    {/each}
-                  </div>
-                {:else}
-                  <span class="muted">No devices deployed in this room.</span>
-                {/if}
-              </td>
+              <td colspan="10"><DeviceList devices={space.devices} /></td>
             </tr>
           {/if}
         {:else}
@@ -158,10 +134,4 @@
   .icons { white-space: nowrap; font-size: 12px; }
   .empty { text-align: center; padding: 28px 0; }
   .devices td { background: #0d1420; }
-  .device {
-    display: flex; align-items: center; gap: 8px;
-    background: #111a27; border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px;
-  }
-  .device select { width: auto; padding: 3px 6px; font-size: 12px; }
-  .modality { font-size: 12px; color: var(--muted); text-transform: capitalize; }
 </style>

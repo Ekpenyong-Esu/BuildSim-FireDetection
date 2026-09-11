@@ -84,6 +84,7 @@ gets its sprinkler request *refused* for lack of heat.
 
 ```
 domain/     pure: standard library only, no clock, no network, no BuildSim
+  world.py       the nouns: Space, Coupling, World — what a building *is*
   sources.py     what a fire emits over time (and its ground-truth label)
   physics.py     how heat, smoke and CO spread between rooms
   sensing.py     truth -> observation: lag, bias, noise, quantisation, faults
@@ -91,25 +92,62 @@ domain/     pure: standard library only, no clock, no network, no BuildSim
   detector.py    features -> P(fire); a Protocol, so a model can replace it
   agent.py       per-room state machine; proposes commands
   interlocks.py  which commands are allowed to happen
+  roles.py       who is in the building, and how fast they get out
   occupants.py   where people are and how they walk a route
-  scoring.py     grades the run against the label each source carries
+  scoring.py     was the alarm right? detections, misses, false alarms
+  timeline.py    was it in time? ignition -> alarm -> building empty (RSET)
   history.py     a short rolling record per space, for charts and CSV
 
 adapters/   everything that speaks HTTP to BuildSim
   buildsim.py       the HTTP client, one method per endpoint
   world_builder.py  BuildSim floor plans -> a physics World
-  publisher.py      simulation state -> BuildSim payload shapes
+  exits.py          guessing each upper level's stairwell exits
+  publisher/        simulation state -> BuildSim payload shapes
+    layers.py         physics -> floor heat maps
+    effects.py        physics -> fire, smoke and sprinkler particles
+    beliefs.py        agent   -> room highlights and alerts
+    people.py         people  -> viewer markers and occupancy
+    hardware.py       devices -> fire doors and the equipment tree
 
 app/        the impure edge
   config.py      runtime settings
-  engine.py      the tick loop; the only mutable state
+  runtime.py     the one engine instance for the process
   evacuation.py  route lookup + walking people along it
-  snapshot.py    engine state -> the JSON the UI reads
   presets.py     one-click scenarios: a template plus a room
-  main.py        REST + SSE
+  main.py        assembles the app: routers + static files
+  engine/        the tick loop; the only mutable state
+    state.py       every mutable attribute, and nothing that acts on it
+    core.py        the lifecycle and *when* each zone runs
+    building.py    floor plans -> the world the physics runs on
+    session.py     reseeding, re-scattering people, clearing the board
+    truth.py       WORLD and SENSING: the only readers of the ground truth
+    intelligence.py  readings -> features -> P(fire) -> the room state machine
+    recording.py   the flight recorder: truth beside reading
+    actuation.py   the single door between deciding and doing
+    scenario.py    igniting sources and applying presets
+    devices.py     installing, removing and breaking sensors
+    publishing.py  deciding what to write to BuildSim, and when
+    streaming.py   fan-out of snapshots to open browsers
+  snapshot/      engine state -> the JSON the UI reads
+    builder.py     assembles the one dictionary the UI reads
+    status.py      clock, connection, headline counts
+    spaces.py      the room table: truth beside reading
+    safety.py      tenability and evacuation progress
+    population.py  how each role is getting on
+    explain.py     why P(fire) is where it is
+  api/           REST + SSE, one router per thing you can ask for
+    models.py      the request bodies
+    system.py      health, state, rooms, config
+    events.py      the SSE stream
+    clock.py       play, pause, fast-forward, reset
+    scenario.py    fires, nuisances, presets
+    population.py  roles and how many of each
+    sensors.py     deploy, undeploy, inject faults
+    response.py    supervision mode and manual commands
+    data.py        history and CSV export
 
 ui/         Svelte + Vite front end, one component per panel
-tests/      domain tests; they run without anything else being up
+tests/      domain tests, one file per module; they run with nothing else up
 ```
 
 The dependency arrow only ever points inward: `app → adapters → domain`.

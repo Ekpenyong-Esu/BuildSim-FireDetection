@@ -2,12 +2,14 @@
 
 Every source knows whether it is a real fire or a nuisance, so the run can be
 scored while it happens: how fast real fires were caught, which nuisances the
-system fell for, and which fires it missed. Pure: it is told the time.
+system fell for, and which fires it missed. Whether people got out *in time* is
+a separate question, kept in `timeline.py`. Pure: it is told the time.
 """
 
 from dataclasses import dataclass, field
 
 from .sources import Source
+from .timeline import Timeline
 
 REAL = ("flaming", "smouldering")  # everything else is a nuisance
 ALARM_STATES = ("CONFIRMED", "SUPPRESSED")  # the states that count as alarming
@@ -30,14 +32,8 @@ class Scoreboard:
     detected: dict[str, float] = field(default_factory=dict)  # source id -> seconds to confirm
     missed: set[str] = field(default_factory=set)  # source ids
     false_alarms: list[FalseAlarm] = field(default_factory=list)
+    timeline: Timeline = field(default_factory=Timeline)
     _alarming: set[str] = field(default_factory=set)  # rooms alarming last tick
-
-    # The evacuation timeline. Detection latency is only half the story; what
-    # matters is whether the warning came early enough to empty the building.
-    ignition_at: float | None = None
-    alarm_at: float | None = None
-    cleared_at: float | None = None
-    _moved: bool = False  # somebody has actually started walking
 
     def clear(self) -> None:
         """Start a fresh run with an empty scorecard."""
@@ -45,10 +41,7 @@ class Scoreboard:
         self.missed.clear()
         self.false_alarms.clear()
         self._alarming.clear()
-        self.ignition_at = None
-        self.alarm_at = None
-        self.cleared_at = None
-        self._moved = False
+        self.timeline.clear()
 
     def update(
         self,
@@ -64,18 +57,10 @@ class Scoreboard:
         for space in alarming - self._alarming:  # a newly raised alarm
             self._score_alarm(space, now, sources)
         self._alarming = alarming
-        if alarming and self.alarm_at is None:
-            self.alarm_at = now
 
-        lit = [s.t_start for s in sources if s.kind in REAL and s.t_start <= now]
-        if lit and self.ignition_at is None:
-            self.ignition_at = min(lit)
-
-        # The building is only "cleared" if it was ever evacuating; an empty
-        # building that nobody had to leave is not an evacuation time.
-        self._moved = self._moved or evacuating > 0
-        if self._moved and inside == 0 and self.cleared_at is None:
-            self.cleared_at = now
+        self.timeline.note_alarm(now, bool(alarming))
+        self.timeline.note_ignition([s.t_start for s in sources if s.kind in REAL and s.t_start <= now])
+        self.timeline.note_evacuation(now, evacuating, inside)
 
         # A real fire nobody has confirmed after five minutes counts as missed.
         for source in sources:
@@ -109,19 +94,9 @@ class Scoreboard:
             "false_alarms": len(self.false_alarms),
             "mean_latency": round(sum(latencies) / len(latencies), 1) if latencies else None,
             "worst_latency": round(max(latencies), 1) if latencies else None,
-            "alarm_delay": _gap(self.ignition_at, self.alarm_at),
-            "rset": _gap(self.ignition_at, self.cleared_at),
-            "rset_from_alarm": _gap(self.alarm_at, self.cleared_at),
-            "clearing": self._moved and self.cleared_at is None,
             "recent_false_alarms": [
                 {"space": f.space, "at": round(f.at, 1), "cause": f.cause}
                 for f in self.false_alarms[-5:]
             ],
+            **self.timeline.summary(),
         }
-
-
-def _gap(start: float | None, end: float | None) -> float | None:
-    """Seconds between two milestones, or None while either is still ahead."""
-    if start is None or end is None:
-        return None
-    return round(max(0.0, end - start), 1)

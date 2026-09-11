@@ -2,7 +2,7 @@
 
 from dataclasses import asdict, dataclass, field
 
-from ..domain.occupants import DEFAULT_POPULATION
+from ..domain.roles import DEFAULT_POPULATION
 
 
 @dataclass

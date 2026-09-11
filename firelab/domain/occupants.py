@@ -1,38 +1,17 @@
-"""Occupants: where they are and how they follow a route. Pure."""
+"""Occupants: where they are and how they follow a route. Pure.
+
+Who they are lives in `roles.py`; this file is only about position and movement.
+"""
 
 from dataclasses import dataclass, field
 from random import Random
 from typing import Iterable
 
-from .physics import Space
+from .roles import ROLES
+from .world import Space
 
 MIN_ROOM_AREA = 8.0  # skip cupboards and shafts
 PERSONAL_SPACE = 2.5  # floor-plan units of scatter, so people never share a point
-
-
-@dataclass(frozen=True)
-class Role:
-    """A kind of person on campus, and how well they get themselves out."""
-
-    key: str
-    label: str  # plural, for the UI
-    singular: str
-    speed: float  # multiplier on the configured walking speed
-    note: str
-
-
-# Speed differences are about familiarity, not fitness: knowing where the back
-# stairs are matters more than how fast you can run.
-ROLES = (
-    Role("student", "Students", "Student", 1.05, "quick, but only know the main entrance"),
-    Role("lecturer", "Lecturers", "Lecturer", 1.0, "know the building"),
-    Role("staff", "Staff", "Staff", 1.0, "technical and administrative staff"),
-    Role("security", "Security", "Guard", 1.15, "drilled on the escape routes"),
-    Role("visitor", "Visitors", "Visitor", 0.85, "have never been here before"),
-)
-ROLE_BY_KEY = {role.key: role for role in ROLES}
-
-DEFAULT_POPULATION = {"student": 28, "lecturer": 5, "staff": 4, "security": 1, "visitor": 2}
 
 
 @dataclass
