@@ -21,6 +21,11 @@ async def events() -> StreamingResponse:
     queue = engine.subscribe()
 
     async def stream():
+        """Yield SSE frames until the browser goes away.
+
+        Closed over `queue` so each connection reads its own, and the `finally`
+        is the only place a dropped connection gets cleaned up.
+        """
         try:
             yield f"data: {json.dumps(engine.snapshot())}\n\n"  # current state first
             while True:

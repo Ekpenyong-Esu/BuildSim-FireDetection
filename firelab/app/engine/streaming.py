@@ -37,4 +37,9 @@ class Broadcaster:
                 queue.put_nowait(snapshot)
 
     def __bool__(self) -> bool:
+        """True when at least one browser is listening.
+
+        Lets the engine write `if self.stream:` and skip building a snapshot
+        nobody would receive. Building one costs a pass over every room.
+        """
         return bool(self._subscribers)

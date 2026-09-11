@@ -33,11 +33,19 @@ class Detector(Protocol):
     rule below can be swapped for a trained model without touching anything.
     """
 
-    name: str
+    name: str  # shown in the UI, so you can tell which detector is installed
 
-    def probability(self, features: Features) -> float: ...
+    def probability(self, features: Features) -> float:
+        """P(fire) for one room, in 0..1, from readings alone."""
+        ...
 
-    def explain(self, features: Features) -> list[Contribution]: ...
+    def explain(self, features: Features) -> list[Contribution]:
+        """The terms behind that number, one per piece of evidence.
+
+        Required, not optional: a detector that cannot say why is one nobody can
+        sign off on. `probability` must be a function of exactly these terms.
+        """
+        ...
 
 
 class FusionRule:

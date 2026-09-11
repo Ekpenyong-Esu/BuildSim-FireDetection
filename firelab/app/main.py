@@ -37,4 +37,5 @@ if UI_DIST.is_dir():
 
     @app.get("/")
     async def index() -> FileResponse:
+        """The built Svelte app. Everything it then asks for is under /api."""
         return FileResponse(UI_DIST / "index.html")

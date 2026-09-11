@@ -4,6 +4,11 @@ from firelab.domain import world as world_mod
 
 
 def make_world() -> world_mod.World:
+    """Two 25 m2 rooms, A1 and A2, joined by one doorway.
+
+    The smallest building that can still show the thing most tests are about:
+    something happens in A1 and has to reach A2 to be corroborated.
+    """
     world = world_mod.World()
     for name in ("A1", "A2"):
         world.spaces[f"level0/{name}"] = world_mod.Space(

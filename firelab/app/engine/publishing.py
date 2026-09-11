@@ -66,9 +66,10 @@ async def session_writes(engine: EngineState, states: dict[str, str]) -> list:
         engine.last_highlights = highlights
         writes.append(viewer.put_highlights(session_id, highlights))
     route = engine.evacuation.display_route
-    if route and route != engine.last_route:
-        engine.last_route = route
-        writes.append(viewer.put_route(session_id, publisher.route(route)))
+    level = engine.evacuation.display_level
+    if route and (route, level) != engine.last_route:
+        engine.last_route = (route, level)
+        writes.append(viewer.put_route(session_id, publisher.route(route, level)))
     return writes
 
 

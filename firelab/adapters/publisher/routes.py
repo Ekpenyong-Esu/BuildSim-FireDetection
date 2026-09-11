@@ -15,6 +15,13 @@ def path_length(path: list[dict]) -> float:
     )
 
 
-def route(path: list[dict]) -> dict:
-    """A route in BuildSim's shape, with the distance converted to metres."""
-    return {"path": path, "distance": round(path_length(path) * UNITS_TO_METRES, 1)}
+def route(path: list[dict], level: str = "") -> dict:
+    """A route in BuildSim's shape, with the distance converted to metres.
+
+    Each node carries the storey it is on. A single-floor route comes back from
+    BuildSim without one, and the viewer then guesses the floor from the first
+    room name and falls back to level1 — which drew a ground-floor escape two
+    storeys up. We know the level, so we say it.
+    """
+    nodes = [{**node, "level": level} for node in path] if level else path
+    return {"path": nodes, "distance": round(path_length(path) * UNITS_TO_METRES, 1)}
