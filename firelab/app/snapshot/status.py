@@ -1,7 +1,14 @@
 """Header numbers: the clock, the BuildSim connection and the tallies."""
 
+from __future__ import annotations
 
-def clock(engine) -> dict:
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..engine.state import EngineState
+
+
+def clock(engine: EngineState) -> dict:
     """Simulated time, both as a number and as a readable hh:mm:ss."""
     hours, remainder = divmod(int(engine.now) % 86400, 3600)  # wrap at midnight
     minutes, seconds = divmod(remainder, 60)
@@ -13,7 +20,7 @@ def clock(engine) -> dict:
     }
 
 
-def buildsim(engine) -> dict:
+def buildsim(engine: EngineState) -> dict:
     """Whether the 3D viewer is reachable and how much of it has been loaded."""
     return {
         "url": engine.config.buildsim_url,
@@ -24,7 +31,7 @@ def buildsim(engine) -> dict:
     }
 
 
-def counts(engine) -> dict:
+def counts(engine: EngineState) -> dict:
     """The headline numbers along the top of the UI."""
     return {
         "devices": len(engine.devices),

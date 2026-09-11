@@ -8,7 +8,4 @@ from .client import BuildSim
 from .transport import BuildSimError
 from .viewer import ViewerSessions
 
-# BuildSim floor plans are drawn in units of 0.5 m.
-UNITS_TO_METRES = 0.5
-
-__all__ = ["UNITS_TO_METRES", "BuildSim", "BuildSimError", "ViewerSessions"]
+__all__ = ["BuildSim", "BuildSimError", "ViewerSessions"]

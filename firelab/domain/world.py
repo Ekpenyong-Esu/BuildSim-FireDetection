@@ -8,6 +8,9 @@ in `physics.py`.
 from dataclasses import dataclass, field
 
 T_OUT = 20.0  # outdoor / baseline temperature, degrees C
+# Floor plans are drawn in units of 0.5 m. Every distance in the project is in
+# those units; this is the one place that says what they mean.
+UNITS_TO_METRES = 0.5
 
 
 @dataclass
@@ -56,3 +59,11 @@ class World:
             space.smoke = 0.0
             space.co = 0.0
             space.sprinkler = False
+
+    def adjacency(self) -> dict[str, set[str]]:
+        """Which spaces share a doorway with which. Smoke travels along these."""
+        links: dict[str, set[str]] = {}
+        for coupling in self.couplings:
+            links.setdefault(coupling.a, set()).add(coupling.b)
+            links.setdefault(coupling.b, set()).add(coupling.a)
+        return links

@@ -50,12 +50,13 @@ class Scoreboard:
         states: dict[str, str],
         evacuating: int = 0,
         inside: int = 0,
+        adjacency: dict[str, set[str]] | None = None,
     ) -> None:
         """Mark the system's homework for this tick."""
         # Compare with last tick so each alarm is only judged once, when raised.
         alarming = {key for key, state in states.items() if state in ALARM_STATES}
         for space in alarming - self._alarming:  # a newly raised alarm
-            self._score_alarm(space, now, sources)
+            self._score_alarm(space, now, sources, adjacency or {})
         self._alarming = alarming
 
         self.timeline.note_alarm(now, bool(alarming))
@@ -69,7 +70,9 @@ class Scoreboard:
             if now - source.t_start > MISS_AFTER:
                 self.missed.add(source.id)
 
-    def _score_alarm(self, space: str, now: float, sources: list[Source]) -> None:
+    def _score_alarm(
+        self, space: str, now: float, sources: list[Source], adjacency: dict[str, set[str]]
+    ) -> None:
         """Decide whether one new alarm was a good call or a false one."""
         lit = [s for s in sources if s.t_start <= now]  # already burning
         burning = [s for s in lit if s.space == space]  # ...in this room
@@ -80,8 +83,10 @@ class Scoreboard:
                 self.detected.setdefault(source.id, max(0.0, now - source.t_start))
                 self.missed.discard(source.id)
             return
-        if not burning and any(s.kind in REAL for s in lit):
-            return  # smoke that spread from a real fire; the alarm is correct
+        # Smoke that came through the door from a real fire next door is not a
+        # false alarm. A fire on another floor is no excuse at all.
+        if not burning and adjacency.get(space, set()) & {s.space for s in lit if s.kind in REAL}:
+            return
         cause = burning[0].kind if burning else "none"
         self.false_alarms.append(FalseAlarm(space=space, at=now, cause=cause))
 

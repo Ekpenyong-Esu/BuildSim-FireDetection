@@ -1,7 +1,8 @@
 """ACTUATION: the single door between deciding and doing.
 
 Agent commands and button presses both come through `apply`, so the interlocks
-cannot be bypassed by clicking instead of waiting.
+cannot be bypassed by clicking instead of waiting. A command the interlocks
+refuse is not thrown away: the agent keeps offering it until it gets through.
 """
 
 from __future__ import annotations
@@ -26,11 +27,16 @@ def apply(
     occupants = sum(1 for o in engine.occupants if o.space == cmd.space and not o.safe)
     on_route = any(cmd.space in o.route_spaces for o in engine.occupants)
     verdict = interlocks.check(cmd, space.temperature, occupants, on_route)
+    held = (cmd.space, cmd.kind, cmd.value)
     if not verdict.allowed:
-        engine.log(
-            "interlock", f"blocked {cmd.kind}={cmd.value} in {space.name}: {verdict.reason}"
-        )
+        # A held command is retried every tick, so only say so when the answer changes.
+        if manual or engine.blocks.get(held) != verdict.reason:
+            engine.log(
+                "interlock", f"blocked {cmd.kind}={cmd.value} in {space.name}: {verdict.reason}"
+            )
+        engine.blocks[held] = verdict.reason
         return verdict
+    engine.blocks.pop(held, None)
 
     if cmd.kind == "sprinkler":
         space.sprinkler = cmd.value == "on"
@@ -42,11 +48,20 @@ def apply(
             if cmd.space in (link.a, link.b):
                 link.openness = openness
     elif cmd.kind == "evacuate":
-        evacuating = cmd.value == "start"
-        for occupant in engine.occupants:
-            if not occupant.safe:
-                occupant.status = "evacuating" if evacuating else "idle"
+        # One room raises the alarm but the whole building walks out. Standing
+        # down is different: nobody goes back inside while any room is still lit.
+        if cmd.value == "start":
+            for occupant in engine.occupants:
+                if not occupant.safe:
+                    occupant.status = "evacuating"
+        elif not danger(engine):
+            for occupant in engine.occupants:
+                if not occupant.safe:
+                    occupant.status = "idle"
 
+    room_agent = engine.agents.get(cmd.space)
+    if room_agent is not None:
+        agent_mod.retire(room_agent, cmd)  # a human pressing the button settles it too
     prefix = "manual" if manual else "auto"
     engine.log("actuator", f"{prefix} {cmd.kind}={cmd.value} in {space.name}")
     engine.mark_dirty()

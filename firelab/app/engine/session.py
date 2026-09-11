@@ -44,7 +44,11 @@ def reset(engine: EngineState) -> None:
         room_agent.probability = 0.0
         room_agent.above_since = None
         room_agent.below_since = None
+        room_agent.under_since = None
+        room_agent.pending.clear()
+        room_agent.suppressing = False
     engine.doors.clear()
+    engine.blocks.clear()
     engine.evacuation.reset()
     engine.score.clear()
     engine.history.clear()

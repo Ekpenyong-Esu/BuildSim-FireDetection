@@ -15,7 +15,7 @@ import asyncio
 import contextlib
 import time
 
-from ...adapters.buildsim import UNITS_TO_METRES
+from ...domain.world import UNITS_TO_METRES
 from .. import snapshot as snapshot_mod
 from . import actuation, building, intelligence, publishing, recording, truth
 from .constants import PUBLISH_EVERY, REAL_TICK

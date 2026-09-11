@@ -50,6 +50,7 @@ class FusionRule:
         # assumed to be fine until the evidence outweighs it.
         self.weights = weights or {
             "smoke": 3.2,
+            "co": 1.8,
             "co_smoke_ratio": 1.6,
             "temperature_rise": 0.55,
             "smoke_rate": 1.4,
@@ -70,6 +71,12 @@ class FusionRule:
         return [
             Contribution("bias", 1.0, w["bias"]),
             Contribution("smoke", features.smoke, w["smoke"] * min(features.smoke, 1.5)),
+            # CO on its own, not divided by anything: this is the only term that
+            # still speaks when the smoke detector is dead. Cooking peaks at about
+            # 25 ppm, so that is where the evidence is taken to start.
+            Contribution(
+                "co", features.co, w["co"] * min(max(features.co - 25.0, 0.0) / 125.0, 1.0)
+            ),
             Contribution(
                 "co_smoke_ratio",
                 features.co_smoke_ratio,
@@ -78,7 +85,9 @@ class FusionRule:
             Contribution(
                 "temperature_rise",
                 features.temperature_rise,
-                w["temperature_rise"] * min(features.temperature_rise, 40.0) / 10.0,
+                # Clipped at 60 rather than 40 so a serious fire can be carried by
+                # heat alone. Nuisances never get near either number.
+                w["temperature_rise"] * min(features.temperature_rise, 60.0) / 10.0,
             ),
             Contribution(
                 "smoke_rate",

@@ -37,6 +37,11 @@ class Evacuation:
         if not danger:
             return
         for occupant in people:
+            # The fire moves after routes are handed out. Anyone whose remaining
+            # path now runs through a burning room is sent back for a new one.
+            if occupant.route and any(key in danger for key in occupant.route_spaces):
+                occupant.route = []
+                occupant.route_spaces = []
             if occupant.safe or occupant.route:
                 continue  # already out, or already walking
             # Once someone starts evacuating they keep going, even if their room
@@ -65,26 +70,37 @@ class Evacuation:
     ) -> list[dict]:
         """The shortest safe way out. Sending everyone to the first listed exit
         piles the whole building into one room."""
-        if space_key in self._cache:
-            return list(self._cache[space_key])  # a copy: the caller consumes it
+        cached = self._cache.get(space_key)
+        if cached is not None:
+            if not self._through_fire(world, space_key.split("/")[0], cached, danger):
+                return list(cached)  # a copy: the caller consumes it
+            del self._cache[space_key]  # the fire has spread onto the way out
         space = world.spaces.get(space_key)
         if space is None:
             return []
         best: list[dict] = []
         for exit_name in exits.get(space.level, []):
             if key_of(space.level, exit_name) in danger:
-                continue  # never route people through a burning room
+                continue  # never send people towards a burning exit
             try:
                 result = await self.client.route(space.name, exit_name, space.level)
             except BuildSimError:
                 continue  # this exit is unreachable; try the next one
             path = (result or {}).get("path") or []
+            if self._through_fire(world, space.level, path, danger):
+                continue  # never route people *through* a burning room either
             if path and (not best or path_length(path) < path_length(best)):
                 best = path
         if best:
             self._cache[space_key] = best
             self.display_route = best
         return list(best)
+
+    def _through_fire(
+        self, world: World, level: str, path: list[dict], danger: set[str]
+    ) -> bool:
+        """Does this route pass through a room that is alarming?"""
+        return any(self._space_key(world, level, node) in danger for node in path)
 
     @staticmethod
     def _space_key(world: World, level: str, node: dict) -> str:

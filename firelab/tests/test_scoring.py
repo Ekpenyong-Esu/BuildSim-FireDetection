@@ -31,13 +31,31 @@ class TestScoring(unittest.TestCase):
         board.update(scoring.MISS_AFTER + 1, [source], {"level0/A1": "NORMAL"})
         self.assertIn("s1", board.missed)
 
-    # Smoke spreading from a real fire is not a false alarm.
+    # Smoke spreading through the door from a real fire is not a false alarm.
     def test_spread_from_a_real_fire_is_not_a_false_alarm(self):
         board = scoring.Scoreboard()
         source = sources.Source("s1", "flaming", "level0/A1", t_start=0.0)
-        board.update(60.0, [source], {"level0/A1": "CONFIRMED", "level0/A2": "CONFIRMED"})
+        board.update(
+            60.0,
+            [source],
+            {"level0/A1": "CONFIRMED", "level0/A2": "CONFIRMED"},
+            adjacency={"level0/A1": {"level0/A2"}, "level0/A2": {"level0/A1"}},
+        )
         self.assertEqual(board.summary()["false_alarms"], 0)
         self.assertEqual(board.summary()["detections"], 1)
+
+    # A fire elsewhere in the building is no excuse for an unconnected room.
+    def test_a_fire_next_door_does_not_excuse_the_far_side_of_the_building(self):
+        board = scoring.Scoreboard()
+        source = sources.Source("s1", "flaming", "level0/A1", t_start=0.0)
+        board.update(
+            60.0,
+            [source],
+            {"level0/A1": "CONFIRMED", "level3/Z9": "CONFIRMED"},
+            adjacency={"level0/A1": {"level0/A2"}, "level0/A2": {"level0/A1"}},
+        )
+        self.assertEqual(board.summary()["false_alarms"], 1)
+        self.assertEqual(board.false_alarms[0].space, "level3/Z9")
 
 
 if __name__ == "__main__":

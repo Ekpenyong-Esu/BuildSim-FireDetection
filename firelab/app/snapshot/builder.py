@@ -1,10 +1,17 @@
 """Assemble the one dictionary that is the entire contract with the UI."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from . import population as population_mod
 from . import safety, spaces, status
 
+if TYPE_CHECKING:
+    from ..engine.state import EngineState
 
-def build(engine) -> dict:
+
+def build(engine: EngineState) -> dict:
     """A full picture of the simulation, small enough to push every tick.
 
     This one dictionary is the entire contract with the UI. Nothing in the

@@ -1,7 +1,9 @@
 """The alarm state machine: NORMAL -> INVESTIGATING -> PRE_ALARM -> CONFIRMED -> SUPPRESSED.
 
 The agent issues commands. It never writes actuator state, and it never sees
-the truth - only P(fire) from the detector.
+the truth - only P(fire) from the detector. A command it asks for stays asked
+for until it is carried out, because an interlock saying "not yet" is a delay
+and not a refusal.
 """
 
 from dataclasses import dataclass, field
@@ -46,6 +48,11 @@ class RoomAgent:
     since: float = 0.0  # when the current state was entered
     above_since: float | None = None  # when P(fire) first went above pre_alarm
     below_since: float | None = None  # when it first went below clear
+    under_since: float | None = None  # when it first fell back under confirm
+    # Commands asked for but not yet carried out. An interlock that says "not
+    # yet" must not become "never", so a request stands until it is honoured.
+    pending: list[Command] = field(default_factory=list)
+    suppressing: bool = False  # a sprinkler this agent asked for is running
 
 
 def update(
@@ -53,7 +60,6 @@ def update(
 ) -> list[Command]:
     """Advance one room's state machine and return the commands it wants issued."""
     agent.probability = probability
-    commands: list[Command] = []
 
     # Keep track of how long the probability has been high, and how long low.
     # Setting the timestamp to None resets the stopwatch.
@@ -65,6 +71,10 @@ def update(
         agent.below_since = agent.below_since if agent.below_since is not None else now
     else:
         agent.below_since = None
+    if probability < thresholds.confirm:
+        agent.under_since = agent.under_since if agent.under_since is not None else now
+    else:
+        agent.under_since = None
 
     previous = agent.state
 
@@ -72,6 +82,9 @@ def update(
     if agent.state in ("NORMAL", "CLEARING"):
         if probability >= thresholds.investigate:
             agent.state = "INVESTIGATING"
+        elif agent.state == "CLEARING" and now - agent.since >= thresholds.dwell_clear:
+            # Quiet ever since it stood down, so stop flagging the room as an incident.
+            agent.state = "NORMAL"
     elif agent.state == "INVESTIGATING":
         if agent.above_since is not None and now - agent.above_since >= thresholds.dwell_pre_alarm:
             agent.state = "PRE_ALARM"
@@ -82,17 +95,39 @@ def update(
             agent.state = "CONFIRMED"
         elif probability < thresholds.investigate:
             agent.state = "INVESTIGATING"
-    elif agent.state in ("CONFIRMED", "SUPPRESSED"):
+    elif agent.state == "CONFIRMED":
         # Standing down takes much longer than raising the alarm did.
         if agent.below_since is not None and now - agent.below_since >= thresholds.dwell_clear:
             agent.state = "CLEARING"
+        elif (
+            agent.suppressing
+            and agent.under_since is not None
+            and now - agent.under_since >= thresholds.dwell_confirm
+        ):
+            # Water has been on the fire and the evidence has stayed down for as
+            # long as it took to confirm: the fire is being held, not out.
+            agent.state = "SUPPRESSED"
+    elif agent.state == "SUPPRESSED":
+        if agent.below_since is not None and now - agent.below_since >= thresholds.dwell_clear:
+            agent.state = "CLEARING"
+        elif probability >= thresholds.confirm:
+            agent.state = "CONFIRMED"  # burning on through the water
 
-    # Commands are only produced at the moment a room changes state.
     if agent.state != previous:
         agent.since = now
-        commands = _on_enter(agent)
+        # SUPPRESSED is still an alarm, so CONFIRMED's outstanding requests stand.
+        if agent.state != "SUPPRESSED":
+            agent.pending = _on_enter(agent)
 
-    return commands
+    # Anything the interlocks deferred is offered again on every tick.
+    return list(agent.pending)
+
+
+def retire(agent: RoomAgent, command: Command) -> None:
+    """Note that a command was carried out, so it stops being asked for."""
+    agent.pending = [c for c in agent.pending if c.kind != command.kind]
+    if command.kind == "sprinkler":
+        agent.suppressing = command.value == "on"
 
 
 def _on_enter(agent: RoomAgent) -> list[Command]:

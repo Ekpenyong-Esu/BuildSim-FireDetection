@@ -47,6 +47,7 @@ def think(engine: EngineState) -> list[agent_mod.Command]:
         {key: a.state for key, a in engine.agents.items()},
         evacuating=sum(1 for o in engine.occupants if o.status == "evacuating"),
         inside=sum(1 for o in engine.occupants if not o.safe),
+        adjacency=engine.world.adjacency(),
     )
     return proposed
 

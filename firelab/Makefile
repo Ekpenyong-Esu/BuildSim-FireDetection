@@ -13,7 +13,7 @@ help:
 	@echo "make run    - serve the API and the built UI on :$(PORT)"
 	@echo "make dev    - API on :$(PORT) with reload, Vite dev server separately"
 	@echo "make stop   - stop a detached server started with nohup or &"
-	@echo "make test   - run the domain tests"
+	@echo "make test   - run the domain, layering and preset tests"
 	@echo "make clean  - remove build artefacts"
 
 $(VENV)/.stamp: requirements.txt
@@ -47,7 +47,7 @@ stop:
 	@pkill -f "[u]vicorn firelab.app.main" && echo "firelab stopped" || echo "firelab was not running"
 
 test: deps
-	$(PY) -m unittest discover -s tests -t .. -v
+	$(PY) -m pytest tests -q
 
 clean:
 	rm -rf $(VENV) ui/dist ui/node_modules

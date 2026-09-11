@@ -5,8 +5,7 @@ an edge between two nodes carrying different names is a physical opening
 between those two spaces.
 """
 
-from ..domain.world import Coupling, Space, World
-from .buildsim import UNITS_TO_METRES
+from ..domain.world import UNITS_TO_METRES, Coupling, Space, World
 
 
 def key_of(level: str, name: str) -> str:

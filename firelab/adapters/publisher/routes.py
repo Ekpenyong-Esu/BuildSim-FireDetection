@@ -4,7 +4,7 @@ BuildSim draws a route as a list of waypoints plus a distance, and it wants that
 distance in metres while the floor plan is in 0.5 m units.
 """
 
-from ..buildsim import UNITS_TO_METRES
+from ...domain.world import UNITS_TO_METRES
 
 
 def path_length(path: list[dict]) -> float:

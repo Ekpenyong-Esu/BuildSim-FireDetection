@@ -1,15 +1,22 @@
 """Life safety: where the building has stopped being escapable, and who is still in it."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ...domain import tenability
 
+if TYPE_CHECKING:
+    from ..engine.state import EngineState
 
-def tenability_report(engine) -> dict:
+
+def tenability_report(engine: EngineState) -> dict:
     """Which rooms have stopped being escapable, and who is in them.
 
     This is the number the whole system exists to keep at zero. Detection
     latency only matters through its effect on it.
     """
-    rooms = []
+    rooms: list[dict] = []
     heads: dict[str, int] = {}
     for occupant in engine.occupants:
         if not occupant.safe:
@@ -43,7 +50,7 @@ def tenability_report(engine) -> dict:
     }
 
 
-def evacuation(engine) -> dict:
+def evacuation(engine: EngineState) -> dict:
     """Who is still inside, per floor, and who could not be given a route."""
     levels: dict[str, dict[str, int]] = {}
     stranded = []

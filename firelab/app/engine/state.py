@@ -56,6 +56,7 @@ class EngineState:
         self.agents: dict[str, agent_mod.RoomAgent] = {}
         self.occupants: list[occupants_mod.Occupant] = []
         self.doors: dict[str, str] = {}  # space key -> "open" | "closed"
+        self.blocks: dict[tuple[str, str, str], str] = {}  # held command -> why, for the log
         self.journal: list[dict] = []
         self.score = Scoreboard()
         self.history = History()

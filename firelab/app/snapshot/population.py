@@ -1,9 +1,16 @@
 """How each kind of person is getting on during the evacuation."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ...domain import roles as roles_mod
 
+if TYPE_CHECKING:
+    from ..engine.state import EngineState
 
-def population(engine) -> list[dict]:
+
+def population(engine: EngineState) -> list[dict]:
     """How each role is getting on. Visitors are expected to lag the students."""
     rows = []
     for role in roles_mod.ROLES:

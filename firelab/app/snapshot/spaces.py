@@ -1,7 +1,14 @@
 """The room table: for each watched room, the truth beside the reading."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ...domain import tenability
 from ...domain.world import World
+
+if TYPE_CHECKING:
+    from ..engine.state import EngineState
 
 
 def rooms(world: World) -> list[dict]:
@@ -12,7 +19,7 @@ def rooms(world: World) -> list[dict]:
     ]
 
 
-def watched(engine) -> list[str]:
+def watched(engine: EngineState) -> list[str]:
     """Rooms worth showing: monitored, burning, or suspected."""
     keys = set(engine.windows) | {s.space for s in engine.sources}
     keys |= {key for key, value in engine.probabilities.items() if value > 0.05}
