@@ -15,6 +15,7 @@ class BuildSim:
     """A typed wrapper around BuildSim's REST API."""
 
     def __init__(self, base_url: str, timeout: float = 10.0) -> None:
+        """Point it at a running BuildSim and keep one connection pool."""
         self._transport = Transport(base_url, timeout)
         self.viewer = ViewerSessions(self._transport)
 
@@ -41,9 +42,21 @@ class BuildSim:
         return await self._transport.request("GET", f"/api/building/floors/{level}")
 
     async def route(
-        self, from_name: str, to_name: str, level: str, graph: str = "walkable"
+        self,
+        from_name: str,
+        to_name: str,
+        from_level: str,
+        to_level: str = "",
+        graph: str = "walkable",
     ) -> dict | None:
         """Ask BuildSim to walk someone from one room to another.
+
+        Sending `from_level`/`to_level` instead of a single `level` is what picks
+        BuildSim's merged multi-floor graph, where the storeys are joined by real
+        stairwells. Pinning one `level` confines the answer to that floor, which
+        is how an upstairs occupant ends up "escaping" to a stairwell rather than
+        to a door. The qualified levels also disambiguate a room name that
+        appears on more than one storey.
 
         Returns None when there is no path, which is normal rather than an error.
         """
@@ -53,13 +66,22 @@ class BuildSim:
                 "/api/graph/route",
                 params={
                     "from_name": from_name,
+                    "from_level": from_level,
                     "to_name": to_name,
-                    "level": level,
+                    "to_level": to_level or from_level,
                     "type": graph,
                 },
             )
         except BuildSimError:
             return None
+
+    async def cross_floor_edges(self) -> list[dict]:
+        """The stairs and lifts that join the storeys.
+
+        BuildSim uses these to merge the per-floor walkable graphs; we use them
+        as couplings, so smoke can climb a stairwell the way it really does.
+        """
+        return await self._transport.request("GET", "/api/building/cross-floor-edges") or []
 
     # --- writing state --------------------------------------------------------
     # Each of these replaces the whole collection, so anything left out

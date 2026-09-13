@@ -52,7 +52,7 @@ class FakeBuildSim:
         self.paths = paths
         self.calls: list[tuple[str, str]] = []
 
-    async def route(self, from_name, to_name, level, graph="walkable"):
+    async def route(self, from_name, to_name, from_level, to_level="", graph="walkable"):
         self.calls.append((from_name, to_name))
         nodes = self.paths.get((from_name, to_name))
         if nodes is None:
@@ -126,13 +126,31 @@ class TestRoutingAroundFire(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(key("HALL"), occupant.route_spaces)
         self.assertEqual(occupant.route_spaces[-1], key("BACK"))
 
-    async def test_no_safe_path_means_trapped(self):
-        # Both ways out are alight: this must count against the run rather than
-        # quietly sending somebody through the fire.
+    async def test_the_least_bad_way_out_beats_standing_still(self):
+        # HALL is on the only remaining way out and it is alarming. Refusing it
+        # walls the occupant into the fire; nobody stays put because the
+        # corridor is smoky, so they are sent through it rather than stranded.
         occupant = person("A1")
         await self.evacuation.plan(
             [occupant], self.world, {key("A1"), key("HALL"), key("BACK")}, EXITS
         )
+        self.assertEqual(occupant.status, "evacuating")
+        self.assertEqual(occupant.route_spaces[-1], key("EXIT"))
+
+    async def test_a_clear_route_still_wins_over_a_smoky_one(self):
+        # Ranking, not disqualifying: when a clear way out exists it is taken,
+        # even though the smoky one is much shorter.
+        occupant = person("A1")
+        await self.evacuation.plan(
+            [occupant], self.world, {key("A1"), key("HALL")}, EXITS
+        )
+        self.assertEqual(occupant.route_spaces[-1], key("BACK"))
+
+    async def test_trapped_means_buildsim_found_no_path_at_all(self):
+        # "no route" now says what it means, so the stranded count is real.
+        self.evacuation.client = FakeBuildSim({})  # every lookup raises
+        occupant = person("A1")
+        await self.evacuation.plan([occupant], self.world, {key("A1")}, EXITS)
         self.assertEqual(occupant.status, "no route")
         self.assertEqual(occupant.route, [])
 
@@ -249,6 +267,33 @@ class TestTheRouteTheViewerDraws(unittest.IsolatedAsyncioTestCase):
             for level in ("level0", "level1", "level2")
         ]
 
+    async def test_a_route_is_drawn_even_when_the_fire_room_is_empty(self):
+        # Forty people in nine hundred rooms: normally nobody is standing in the
+        # room that caught fire. Requiring the drawn route to start inside it
+        # meant no line at all while dozens of people were walking.
+        world = world_mod.World()
+        for index, name in enumerate(("FIRE", "NEXTDOOR", "FAR", "EXIT")):
+            world.spaces[key(name)] = world_mod.Space(
+                key=key(name), level=LEVEL, name=name, kind="room",
+                area_m2=25.0, center=(float(index), 0.0),
+            )
+        world.couplings.append(
+            world_mod.Coupling(a=key("FIRE"), b=key("NEXTDOOR"), conductance=0.5)
+        )
+        evacuation = Evacuation(
+            FakeBuildSim({
+                ("NEXTDOOR", "EXIT"): [("NEXTDOOR", 0.0), ("EXIT", 2.0)],
+                ("FAR", "EXIT"): [("FAR", 0.0), ("EXIT", 2.0)],
+            })
+        )
+        # Nobody is in FIRE. Two people elsewhere are told to get out.
+        people = [person("NEXTDOOR", status="evacuating"),
+                  person("FAR", status="evacuating")]
+        await evacuation.plan(people, world, {key("FIRE")}, {LEVEL: ["EXIT"]})
+        self.assertTrue(evacuation.display_route, "no line drawn at all")
+        # And it is the escape from next door to the fire, not the far one.
+        self.assertEqual(evacuation.display_route[0]["name"], "NEXTDOOR")
+
     async def test_the_drawn_route_is_the_one_out_of_the_fire(self):
         await self.evacuation.plan(self.people, self.world, {"level0/ROOM"}, self.exits)
         self.assertEqual(self.evacuation.display_level, "level0")
@@ -284,3 +329,54 @@ class TestTheRouteTheViewerDraws(unittest.IsolatedAsyncioTestCase):
     async def test_a_route_with_no_known_storey_is_left_alone(self):
         payload = publisher_route([{"name": "ROOM", "x": 0.0, "y": 0.0}])
         self.assertNotIn("level", payload["path"][0])
+
+
+class TestTheWalledInWing(unittest.IsolatedAsyncioTestCase):
+    """The corridor beside a fire alarms, and it is the only way out of a wing.
+
+    This is the shape of the real building: one corridor serves a whole wing, a
+    preset instruments the fire room *and its neighbours*, and smoke reaches the
+    corridor within a minute. Treating that corridor as impassable left everyone
+    behind it standing still while the fire grew — visibly, in the viewer.
+    """
+
+    def setUp(self):
+        # WING -> CORRIDOR -> EXIT is the only way out.
+        self.world = make_world("WING", "CORRIDOR", "EXIT")
+        self.evacuation = Evacuation(
+            FakeBuildSim(
+                {("WING", "EXIT"): [("WING", 0.0), ("CORRIDOR", 1.0), ("EXIT", 2.0)]}
+            )
+        )
+        self.exits = {LEVEL: ["EXIT"]}
+        self.people = [person("WING", status="evacuating") for _ in range(3)]
+
+    async def test_an_alarming_corridor_does_not_wall_the_wing_in(self):
+        await self.evacuation.plan(
+            self.people, self.world, {key("CORRIDOR")}, self.exits
+        )
+        for occupant in self.people:
+            self.assertEqual(occupant.status, "evacuating")
+            self.assertTrue(occupant.route, "given no way out of the wing")
+
+    async def test_they_keep_their_place_on_the_route_tick_after_tick(self):
+        # The bug was not the first plan but the second: a route that crosses
+        # danger was thrown away and rebuilt from the start on every tick, so
+        # everyone restarted their walk four times a second and never arrived.
+        occupant = self.people[0]
+        danger = {key("CORRIDOR")}
+        await self.evacuation.plan([occupant], self.world, danger, self.exits)
+        self.evacuation.advance([occupant], 1.0)  # they reach the first waypoint
+        remaining = len(occupant.route)
+        for _ in range(5):
+            await self.evacuation.plan([occupant], self.world, danger, self.exits)
+        self.assertEqual(len(occupant.route), remaining, "their progress was reset")
+
+    async def test_they_do_get_out(self):
+        occupant = self.people[0]
+        danger = {key("CORRIDOR")}
+        for _ in range(40):
+            await self.evacuation.plan([occupant], self.world, danger, self.exits)
+            self.evacuation.advance([occupant], 1.0)
+        self.assertTrue(occupant.safe)
+        self.assertEqual(occupant.status, "safe")

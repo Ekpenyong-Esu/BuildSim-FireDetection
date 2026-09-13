@@ -54,6 +54,7 @@ class FusionRule:
     name = "fusion-rule"
 
     def __init__(self, weights: dict[str, float] | None = None) -> None:
+        """Use the tuned weights unless the caller supplies their own."""
         # How much each piece of evidence counts. `bias` is negative: the room is
         # assumed to be fine until the evidence outweighs it.
         self.weights = weights or {

@@ -39,6 +39,9 @@ def reset(engine: EngineState) -> None:
         device.reading = None
         device.drift = 0.0
         device.history.clear()
+        # Keeping the sensors you installed is deliberate; keeping them broken
+        # is not. A preset that injected a fault must not outlive the run.
+        device.fault = "none"
     for room_agent in engine.agents.values():
         room_agent.state = "NORMAL"
         room_agent.probability = 0.0

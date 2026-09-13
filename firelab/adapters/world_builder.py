@@ -2,15 +2,48 @@
 
 Spaces come from the room list; couplings come from the walkable graph, where
 an edge between two nodes carrying different names is a physical opening
-between those two spaces.
+between those two spaces. Stairwells join the storeys and are added separately,
+because they do not appear in any one floor's graph.
 """
 
 from ..domain.world import UNITS_TO_METRES, Coupling, Space, World
+
+# How wide a stairwell is as an opening, compared with a doorway. A stair is a
+# tall shaft, so it carries smoke upward readily — this is the single biggest
+# path smoke takes through a real building, and without it a fire on the ground
+# floor can never be smelled upstairs.
+STAIR_CONDUCTANCE = 0.6
 
 
 def key_of(level: str, name: str) -> str:
     """The one identifier used for a room everywhere, e.g. "level1/2541"."""
     return f"{level}/{name}"
+
+
+def level_of(qualified: str) -> str:
+    """"abuilding/level0" -> "level0". BuildSim qualifies these, our keys do not."""
+    return qualified.rsplit("/", 1)[-1]
+
+
+def stair_couplings(edges: list[dict], spaces: dict[str, Space]) -> list[Coupling]:
+    """Turn BuildSim's cross-floor edges into couplings the physics can use.
+
+    These are the same edges BuildSim merges its multi-floor walkable graph
+    with, so the way smoke travels and the way people walk agree with each other.
+    """
+    couplings = []
+    seen: set[tuple[str, str]] = set()
+    for edge in edges:
+        a = key_of(level_of(str(edge.get("from_level", ""))), str(edge.get("from_name", "")))
+        b = key_of(level_of(str(edge.get("to_level", ""))), str(edge.get("to_name", "")))
+        if a not in spaces or b not in spaces or a == b:
+            continue
+        pair = (a, b) if a < b else (b, a)
+        if pair in seen:
+            continue  # the same stairwell listed from both ends
+        seen.add(pair)
+        couplings.append(Coupling(a=pair[0], b=pair[1], conductance=STAIR_CONDUCTANCE))
+    return couplings
 
 
 def page_bounds(floors: dict[str, dict]) -> dict[str, tuple[float, float]]:

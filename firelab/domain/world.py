@@ -59,6 +59,10 @@ class World:
             space.smoke = 0.0
             space.co = 0.0
             space.sprinkler = False
+        for coupling in self.couplings:
+            # A door shut by the last run would otherwise still be throttling
+            # smoke to 15% in the next one, with nothing in the UI to show it.
+            coupling.openness = 1.0
 
     def adjacency(self) -> dict[str, set[str]]:
         """Which spaces share a doorway with which. Smoke travels along these."""

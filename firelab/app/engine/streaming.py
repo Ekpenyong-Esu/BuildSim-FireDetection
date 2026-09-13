@@ -14,6 +14,7 @@ class Broadcaster:
     """
 
     def __init__(self, depth: int = 4) -> None:
+        """How many snapshots a slow browser may fall behind before we drop."""
         self._depth = depth
         self._subscribers: set[asyncio.Queue] = set()
 

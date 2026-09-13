@@ -20,6 +20,11 @@ DIFFUSION_SMOKE = 0.35
 DIFFUSION_CO = 0.30
 DIFFUSION_TEMP = 0.12
 
+# The most of the gap to its neighbours a room may close in one step, counting
+# all its doorways together. Below 1.0 nothing can overshoot past equal, and no
+# room can give away more than it holds however many doorways it has.
+MAX_SHARE = 0.5
+
 SPRINKLER_HRR_FACTOR = 0.25  # heat release surviving an active sprinkler
 SPRINKLER_SMOKE_WASHOUT = 0.4
 TEMP_GAIN = 140.0  # degrees C at 1 kW per cubic metre
@@ -60,22 +65,44 @@ def step(world: World, emissions: dict[str, tuple[float, float, float]], dt: flo
 
 
 def _diffuse(world: World, dt: float) -> None:
-    """Let neighbouring rooms even out, which is how smoke leaves the fire room."""
+    """Let neighbouring rooms even out, which is how smoke leaves the fire room.
+
+    The share of the gap a doorway closes in one step is capped, and then capped
+    again across all of a room's doorways together. The second cap is the one
+    that matters: a corridor has twenty doorways, and letting each move its own
+    share of the gap independently means the corridor hands out several times
+    what it holds. The shortfall used to vanish into the `max(0.0, ...)` below
+    while every neighbour kept what it was given, so the building filled with
+    smoke nobody produced — worse the faster the clock ran, because a longer
+    step moves a larger share per doorway.
+    """
+    quantities = (("temperature", DIFFUSION_TEMP), ("smoke", DIFFUSION_SMOKE), ("co", DIFFUSION_CO))
     # Work out every exchange first, apply them after, so the order of the
     # couplings cannot change the answer.
     deltas: dict[str, list[float]] = {key: [0.0, 0.0, 0.0] for key in world.spaces}
+    exchanges = []
+    demand: dict[str, list[float]] = {key: [0.0, 0.0, 0.0] for key in world.spaces}
     for link in world.couplings:
         a = world.spaces.get(link.a)
         b = world.spaces.get(link.b)
         if a is None or b is None or link.openness <= 0.0:
             continue  # a shut door blocks the exchange entirely
         g = link.conductance * link.openness * dt
-        for index, (attr, rate) in enumerate(
-            (("temperature", DIFFUSION_TEMP), ("smoke", DIFFUSION_SMOKE), ("co", DIFFUSION_CO))
-        ):
-            # Flow always runs from the fuller room to the emptier one. The cap
-            # stops a long time step from over-shooting past equal.
-            flow = min(g * rate, 0.5) * (getattr(a, attr) - getattr(b, attr))
+        # The share this one doorway would move, before its room's total is known.
+        shares = [min(g * rate, MAX_SHARE) for _, rate in quantities]
+        exchanges.append((a, b, shares))
+        for index, share in enumerate(shares):
+            demand[a.key][index] += share
+            demand[b.key][index] += share
+
+    for a, b, shares in exchanges:
+        for index, (attr, _) in enumerate(quantities):
+            # Scale the doorway back so neither room gives away more than
+            # MAX_SHARE of what it holds across all its doorways together.
+            busiest = max(demand[a.key][index], demand[b.key][index], MAX_SHARE)
+            share = shares[index] * MAX_SHARE / busiest
+            # Flow always runs from the fuller room to the emptier one.
+            flow = share * (getattr(a, attr) - getattr(b, attr))
             deltas[a.key][index] -= flow
             deltas[b.key][index] += flow
 

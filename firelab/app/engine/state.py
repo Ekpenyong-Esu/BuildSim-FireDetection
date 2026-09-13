@@ -31,6 +31,7 @@ class EngineState:
     """
 
     def __init__(self, config: Config | None = None) -> None:
+        """Build a fresh, empty run ready to be loaded and started."""
         self.config = config or Config()
         self.client = BuildSim(self.config.buildsim_url)
         self.detector = FusionRule()  # swap this line to try a trained model

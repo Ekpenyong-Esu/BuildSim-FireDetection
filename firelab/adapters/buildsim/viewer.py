@@ -12,6 +12,7 @@ class ViewerSessions:
     """Tracks the active viewer tab and draws into it."""
 
     def __init__(self, transport: Transport) -> None:
+        """Borrow the shared transport; the viewer has no connection of its own."""
         self._transport = transport
         self._session_id: str | None = None
         self._checked = -1e9  # long ago, so the first lookup always runs

@@ -41,8 +41,10 @@ class Config:
     walking_speed: float = 1.3  # m/s, before each role's own factor
     sensors: SensorConfig = field(default_factory=SensorConfig)
     response: ResponseConfig = field(default_factory=ResponseConfig)
-    # Real doors to the outside on the ground floor. Upper levels are worked out
-    # from these; see `derive_exits`.
+    # Real doors to the outside. Only the ground floor has any, and only these
+    # count as being out of the building: upper storeys are routed down the
+    # stairs to one of them rather than to a landing that merely looks like an
+    # exit.
     exits: dict[str, list[str]] = field(
         default_factory=lambda: {
             "level0": ["A1016", "A1123", "A105", "A10", "A1000A", "A1000E", "A170"]

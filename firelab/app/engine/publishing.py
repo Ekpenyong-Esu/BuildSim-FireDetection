@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from ...adapters import publisher
 from ...adapters.buildsim import BuildSimError
+from . import actuation
 from .constants import MAX_SENSOR_WRITES, PUBLISH_EVERY
 
 if TYPE_CHECKING:
@@ -40,7 +41,11 @@ async def publish(engine: EngineState) -> None:
             )
         ),
         engine.client.put_occupancy(publisher.occupancy(engine.world, engine.occupants)),
-        engine.client.put_doors(publisher.doors(engine.world, engine.doors)),
+        # Publishing danger here is what lets BuildSim route people around the
+        # fire rather than merely refusing the path it would otherwise return.
+        engine.client.put_doors(
+            publisher.doors(engine.world, engine.doors, actuation.danger(engine))
+        ),
     ]
     tasks.extend(await session_writes(engine, states))
     tasks.extend(sensor_writes(engine))
