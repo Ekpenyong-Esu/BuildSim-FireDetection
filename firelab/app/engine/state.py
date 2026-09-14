@@ -63,7 +63,7 @@ class EngineState:
 
         # Bookkeeping for the loop and for talking to BuildSim.
         self.pending_writes: dict[str, float] = {}  # sensor values still to send
-        self.last_route: tuple[list[dict], str] | None = None  # route and its storey
+        self.last_route: tuple[str, list[dict], str] | None = None  # tab, route, storey
         self.last_highlights: list[dict] | None = None
         self.task: asyncio.Task | None = None
         self.lock = asyncio.Lock()  # a tick and an API call must not interleave

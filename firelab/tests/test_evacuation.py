@@ -294,6 +294,18 @@ class TestTheRouteTheViewerDraws(unittest.IsolatedAsyncioTestCase):
         # And it is the escape from next door to the fire, not the far one.
         self.assertEqual(evacuation.display_route[0]["name"], "NEXTDOOR")
 
+    async def test_the_line_starts_at_the_fire_not_at_the_first_name(self):
+        # Nobody is in FIRE, and the only evacuee's room sorts first. That used
+        # to be enough to draw the line at the far end of the wing.
+        world = make_world("AAA_FAR", "FIRE", "EXIT")
+        evacuation = Evacuation(FakeBuildSim({
+            ("FIRE", "EXIT"): [("FIRE", 5.0), ("EXIT", 6.0)],
+            ("AAA_FAR", "EXIT"): [("AAA_FAR", 0.0), ("EXIT", 6.0)],
+        }))
+        people = [person("AAA_FAR", status="evacuating")]
+        await evacuation.plan(people, world, {key("FIRE")}, {LEVEL: ["EXIT"]})
+        self.assertEqual(evacuation.display_route[0]["name"], "FIRE")
+
     async def test_the_drawn_route_is_the_one_out_of_the_fire(self):
         await self.evacuation.plan(self.people, self.world, {"level0/ROOM"}, self.exits)
         self.assertEqual(self.evacuation.display_level, "level0")
@@ -329,6 +341,49 @@ class TestTheRouteTheViewerDraws(unittest.IsolatedAsyncioTestCase):
     async def test_a_route_with_no_known_storey_is_left_alone(self):
         payload = publisher_route([{"name": "ROOM", "x": 0.0, "y": 0.0}])
         self.assertNotIn("level", payload["path"][0])
+
+    async def test_a_route_down_the_stairs_keeps_each_node_s_storey(self):
+        # Stamping the starting storey over every node drew an escape from
+        # level2 entirely on level2, out of sight of the ground floor it ends on.
+        path = [{"name": "ROOM", "level": "level2", "x": 0.0, "y": 0.0},
+                {"name": "STAIR", "level": "level1", "x": 1.0, "y": 0.0},
+                {"name": "EXIT", "level": "level0", "x": 2.0, "y": 0.0}]
+        payload = publisher_route(path, "level2")
+        self.assertEqual([n["level"] for n in payload["path"]], ["level2", "level1", "level0"])
+
+    async def test_the_line_stays_up_while_the_alarm_lasts(self):
+        # At speed the building empties in seconds. Taking the line down when
+        # the last person got out meant it was never seen at all.
+        await self.evacuation.plan(self.people, self.world, {"level0/ROOM"}, self.exits)
+        drawn = list(self.evacuation.display_route)
+        for occupant in self.people:
+            occupant.safe, occupant.status = True, "safe"
+        for _ in range(3):
+            await self.evacuation.plan(self.people, self.world, {"level0/ROOM"}, self.exits)
+        self.assertEqual(self.evacuation.display_route, drawn)
+
+    async def test_the_line_is_taken_down_when_the_alarm_clears_and_nobody_walks(self):
+        await self.evacuation.plan(self.people, self.world, {"level0/ROOM"}, self.exits)
+        for occupant in self.people:
+            occupant.safe, occupant.status = True, "safe"
+        await self.evacuation.plan(self.people, self.world, set(), self.exits)
+        self.assertEqual(self.evacuation.display_route, [])
+
+
+class TestTheLineAfterEveryoneIsOut(unittest.IsolatedAsyncioTestCase):
+    async def test_it_follows_the_fire_when_the_fire_spreads(self):
+        # Nobody re-plans once everyone is out, so the drawn line has to be.
+        world = make_world("A1", "HALL", "EXIT", "BACK")
+        evacuation = Evacuation(FakeBuildSim({
+            ("A1", "EXIT"): [("A1", 0.0), ("HALL", 1.0), ("EXIT", 2.0)],
+            ("A1", "BACK"): [("A1", 0.0), ("BACK", 9.0)],
+        }))
+        occupant = person("A1")
+        await evacuation.plan([occupant], world, {key("A1")}, EXITS)
+        self.assertIn("HALL", [n["name"] for n in evacuation.display_route])
+        occupant.safe, occupant.status = True, "safe"
+        await evacuation.plan([occupant], world, {key("A1"), key("HALL")}, EXITS)
+        self.assertNotIn("HALL", [n["name"] for n in evacuation.display_route])
 
 
 class TestTheWalledInWing(unittest.IsolatedAsyncioTestCase):

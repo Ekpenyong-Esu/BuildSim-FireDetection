@@ -72,10 +72,20 @@ async def session_writes(engine: EngineState, states: dict[str, str]) -> list:
         writes.append(viewer.put_highlights(session_id, highlights))
     route = engine.evacuation.display_route
     level = engine.evacuation.display_level
-    if route and (route, level) != engine.last_route:
-        engine.last_route = (route, level)
-        writes.append(viewer.put_route(session_id, publisher.route(route, level)))
+    # Keyed by tab as well: a reloaded or newly opened viewer has never been
+    # sent the route, however unchanged it is. An empty route is sent too,
+    # once, because that is how the viewer is told to erase the old line.
+    drawn = (session_id, route, level)
+    if drawn != engine.last_route and (route or engine.last_route is not None):
+        writes.append(_put_route(engine, drawn))
     return writes
+
+
+async def _put_route(engine: EngineState, drawn: tuple[str, list[dict], str]) -> None:
+    """Draw a route, and only then remember it as drawn, so a failure is retried."""
+    session_id, route, level = drawn
+    await engine.client.viewer.put_route(session_id, publisher.route(route, level))
+    engine.last_route = drawn
 
 
 def sensor_writes(engine: EngineState) -> list:

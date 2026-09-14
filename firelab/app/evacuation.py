@@ -1,4 +1,4 @@
-"""Evacuation: ask BuildSim for escape routes and walk people along them.
+"""Evacuation: find escape routes and walk people along them.
 
 The only reason this is not in `domain/` is the route lookup, which is a
 network call. Everything else here delegates to `domain.occupants`.
@@ -6,13 +6,10 @@ network call. Everything else here delegates to `domain.occupants`.
 
 from ..adapters.buildsim import BuildSim, BuildSimError
 from ..adapters.publisher import path_length
+from ..adapters.walkways import STAIR_COST, Walkways
 from ..adapters.world_builder import key_of
 from ..domain import occupants as occupants_mod
 from ..domain.world import World
-
-# What one change of storey costs, in floor-plan units. The same figure BuildSim
-# gives a stair edge in its own graph, so our ranking agrees with its routing.
-STAIR_COST = 20.0
 
 
 class Evacuation:
@@ -21,6 +18,9 @@ class Evacuation:
     def __init__(self, client: BuildSim) -> None:
         """Borrow the BuildSim client that knows how to ask for a route."""
         self.client = client
+        # The walkable graph, once the building is loaded. It is what finds the
+        # way round a burning corridor, which BuildSim's router cannot.
+        self.walkways: Walkways | None = None
         self.display_route: list[dict] = []  # the one route drawn in the viewer
         self.display_level = ""  # which storey that route is on
         # Everyone leaving the same room takes the same way out, so the answer is
@@ -43,6 +43,10 @@ class Evacuation:
     ) -> None:
         """Give every threatened occupant a way out, and keep it up to date."""
         if not danger:
+            # The alarm is over. A line stays up only while somebody is still
+            # walking it; after that it is a leftover.
+            if not self._anyone_walking(people):
+                self._clear_display()
             return
         for occupant in people:
             if occupant.safe:
@@ -81,29 +85,56 @@ class Evacuation:
             occupant.route = [[node["x"], node["y"]] for node in path]
             occupant.route_spaces = [self._space_key(world, level, node) for node in path]
 
-        self._choose_display_route(world, danger)
+        # Drawn for as long as the alarm lasts, not just while people walk. At
+        # speed the whole building is out within seconds, and taking the line
+        # down then meant it flashed up and was gone before anyone saw it.
+        await self._choose_display_route(world, danger, exits)
 
-    def _choose_display_route(self, world: World, danger: set[str]) -> None:
-        """Pick the one route the viewer draws: the escape nearest the fire.
+    @staticmethod
+    def _anyone_walking(people: list[occupants_mod.Occupant]) -> bool:
+        return any(o.status == "evacuating" and not o.safe for o in people)
 
-        Two ways to get this wrong, and this code has been both. Drawing whichever
-        route was worked out last picked whoever happened to be planned last,
-        usually somebody two floors away. Insisting it start *inside* a burning
-        room drew nothing at all: there are forty people in nine hundred rooms, so
-        normally nobody is standing in the one that caught fire, and the line
-        vanished while dozens of people were walking.
+    def _clear_display(self) -> None:
+        self.display_route = []
+        self.display_level = ""
 
-        So take the route that starts as close to the fire as any does — in it,
-        else next door to it, else anywhere — and break ties by name so the line
-        stays put instead of flickering between everyone leaving the same room.
+    async def _choose_display_route(
+        self, world: World, danger: set[str], exits: dict[str, list[str]]
+    ) -> None:
+        """Pick the one route the viewer draws: the way out of the fire.
+
+        Three ways to get this wrong, and this code has been all of them. Drawing
+        whichever route was worked out last picked whoever happened to be planned
+        last, usually somebody two floors away. Drawing only an occupant's route
+        from inside a burning room drew nothing: forty people in nine hundred
+        rooms means nobody is normally standing in it. And drawing the occupant
+        route nearest the fire fell back on alphabetical order whenever nobody
+        started next door, which put the line at the far end of the wing.
+
+        So the route is worked out from the fire itself, whether or not anyone
+        is standing in it: from its centre, the alarming room with the most
+        alarming neighbours, ties broken by name so the line stays put. Only if
+        no burning room has a way out at all is an occupant's route drawn
+        instead, the one starting nearest the fire.
+
+        Routes are asked for again rather than read straight from the cache:
+        once everybody is out nothing else re-plans them, and a line worked out
+        before the fire spread would go on being drawn through the new fire.
         """
         if not self._cache:
-            return
+            return  # nobody was ever sent anywhere, so there is nothing to show
+        links = world.adjacency()
+        centre_first = sorted(danger, key=lambda key: (-len(links.get(key, set()) & danger), key))
+        for origin in centre_first:
+            path = await self._path(origin, world, danger, exits)
+            if path:
+                self.display_route = path
+                self.display_level = origin.split("/")[0]
+                return
+
         adjacent: set[str] = set()
-        if danger:
-            links = world.adjacency()
-            for key in danger:
-                adjacent |= links.get(key, set())
+        for key in danger:
+            adjacent |= links.get(key, set())
 
         def nearness(origin: str) -> tuple[int, str]:
             if origin in danger:
@@ -111,7 +142,7 @@ class Evacuation:
             return (1, origin) if origin in adjacent else (2, origin)
 
         origin = min(self._cache, key=nearness)
-        path = self._cache[origin][0]
+        path = await self._path(origin, world, danger, exits)  # the cache, unless the fire moved
         if path:
             self.display_route = path
             self.display_level = origin.split("/")[0]
@@ -136,6 +167,11 @@ class Evacuation:
 
         So danger ranks a route rather than disqualifying it, and "no route" now
         means what it says: BuildSim could not find a path at all.
+
+        A clear route is searched for first, over our own copy of the walkable
+        graph with the alarming rooms removed. BuildSim only ever offers the
+        shortest way to each exit, and when the fire is in a corridor every one
+        of those can run through it, however clear the long way round is.
         """
         cached = self._cache.get(space_key)
         if cached is not None and cached[1] == danger:
@@ -143,6 +179,17 @@ class Evacuation:
         space = world.spaces.get(space_key)
         if space is None:
             return []
+        if self.walkways is not None:
+            usable = [
+                (level, name)
+                for level, names in exits.items()
+                for name in names
+                if key_of(level, name) not in danger
+            ]
+            clear = self.walkways.route(space.level, space.name, usable, danger - {space_key})
+            if clear:
+                self._cache[space_key] = (clear, frozenset(danger))
+                return list(clear)
         best: tuple[tuple[int, float], list[dict]] | None = None
         # Every real exit in the building is a candidate, not just the ones on
         # this storey. The stairs are part of the walkable graph, so somebody on

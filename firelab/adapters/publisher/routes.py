@@ -22,6 +22,10 @@ def route(path: list[dict], level: str = "") -> dict:
     BuildSim without one, and the viewer then guesses the floor from the first
     room name and falls back to level1 — which drew a ground-floor escape two
     storeys up. We know the level, so we say it.
+
+    Only where it is missing, though. A route down the stairs already names each
+    node's storey, and stamping the starting level over all of them drew the
+    whole escape on the floor it began on, out of sight of the floor it ends on.
     """
-    nodes = [{**node, "level": level} for node in path] if level else path
+    nodes = [{**node, "level": node.get("level") or level} for node in path] if level else path
     return {"path": nodes, "distance": round(path_length(path) * UNITS_TO_METRES, 1)}

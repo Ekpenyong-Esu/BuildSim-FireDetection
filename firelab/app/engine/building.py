@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...adapters.buildsim import BuildSimError
+from ...adapters.walkways import Walkways
 from ...adapters.world_builder import build_world, page_bounds, stair_couplings
 from . import session
 
@@ -32,13 +33,17 @@ async def load(engine: EngineState) -> None:
     # The stairs are not in any one floor's graph, so they are asked for
     # separately. They serve twice over: people walk down them to a real exit,
     # and smoke climbs them. Without this the storeys are sealed from each other.
-    stairs = []
+    stairs, edges = [], []
     try:
-        stairs = stair_couplings(await engine.client.cross_floor_edges(), engine.world.spaces)
+        edges = await engine.client.cross_floor_edges()
+        stairs = stair_couplings(edges, engine.world.spaces)
         engine.world.couplings.extend(stairs)
     except BuildSimError as exc:
         # Not fatal: each floor still works on its own, but nothing joins them.
         engine.log("error", f"no cross-floor edges, storeys will be sealed: {exc}")
+    # The same graph BuildSim routes on, kept here so an escape can be searched
+    # for with the burning rooms taken out of it.
+    engine.evacuation.walkways = Walkways(floors, edges)
     engine.loaded = True
     engine.log(
         "info",
