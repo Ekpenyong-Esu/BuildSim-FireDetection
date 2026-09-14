@@ -40,7 +40,6 @@ class EngineState:
 
         # The building, as loaded from BuildSim.
         self.world = world_mod.World()
-        self.entries: dict[str, dict] = {}
         self.floors: dict[str, dict] = {}
         self.bounds: dict[str, tuple[float, float]] = {}
         self.connected = False

@@ -201,16 +201,6 @@ class Evacuation:
                 crossed.add(key)  # a room is one hazard however many nodes it has
         return len(crossed)
 
-    def _through_fire(
-        self, world: World, level: str, path: list[dict], danger: set[str], origin: str = ""
-    ) -> bool:
-        """Does this route pass through an alarming room at all?
-
-        Used to decide whether somebody already walking should be re-routed, not
-        to decide whether a route is allowed: see `_path`.
-        """
-        return self._hazard(world, level, path, danger, origin) > 0
-
     @staticmethod
     def _space_key(world: World, level: str, node: dict) -> str:
         """A route node names a room only sometimes; "" means "stay put".

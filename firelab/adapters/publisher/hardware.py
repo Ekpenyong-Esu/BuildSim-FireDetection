@@ -24,7 +24,7 @@ def doors(world: World, states: dict[str, str], danger: set[str] | None = None) 
     that have entry nodes, which means rooms. Corridors have none — 41 of the
     305 named spaces on level0 — and an escape route is almost entirely
     corridor, so this does not by itself produce a detour around a burning
-    corridor. `Evacuation._through_fire` is what still catches those.
+    corridor. `Evacuation._hazard` is what still catches those.
 
     Every alarming room gets an entry even if no fire door was ever commanded
     there, because the routing matters whether or not the room has a door.

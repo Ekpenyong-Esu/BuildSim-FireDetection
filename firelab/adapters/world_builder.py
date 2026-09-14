@@ -57,10 +57,9 @@ def page_bounds(floors: dict[str, dict]) -> dict[str, tuple[float, float]]:
     return bounds
 
 
-def build_world(floors: dict[str, dict]) -> tuple[World, dict[str, dict]]:
-    """Return the world plus, per level, the entry-node -> room-name mapping."""
+def build_world(floors: dict[str, dict]) -> World:
+    """Every level's rooms and doorways, joined into one world."""
     world = World()
-    entries: dict[str, dict] = {}
 
     for level, payload in floors.items():
         graph = payload.get("walkable_graph") or {}
@@ -68,14 +67,8 @@ def build_world(floors: dict[str, dict]) -> tuple[World, dict[str, dict]]:
 
         world.spaces.update(_spaces_of(level, payload, nodes))
         world.couplings.extend(_couplings_of(level, graph, nodes, world.spaces))
-        # Doorways to the outside world, used later as evacuation targets.
-        entries[level] = {
-            node_id: node.get("name")
-            for node_id, node in nodes.items()
-            if node.get("type") == "entry"
-        }
 
-    return world, entries
+    return world
 
 
 def _spaces_of(level: str, payload: dict, nodes: dict) -> dict[str, Space]:

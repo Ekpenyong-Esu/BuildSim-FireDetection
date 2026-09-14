@@ -28,7 +28,7 @@ async def load(engine: EngineState) -> None:
         return  # nothing loaded, so keep whatever world we already had
     engine.floors = floors
     engine.bounds = page_bounds(floors)
-    engine.world, engine.entries = build_world(floors)
+    engine.world = build_world(floors)
     # The stairs are not in any one floor's graph, so they are asked for
     # separately. They serve twice over: people walk down them to a real exit,
     # and smoke climbs them. Without this the storeys are sealed from each other.
