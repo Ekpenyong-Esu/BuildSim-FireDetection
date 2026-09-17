@@ -19,7 +19,7 @@ open: firelab on <http://127.0.0.1:8090> to control the simulation, BuildSim on
 
 ```bash
 # terminal 1 — the building
-cd ../buildingsim && make build && ./bin/buildsim start --port 9090
+cd ../buildingsim && make run
 
 # terminal 2 — firelab
 cd firelab && make build && make run
