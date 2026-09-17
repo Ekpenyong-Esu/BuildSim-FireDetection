@@ -1,0 +1,22 @@
+---
+title: buildingsim/pkg/model — Shared Nouns
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    B["building.go<br/>Building · FloorData<br/>Level · Room"]
+    G["graph.go<br/>NavGraph · NavNode · NavEdge<br/>CrossFloorEdge"]
+    P["person.go<br/>Person · Position"]
+    S["session.go<br/>Session · ViewerState"]
+    E["equipment.go<br/>Equipment · Sensor · Actuator"]
+    V["visualization.go<br/>RoomLayer · Effect"]
+
+    B --> G
+    B --> E
+    B --> V
+    G --> P
+    S --> P
+
+    classDef noun fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    class B,G,P,S,E,V noun
+

@@ -1,0 +1,30 @@
+---
+title: firelab/ui/src/lib — Shared Components
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    STORE["store.svelte.js<br/>snapshot store<br/>EventSource"]
+    API["api.js<br/>REST helpers"]
+    SCENARIO["ScenarioPanel.svelte"]
+    SCORE["Scorecard.svelte"]
+    EVAC["EvacuationPanel.svelte"]
+    POP["PopulationPanel.svelte"]
+    SENSOR["SensorPanel.svelte"]
+    ROOMTABLE["RoomTable.svelte"]
+    ROOMDETAIL["RoomDetail.svelte<br/>charts + Why"]
+    RESPONSE["ResponsePanel.svelte"]
+    TENABILITY["TenabilityPanel.svelte"]
+    SETTINGS["SettingsPanel.svelte"]
+    JOURNAL["Journal.svelte"]
+
+    STORE --> SCENARIO & SCORE & EVAC & POP & SENSOR
+    STORE --> ROOMTABLE & ROOMDETAIL
+    STORE --> RESPONSE & TENABILITY & SETTINGS & JOURNAL
+    API --> SCENARIO & POP & SENSOR & RESPONSE & SETTINGS
+
+    classDef comp fill:#1e2e4a,stroke:#5dade2,color:#e0e0e0,stroke-width:1.2px
+    classDef core fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:2px
+    class STORE,API core
+    class SCENARIO,SCORE,EVAC,POP,SENSOR,ROOMTABLE,ROOMDETAIL,RESPONSE,TENABILITY,SETTINGS,JOURNAL comp
+

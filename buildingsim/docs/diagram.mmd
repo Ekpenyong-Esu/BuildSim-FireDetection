@@ -1,0 +1,26 @@
+---
+title: buildingsim/docs — API Documentation
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    README["README.md<br/>overview"]
+    ARCH["architecture.md<br/>system architecture"]
+    LAB["lab-quickstart.md<br/>lab setup"]
+    ICONS["icons.md<br/>icon reference"]
+    API["api/<br/>building · config · doors<br/>equipment · graph · sessions<br/>visualization"]
+    IMG["images/<br/>visual-effects-*.png"]
+
+    README --> API
+    ARCH --> API
+    API --> IMG
+
+    SV["pkg/server<br/>implements these APIs"]
+
+    API -. documents .-> SV
+
+    classDef doc fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.5px
+    classDef asset fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class README,ARCH,LAB,ICONS,API doc
+    class IMG,SV asset
+

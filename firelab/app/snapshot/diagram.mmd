@@ -1,0 +1,43 @@
+---
+title: firelab/app/snapshot — UI Snapshot Builders
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    BU["builder.py<br/>build()<br/>imports population + safety + spaces + status"]
+    SA["safety.py<br/>tenability_report()<br/>imports tenability"]
+    SP["spaces.py<br/>rooms()<br/>imports tenability + World"]
+    PO["population.py<br/>population()<br/>imports roles"]
+    ST["status.py<br/>clock() · counts()<br/>standalone"]
+    EX["explain.py<br/>why()<br/>standalone"]
+    INIT["__init__.py<br/>re-exports build · rooms · why"]
+
+    SA --> BU
+    SP --> BU
+    PO --> BU
+    ST --> BU
+    BU --> INIT
+    EX --> INIT
+    SP --> INIT
+
+    W["domain/world.py<br/>World"]
+    TE["domain/tenability.py"]
+    RO["domain/roles.py"]
+    ES["engine/state.py<br/>EngineState"]
+
+    W --> SP
+    W --> SA
+    TE --> SA
+    TE --> SP
+    RO --> PO
+    ES --> BU
+    ES --> SA
+    ES --> SP
+    ES --> PO
+    ES --> ST
+
+    classDef snap fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class BU,SA,SP,PO,ST,EX,INIT snap
+    class W,TE,RO,ES dep
+

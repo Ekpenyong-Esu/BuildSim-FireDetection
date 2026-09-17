@@ -27,4 +27,4 @@ ROLES = (
 )
 ROLE_BY_KEY = {role.key: role for role in ROLES}
 
-DEFAULT_POPULATION = {"student": 28, "lecturer": 5, "staff": 4, "security": 1, "visitor": 2}
+DEFAULT_POPULATION = {"student": 100, "lecturer": 10, "staff": 5, "security": 5, "visitor": 10}

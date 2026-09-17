@@ -1,0 +1,23 @@
+---
+title: firelab/ui/src — Svelte App Source
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    APP["App.svelte<br/>3-column layout<br/>Scenario · RoomTable · Response"]
+    MAIN["main.js<br/>mount App"]
+    STORE["lib/store.svelte.js<br/>single store<br/>EventSource /api/events"]
+    API["lib/api.js<br/>one function per endpoint"]
+
+    MAIN --> APP
+    APP --> STORE
+    APP --> API
+    STORE --> API
+    STORE -. SSE /api/events .-> BE["app/api/events.py"]
+    API -. REST /api/* .-> BE
+
+    classDef svelte fill:#1e2e4a,stroke:#5dade2,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class APP,MAIN,STORE,API svelte
+    class BE dep
+

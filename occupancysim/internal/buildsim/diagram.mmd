@@ -1,0 +1,20 @@
+---
+title: occupancysim/internal/buildsim — BuildSim Publisher
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CL["client.go<br/>Client<br/>standalone HTTP"]
+    PU["publisher.go<br/>Publisher<br/>imports sim + client"]
+
+    SIM["internal/sim<br/>Person · State"]
+
+    SIM --> PU
+    CL --> PU
+    PU -. HTTP PUT /viewer/* .-> BS["buildingsim<br/>pkg/server"]
+
+    classDef pub fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class CL,PU pub
+    class SIM,BS dep
+

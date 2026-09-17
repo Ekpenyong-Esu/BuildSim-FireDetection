@@ -1,0 +1,21 @@
+---
+title: buildingsim/examples — API Usage Examples
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    API_EX["api/<br/>building · equipment · graph<br/>room-layers · scenario · session<br/>curl / http examples"]
+    GO_EX["go-client/main.go<br/>imports pkg/client"]
+
+    SV["pkg/server<br/>HTTP API"]
+    CL["pkg/client<br/>Client"]
+
+    API_EX -. HTTP .-> SV
+    GO_EX --> CL
+    CL -. HTTP .-> SV
+
+    classDef ex fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class API_EX,GO_EX ex
+    class SV,CL dep
+

@@ -1,0 +1,57 @@
+---
+title: buildingsim/pkg/server/handlers — One File Per Route
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    B["building.go<br/>GET /api/building<br/>GET /api/building/floors/:level"]
+    G["graph.go<br/>GET /api/graph<br/>POST /api/route"]
+    S["sensor.go<br/>PUT /api/sensor"]
+    A["actuator.go<br/>PUT /api/actuator"]
+    O["occupancy.go<br/>GET/PUT /api/occupancy"]
+    SE["session.go<br/>GET/PUT /api/session"]
+    E["equipment.go<br/>GET/PUT /api/equipment"]
+    V["visualization.go<br/>GET /api/visualization"]
+    ED["editor.go<br/>editor routes"]
+    CO["coverage.go<br/>coverage"]
+    NO["notify.go<br/>notifications"]
+    VA["validation.go<br/>validation"]
+
+    SV["server.go<br/>registers all handlers"]
+    ST["pkg/store<br/>MemoryStore"]
+    MO["pkg/model"]
+
+    B --> SV
+    G --> SV
+    S --> SV
+    A --> SV
+    O --> SV
+    SE --> SV
+    E --> SV
+    V --> SV
+    ED --> SV
+    CO --> SV
+    NO --> SV
+    VA --> SV
+    ST --> B
+    ST --> G
+    ST --> S
+    ST --> A
+    ST --> O
+    ST --> SE
+    ST --> E
+    ST --> V
+    MO --> B
+    MO --> G
+    MO --> S
+    MO --> A
+    MO --> O
+    MO --> SE
+    MO --> E
+    MO --> V
+
+    classDef handler fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.2px
+    classDef core fill:#fff,stroke:#a0a0c0,color:#e0e0e0,stroke-width:1.5px
+    class B,G,S,A,O,SE,E,V,ED,CO,NO,VA handler
+    class SV,ST,MO core
+

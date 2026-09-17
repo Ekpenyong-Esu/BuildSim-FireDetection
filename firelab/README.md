@@ -12,6 +12,9 @@ open: firelab on <http://127.0.0.1:8090> to control the simulation, BuildSim on
 > firelab writes `/api/entities` and `/api/occupancy`. Do not run `occupancysim`
 > at the same time — both replace the whole collection on every write.
 
+> New to the code? Follow [READING_ORDER.md](READING_ORDER.md) — every file
+> numbered in the order to read it, folder by folder.
+
 ## Quick start
 
 ```bash

@@ -1,0 +1,30 @@
+---
+title: firelab/app — Wiring & HTTP Surface
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CF["config.py<br/>Config<br/>standalone"]
+    ST["engine/state.py<br/>EngineState<br/>imports domain + adapters"]
+    RT["runtime.py<br/>engine = Engine(Config)<br/>imports config + engine"]
+    MN["main.py<br/>FastAPI + lifespan<br/>imports api + runtime"]
+    EV["evacuation.py<br/>Evacuation<br/>imports adapters + domain"]
+    PR["presets.py<br/>presets<br/>standalone"]
+    SN["snapshot/<br/>builder · safety · spaces<br/>imports domain"]
+    API["api/<br/>ROUTERS[]<br/>imports runtime + engine"]
+
+    CF --> ST
+    ST --> RT
+    RT --> MN
+    MN --> API
+    ST --> EV
+    ST --> SN
+    PR --> ST
+    EV --> ST
+    RT --> API
+
+    classDef wiring fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    classDef engine fill:#1e3a2a,stroke:#2e7d32,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class CF,RT,MN,EV,PR,SN,API wiring
+    class ST engine
+

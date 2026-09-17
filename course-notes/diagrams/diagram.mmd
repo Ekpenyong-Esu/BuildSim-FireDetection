@@ -1,0 +1,26 @@
+---
+title: course-notes/diagrams — Lecture Figures (draw.io)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    F1["course-notes1-fig*.drawio<br/>13 figures<br/>intro + architecture"]
+    F2["course-notes2-fig*.drawio<br/>7 figures<br/>sensing + detection"]
+    F3["course-notes3-fig*.drawio<br/>physics + tenability"]
+    F4["course-notes4-fig*.drawio<br/>actuation + evacuation"]
+
+    N1["course-notes1.md"]
+    N2["course-notes2.md"]
+    N3["course-notes3.md"]
+    N4["course-notes4.md"]
+
+    F1 --> N1
+    F2 --> N2
+    F3 --> N3
+    F4 --> N4
+
+    classDef fig fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.2px
+    classDef doc fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.2px
+    class F1,F2,F3,F4 fig
+    class N1,N2,N3,N4 doc
+

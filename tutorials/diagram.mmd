@@ -1,0 +1,27 @@
+---
+title: tutorials — Hands-On Guides
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    BS["buildsim.md<br/>BuildSim tutorial"]
+    DC["docker-containers.md<br/>Docker tutorial"]
+    DA["diagrams-as-code.md<br/>Mermaid tutorial"]
+    DG["diagrams/<br/>tutorial figures"]
+    FG["figures/<br/>images"]
+
+    BS --> DG
+    BS --> FG
+    DC --> DG
+    DC --> FG
+    DA --> DG
+    DA --> FG
+
+    BS -. uses .-> SV["buildingsim<br/>pkg/server"]
+    DC -. uses .-> SV
+
+    classDef tut fill:#2e2a4a,stroke:#6a1b9a,color:#e0e0e0,stroke-width:1.5px
+    classDef asset fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class BS,DC,DA tut
+    class DG,FG,SV asset
+

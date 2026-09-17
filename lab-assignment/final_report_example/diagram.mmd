@@ -1,0 +1,19 @@
+---
+title: lab-assignment/final_report_example — Example Report
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    TEX["final_report_example.tex<br/>LaTeX source"]
+    PDF["final_report_example.pdf<br/>rendered report"]
+    DG["diagrams/<br/>*.d2<br/>C4 + dynamic views"]
+    FG["figures/<br/>*.png<br/>rendered diagrams"]
+
+    TEX --> PDF
+    DG --> FG --> TEX
+
+    classDef doc fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    classDef asset fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class TEX,PDF doc
+    class DG,FG asset
+

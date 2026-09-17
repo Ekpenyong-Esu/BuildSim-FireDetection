@@ -1,0 +1,22 @@
+---
+title: occupancysim/ui — Svelte Frontend
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    SRC["src/<br/>Svelte components"]
+    LIB["src/lib/<br/>shared lib"]
+    DIST["dist/<br/>built assets"]
+
+    API["internal/api/server.go<br/>serves UI + API"]
+
+    SRC --> LIB
+    LIB --> DIST
+    DIST --> API
+    SRC -. fetch /api/* .-> API
+
+    classDef ui fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class SRC,LIB,DIST ui
+    class API dep
+

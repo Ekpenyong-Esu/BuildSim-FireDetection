@@ -1,0 +1,32 @@
+---
+title: course-notes — Lectures 1-4
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    N1["course-notes1.md<br/>Intro + Architecture"]
+    N2["course-notes2.md<br/>Sensing & Detection"]
+    N3["course-notes3.md<br/>Physics & Tenability"]
+    N4["course-notes4.md<br/>Actuation & Evacuation"]
+    RL["reading-list.md<br/>references"]
+    DG["diagrams/<br/>*.drawio<br/>per-lecture figures"]
+    FG["figures/<br/>images"]
+
+    N1 --> DG
+    N1 --> FG
+    N2 --> DG
+    N2 --> FG
+    N3 --> DG
+    N3 --> FG
+    N4 --> DG
+    N4 --> FG
+    RL -. references .-> N1
+    RL -. references .-> N2
+    RL -. references .-> N3
+    RL -. references .-> N4
+
+    classDef note fill:#2e2a4a,stroke:#6a1b9a,color:#e0e0e0,stroke-width:1.5px
+    classDef asset fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class N1,N2,N3,N4,RL note
+    class DG,FG asset
+

@@ -1,0 +1,17 @@
+---
+title: occupancysim/internal — Core Packages
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    SIM["sim/<br/>sim · plan · graph · rooms · config<br/>standalone"]
+    BS["buildsim/<br/>client · publisher<br/>imports sim"]
+    API["api/<br/>server.go<br/>imports sim + buildsim"]
+
+    SIM --> BS
+    SIM --> API
+    BS --> API
+
+    classDef pkg fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    class SIM,BS,API pkg
+

@@ -1,0 +1,21 @@
+---
+title: buildingsim/data — Building Fixtures
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    AB["abuilding/<br/>level0 · level1 · level2<br/>floor JSON"]
+    EQ["equipment/<br/>icons/<br/>equipment definitions"]
+
+    STORE["pkg/store<br/>MemoryStore<br/>loads on startup"]
+    SV["pkg/server<br/>serves via /api/building"]
+
+    AB --> STORE
+    EQ --> STORE
+    STORE --> SV
+
+    classDef data fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class AB,EQ data
+    class STORE,SV dep
+

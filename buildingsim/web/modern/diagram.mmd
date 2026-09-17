@@ -1,0 +1,38 @@
+---
+title: buildingsim/web/modern — Svelte Frontend Source
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    BOOT["boot.js<br/>entry"]
+    STATE["state.js<br/>global state"]
+    WORLD["world.js<br/>3D world"]
+    VIEWER["viewer.js<br/>3D viewer"]
+    FLOORS["floors.js<br/>floor rendering"]
+    INTERIOR["interior.js<br/>room interiors"]
+    NAV["navigation.js<br/>camera + controls"]
+    HUD["hud.js<br/>overlay"]
+    LIVE["live.js<br/>live updates"]
+    ROUTE["route.js<br/>path display"]
+    VIZ["visualization.js<br/>heatmaps"]
+    EQUIP["equipment.js<br/>equipment layer"]
+    FLIGHT["flight.js<br/>fly-through"]
+    SHELL["shell.js<br/>layout"]
+    UI["ui.js<br/>UI logic"]
+    SESSION["session.js<br/>session handling"]
+    STACK["stack.js<br/>floor stack"]
+    PEEL["peel.js<br/>peel view"]
+    PHOTO["photocam.js<br/>photo mode"]
+    EDITOR["editor.js<br/>floor editor"]
+    INIT["init.js<br/>initialization"]
+
+    BOOT --> INIT --> STATE
+    STATE --> WORLD --> VIEWER
+    WORLD --> FLOORS & INTERIOR
+    VIEWER --> NAV & HUD
+    STATE --> LIVE & ROUTE & VIZ & EQUIP
+    STATE --> SESSION & STACK
+
+    classDef js fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.2px
+    class BOOT,STATE,WORLD,VIEWER,FLOORS,INTERIOR,NAV,HUD,LIVE,ROUTE,VIZ,EQUIP,FLIGHT,SHELL,UI,SESSION,STACK,PEEL,PHOTO,EDITOR,INIT js
+

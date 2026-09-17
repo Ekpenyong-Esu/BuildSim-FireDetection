@@ -1,0 +1,20 @@
+---
+title: buildingsim/cmd/buildweb — Static Asset Builder
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    MAIN["main.go<br/>builds web assets<br/>standalone"]
+
+    WEB["web/<br/>classic + modern"]
+    EMBED["embed.go<br/>go:embed"]
+
+    MAIN --> WEB
+    WEB --> EMBED
+    EMBED --> SV["pkg/server<br/>serves embedded UI"]
+
+    classDef cmd fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class MAIN cmd
+    class WEB,EMBED,SV dep
+

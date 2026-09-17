@@ -1,0 +1,49 @@
+---
+title: firelab/app/engine — Orchestration & Tick Loop
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    ST["state.py<br/>EngineState<br/>imports BuildSim + domain"]
+    CO["core.py<br/>Engine : EngineState<br/>_loop() · _tick()<br/>imports snapshot + truth etc"]
+
+    BD["building.py<br/>load()<br/>imports walkways + world_builder"]
+    TR["truth.py<br/>advance() · sense() · expose()<br/>imports physics + sensing"]
+    IN["intelligence.py<br/>think()<br/>imports agent + features"]
+    AC["actuation.py<br/>apply()<br/>imports agent + interlocks"]
+    DE["devices.py<br/>install / fault<br/>imports publisher + sensing"]
+    PU["publishing.py<br/>publish()<br/>imports publisher + actuation"]
+    RC["recording.py<br/>record()<br/>standalone"]
+    SC["scenario.py<br/>ignite()<br/>imports sources + presets"]
+    SE["session.py<br/>reseed / scatter<br/>imports occupants"]
+    SR["streaming.py<br/>Broadcaster<br/>standalone"]
+    CT["constants.py<br/>REAL_TICK · PUBLISH_EVERY"]
+
+    ST --> CO
+    CO --> BD
+    CO --> TR
+    CO --> IN
+    CO --> AC
+    CO --> PU
+    CO --> RC
+    CO --> SR
+    BD --> SE
+    TR --> DE
+    IN --> AC
+    SC --> DE
+    SE --> ST
+    DE --> ST
+    PU --> SR
+    CT --> CO
+    CT --> PU
+
+    CO -. _tick order .-> TR
+    TR -. then .-> IN
+    IN -. then .-> AC
+    AC -. then .-> PU
+
+    classDef hub fill:#1e3a2a,stroke:#2e7d32,color:#e0e0e0,stroke-width:2px
+    classDef phase fill:#fff,stroke:#2e7d32,color:#e0e0e0,stroke-width:1.2px
+    class ST,CO hub
+    class BD,TR,IN,AC,DE,PU,RC,SC,SE,SR,CT phase
+

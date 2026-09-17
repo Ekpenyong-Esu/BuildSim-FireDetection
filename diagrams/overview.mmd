@@ -1,0 +1,40 @@
+---
+title: D7065E — Root Overview — How Every Top-Level Folder Connects
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    ROOT["D7065E<br/>LTU Embedded Intelligence Lab"]
+
+    BS["buildingsim/<br/>Go — Building & Physics Server<br/>pkg/model · pkg/graph · pkg/store<br/>pkg/server · pkg/client · cmd/"]
+    FL["firelab/<br/>Python — Fire Simulation & Intelligence<br/>domain · adapters · app/engine<br/>app/api · app/snapshot · ui/"]
+    OC["occupancysim/<br/>Go — Occupant Movement<br/>internal/sim · internal/buildsim<br/>internal/api · ui/"]
+    CN["course-notes/<br/>Lectures 1-4 + Figures"]
+    TU["tutorials/<br/>buildsim · docker · diagrams-as-code"]
+    LA["lab-assignment/<br/>Proposal + Final Report Templates"]
+
+    ROOT --> BS
+    ROOT --> FL
+    ROOT --> OC
+    ROOT --> CN
+    ROOT --> TU
+    ROOT --> LA
+
+    FL -- "HTTP GET /api/building<br/>/healthz /route<br/>PUT /viewer/*" --> BS
+    OC -- "HTTP GET /api/building<br/>PUT /viewer/*" --> BS
+    FL -. "occupants.py<br/>reads roles" .-> OC
+    CN -. "theory" .-> FL
+    CN -. "theory" .-> BS
+    TU -. "guides" .-> BS
+    TU -. "guides" .-> FL
+
+    classDef rootFill fill:#fff,stroke:#a0a0c0,color:#e0e0e0,stroke-width:2px
+    classDef goFill fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef pyFill fill:#1e2e4a,stroke:#1565c0,color:#e0e0e0,stroke-width:1.5px
+    classDef docFill fill:#2e2a4a,stroke:#6a1b9a,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+
+    class ROOT rootFill
+    class BS,OC goFill
+    class FL pyFill
+    class CN,TU,LA docFill
+

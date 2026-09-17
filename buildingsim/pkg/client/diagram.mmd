@@ -1,0 +1,21 @@
+---
+title: buildingsim/pkg/client — Typed HTTP Client (Go)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CL["client.go<br/>Client<br/>one method per URL<br/>standalone"]
+
+    SV["pkg/server<br/>HTTP API<br/>/api/building · /api/route · ..."]
+
+    CL -. HTTP GET/PUT .-> SV
+
+    EX["examples/go-client/main.go<br/>example usage"]
+
+    CL --> EX
+
+    classDef client fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef ext fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class CL client
+    class SV,EX ext
+

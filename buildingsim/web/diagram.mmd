@@ -1,0 +1,20 @@
+---
+title: buildingsim/web — Built-in UIs
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CLASSIC["vendor/<br/>classic UI<br/>static assets"]
+    MODERN["modern/<br/>Svelte UI<br/>src/ → dist/"]
+
+    SV["pkg/server/server.go<br/>serves at /"]
+
+    CLASSIC --> SV
+    MODERN --> SV
+    SV --> BROWSER["Browser"]
+
+    classDef web fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class CLASSIC,MODERN web
+    class SV,BROWSER dep
+

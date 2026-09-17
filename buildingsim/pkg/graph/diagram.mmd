@@ -1,0 +1,20 @@
+---
+title: buildingsim/pkg/graph — Routing
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    D["dijkstra.go<br/>Dijkstra()<br/>imports model"]
+    M["multifloor.go<br/>BuildMultiFloorGraph()<br/>imports model"]
+
+    MO["pkg/model<br/>NavGraph · FloorData<br/>CrossFloorEdge"]
+
+    MO --> M
+    MO --> D
+    M --> D
+
+    classDef algo fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class D,M algo
+    class MO dep
+

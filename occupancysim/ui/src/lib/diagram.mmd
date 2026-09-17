@@ -1,0 +1,18 @@
+---
+title: occupancysim/ui/src/lib — Components
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    STORE["store.js<br/>occupancy store"]
+    API["api.js<br/>REST helpers"]
+    PANEL["OccupancyPanel.svelte<br/>room occupancy"]
+
+    STORE --> PANEL
+    API --> PANEL
+    STORE -. SSE .-> BE["internal/api/server.go"]
+
+    classDef comp fill:#3d2a3a,stroke:#c0392b,color:#e0e0e0,stroke-width:1.2px
+    class STORE,API,PANEL comp
+    class BE dep
+

@@ -1,0 +1,17 @@
+---
+title: lab-assignment/final_report_guide — Report Guide
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    GUIDE["README.md<br/>report instructions"]
+    DG["diagrams/<br/>*.d2 templates"]
+    FG["figures/<br/>*.png examples"]
+
+    DG --> FG
+    GUIDE --> DG
+
+    classDef doc fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    class GUIDE doc
+    class DG,FG asset
+

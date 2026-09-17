@@ -1,0 +1,27 @@
+---
+title: firelab — Fire Simulation & Intelligence (Python)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    DOMAIN["domain/<br/>pure logic · no I/O<br/>world · physics · sensing · detector"]
+    ADAPTERS["adapters/<br/>I/O bridges<br/>buildsim · world_builder · publisher"]
+    APP["app/<br/>engine · api · snapshot<br/>evacuation · config"]
+    TESTS["tests/<br/>15 test files<br/>helpers + layering"]
+    UI["ui/<br/>Svelte 5 + Vite<br/>src/lib → dist/"]
+
+    DOMAIN --> ADAPTERS
+    DOMAIN --> APP
+    ADAPTERS --> APP
+    APP --> UI
+    TESTS -. imports .-> DOMAIN
+    TESTS -. imports .-> ADAPTERS
+    TESTS -. imports .-> APP
+
+    APP -. HTTP GET /api/building<br/>PUT /viewer/* .-> BS["buildingsim<br/>Go server :9090"]
+
+    classDef py fill:#1e2e4a,stroke:#1565c0,color:#e0e0e0,stroke-width:1.5px
+    classDef ext fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class DOMAIN,ADAPTERS,APP,TESTS py
+    class UI,BS ext
+

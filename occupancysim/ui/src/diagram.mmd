@@ -1,0 +1,18 @@
+---
+title: occupancysim/ui/src — Svelte Source
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    APP["App.svelte<br/>occupancy view"]
+    MAIN["main.js<br/>mount App"]
+    LIB["lib/<br/>shared components"]
+
+    MAIN --> APP --> LIB
+    LIB -. fetch /api/* .-> API["internal/api/server.go"]
+
+    classDef svelte fill:#3d2a3a,stroke:#c0392b,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class APP,MAIN,LIB svelte
+    class API dep
+

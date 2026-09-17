@@ -1,0 +1,32 @@
+---
+title: occupancysim — Occupant Movement Simulator (Go)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    MAIN["main.go<br/>entry point<br/>imports sim + buildsim + api"]
+    SIM["internal/sim/<br/>sim · plan · graph · rooms · config<br/>standalone"]
+    BS["internal/buildsim/<br/>client · publisher<br/>imports sim"]
+    API["internal/api/<br/>server.go<br/>imports sim + buildsim"]
+    UI["ui/<br/>Svelte UI<br/>src/lib → dist/"]
+    DATA["testdata/<br/>fixtures"]
+
+    SIM --> BS
+    SIM --> API
+    BS --> API
+    MAIN --> SIM
+    MAIN --> BS
+    MAIN --> API
+    API --> UI
+    DATA -. fixtures .-> SIM
+
+    BS -. HTTP PUT /viewer/* .-> EXT["buildingsim<br/>pkg/server :9090"]
+
+    classDef entry fill:#fff,stroke:#a0a0c0,color:#e0e0e0,stroke-width:1.5px
+    classDef core fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef ext fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class MAIN entry
+    class SIM,BS,API core
+    class UI,DATA ext
+    class EXT ext
+

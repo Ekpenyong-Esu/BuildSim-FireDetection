@@ -1,0 +1,23 @@
+---
+title: tutorials/diagrams — D2 Sources
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CONTEXT["context.d2<br/>system context"]
+    CONTAINER["container.d2<br/>container view"]
+
+    TUT["diagrams-as-code.md<br/>tutorial"]
+
+    CONTEXT --> TUT
+    CONTAINER --> TUT
+
+    FIG["figures/<br/>*.svg<br/>rendered output"]
+
+    TUT --> FIG
+
+    classDef d2 fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    classDef out fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class CONTEXT,CONTAINER d2
+    class TUT,FIG out
+

@@ -1,0 +1,20 @@
+---
+title: lab-assignment — Lab Templates & Examples
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    PE["proposal_example/<br/>example proposal"]
+    PG["proposal_guide/<br/>proposal instructions"]
+    FE["final_report_example/<br/>example report + diagrams"]
+    FG["final_report_guide/<br/>report guide + diagrams"]
+    FT["final_report_template/<br/>blank template"]
+
+    PE --> PG
+    FE --> FG
+    FT -. based on .-> FG
+    FT -. based on .-> PG
+
+    classDef lab fill:#2e2a4a,stroke:#6a1b9a,color:#e0e0e0,stroke-width:1.5px
+    class PE,PG,FE,FG,FT lab
+

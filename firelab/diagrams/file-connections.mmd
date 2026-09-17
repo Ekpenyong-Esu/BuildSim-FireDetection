@@ -1,0 +1,143 @@
+---
+title: D7065E — How Every File Connects (firelab)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    subgraph ext["External Go Services"]
+        BS["buildingsim<br/>pkg/server/server.go"]
+        OC["occupancysim<br/>internal/buildsim/client.go"]
+    end
+
+    subgraph domain["firelab/domain — Pure Logic"]
+        W["world.py<br/>World / Space / Coupling"]
+        PH["physics.py"]
+        SE["sensing.py"]
+        DE["detector.py"]
+        AG["agent.py"]
+        OC2["occupants.py"]
+        SO["sources.py"]
+        FE["features.py"]
+        HI["history.py"]
+        SC["scoring.py"]
+        IL["interlocks.py"]
+        TE["tenability.py"]
+        TI["timeline.py"]
+        RO["roles.py"]
+    end
+
+    subgraph adapters["firelab/adapters — I/O Bridges"]
+        TR["buildsim/transport.py"]
+        CL["buildsim/client.py"]
+        VW["buildsim/viewer.py"]
+        WB["world_builder.py"]
+        WK["walkways.py"]
+        PB["publisher/<br/>beliefs · effects · hardware<br/>layers · people · routes"]
+        TR --> CL --> VW
+        CL --> WB
+        CL --> WK
+    end
+
+    subgraph engine["firelab/app/engine — Orchestration"]
+        ST["state.py<br/>EngineState"]
+        CO["core.py<br/>Engine : EngineState"]
+        BD["building.py"]
+        TRU["truth.py"]
+        INT["intelligence.py"]
+        ACT["actuation.py"]
+        DEV["devices.py"]
+        PUB["publishing.py"]
+        REC["recording.py"]
+        SCE["scenario.py"]
+        SES["session.py"]
+        STR["streaming.py"]
+    end
+
+    subgraph app["firelab/app — Wiring & HTTP"]
+        CF["config.py"]
+        RT["runtime.py"]
+        MN["main.py<br/>FastAPI"]
+        EV["evacuation.py"]
+        PR["presets.py"]
+        SN["snapshot/<br/>builder · safety · spaces"]
+        API["api/<br/>clock · scenario · population<br/>sensors · response · data · events"]
+    end
+
+    W --> PH
+    W --> SE
+    W --> AG
+    W --> OC2
+    W --> SO
+    W --> FE
+    W --> HI
+    W --> SC
+    W --> IL
+    W --> TE
+    W --> TI
+    SE --> DE
+    FE --> DE
+    DE --> AG
+    SO --> PH
+    W --> WB
+    W --> WK
+    W --> PB
+    OC2 --> PB
+    CL --> PB
+    CF --> ST
+    W --> ST
+    SE --> ST
+    FE --> ST
+    HI --> ST
+    SC --> ST
+    CL --> ST
+    AG --> ST
+    OC2 --> ST
+    SO --> ST
+    DE --> ST
+    EV --> ST
+    STR --> ST
+    ST --> CO
+    CO --> BD
+    CO --> TRU
+    CO --> INT
+    CO --> ACT
+    CO --> PUB
+    CO --> REC
+    CO --> STR
+    CO --> SN
+    BD --> WB
+    BD --> WK
+    BD --> CL
+    TRU --> PH
+    TRU --> SE
+    TRU --> DEV
+    INT --> FE
+    INT --> DE
+    INT --> AG
+    ACT --> IL
+    ACT --> DEV
+    PUB --> PB
+    PUB --> CL
+    PUB --> VW
+    WK --> EV
+    CL --> EV
+    PB --> EV
+    W --> EV
+    ST --> RT --> MN
+    CO --> RT
+    RT --> API
+    MN --> API
+    SN --> ST
+    CL -. HTTP .-> BS
+    VW -. HTTP .-> BS
+
+    classDef domainFill fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:1.5px
+    classDef adapterFill fill:#3d3520,stroke:#e67e22,color:#e0e0e0,stroke-width:1.5px
+    classDef engineFill fill:#1e3a2a,stroke:#2e7d32,color:#e0e0e0,stroke-width:1.5px
+    classDef appFill fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    classDef extFill fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    class W,PH,SE,DE,AG,OC2,SO,FE,HI,SC,IL,TE,TI,RO domainFill
+    class TR,CL,VW,WB,WK,PB adapterFill
+    class ST,CO,BD,TRU,INT,ACT,DEV,PUB,REC,SCE,SES,STR engineFill
+    class CF,RT,MN,EV,PR,SN,API appFill
+    class BS,OC extFill

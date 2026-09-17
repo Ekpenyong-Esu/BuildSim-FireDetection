@@ -1,0 +1,19 @@
+---
+title: buildingsim/cmd — Entry Points
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    MAIN["main.go<br/>buildsim server<br/>imports server"]
+    BW["buildweb/main.go<br/>buildweb<br/>standalone"]
+
+    SV["pkg/server<br/>Server"]
+
+    MAIN --> SV
+    BW -. builds .-> WEB["web/<br/>classic + modern"]
+
+    classDef entry fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class MAIN,BW entry
+    class SV,WEB dep
+

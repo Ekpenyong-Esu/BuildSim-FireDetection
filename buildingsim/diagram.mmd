@@ -1,0 +1,35 @@
+---
+title: buildingsim — Building & Physics Server (Go)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CMD["cmd/<br/>main.go · buildweb/main.go"]
+    MODEL["pkg/model/<br/>building · graph · person<br/>session · equipment · visualization"]
+    GRAPH["pkg/graph/<br/>dijkstra · multifloor<br/>imports model"]
+    STORE["pkg/store/<br/>memory.go<br/>imports model"]
+    SERVER["pkg/server/<br/>server.go · websocket/hub.go<br/>imports model + graph + store"]
+    HANDLERS["pkg/server/handlers/<br/>building · graph · sensor<br/>actuator · occupancy · session<br/>equipment · visualization · editor"]
+    CLIENT["pkg/client/<br/>client.go<br/>standalone HTTP client"]
+    DATA["data/<br/>abuilding/ · equipment/<br/>floor JSON"]
+    WEB["web/<br/>classic + modern UI"]
+
+    MODEL --> GRAPH
+    MODEL --> STORE
+    MODEL --> SERVER
+    MODEL --> CLIENT
+    GRAPH --> SERVER
+    STORE --> SERVER
+    HANDLERS --> SERVER
+    DATA --> STORE
+    SERVER --> WEB
+    CMD --> SERVER
+    CLIENT -. HTTP .-> SERVER
+
+    classDef entry fill:#fff,stroke:#a0a0c0,color:#e0e0e0,stroke-width:1.5px
+    classDef core fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef data fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.2px
+    class CMD entry
+    class MODEL,GRAPH,STORE,SERVER,HANDLERS,CLIENT core
+    class DATA,WEB data
+

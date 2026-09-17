@@ -1,0 +1,27 @@
+---
+title: buildingsim/pkg/server — HTTP + WebSocket Server
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    SV["server.go<br/>Server<br/>imports model + graph + store<br/>Gin router · Hub · MemoryStore"]
+    HUB["websocket/hub.go<br/>Hub<br/>standalone"]
+    HAND["handlers/<br/>building · graph · sensor<br/>actuator · occupancy · session<br/>equipment · visualization"]
+
+    MODEL["pkg/model"]
+    GRAPH["pkg/graph"]
+    STORE["pkg/store"]
+
+    MODEL --> SV
+    MODEL --> HAND
+    GRAPH --> SV
+    GRAPH --> HAND
+    STORE --> SV
+    HAND --> SV
+    SV --> HUB
+
+    classDef server fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class SV,HUB,HAND server
+    class MODEL,GRAPH,STORE dep
+

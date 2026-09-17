@@ -1,0 +1,21 @@
+---
+title: buildingsim/web/vendor — Third-Party Libraries
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    THREE["three.module.js<br/>Three.js 3D engine"]
+    ORBIT["OrbitControls.js<br/>camera controls"]
+    JSPDF["jspdf.umd.min.js<br/>PDF export"]
+
+    WEB["web/modern/src/<br/>imports these"]
+
+    THREE --> WEB
+    ORBIT --> WEB
+    JSPDF --> WEB
+
+    classDef vendor fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#3a3520,stroke:#f9a825,color:#e0e0e0,stroke-width:1.2px
+    class THREE,ORBIT,JSPDF vendor
+    class WEB dep
+

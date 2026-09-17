@@ -1,0 +1,43 @@
+---
+title: firelab/adapters/publisher — Simulation to BuildSim Writers
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    LA["layers.py<br/>room_layers()<br/>imports domain/world"]
+    EF["effects.py<br/>effects()<br/>imports domain/world"]
+    BE["beliefs.py<br/>highlights() · alerts()<br/>imports domain/world"]
+    HW["hardware.py<br/>doors() · equipment()<br/>imports domain/world + sensing"]
+    PE["people.py<br/>entities() · occupancy()<br/>imports domain/world + occupants"]
+    RO["routes.py<br/>route() · path_length()<br/>imports domain/world"]
+    INIT["__init__.py<br/>re-exports all writers"]
+
+    LA --> INIT
+    EF --> INIT
+    BE --> INIT
+    HW --> INIT
+    PE --> INIT
+    RO --> INIT
+
+    W["domain/world.py<br/>World"]
+    OC["domain/occupants.py<br/>Occupant"]
+    SE["domain/sensing.py<br/>Device"]
+
+    W --> LA
+    W --> EF
+    W --> BE
+    W --> HW
+    W --> PE
+    W --> RO
+    OC --> PE
+    SE --> HW
+
+    PUB["app/engine/publishing.py<br/>publish()<br/>imports publisher"]
+
+    INIT --> PUB
+
+    classDef writer fill:#3d3520,stroke:#e67e22,color:#e0e0e0,stroke-width:1.5px
+    classDef domain fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class LA,EF,BE,HW,PE,RO,INIT writer
+    class W,OC,SE,PUB domain
+

@@ -1,0 +1,31 @@
+---
+title: firelab/adapters — I/O Bridges
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    WB["world_builder.py<br/>build_world() · stair_couplings()<br/>imports domain/world"]
+    WK["walkways.py<br/>Walkways (Dijkstra)<br/>imports world_builder"]
+    TR["buildsim/transport.py<br/>Transport · BuildSimError<br/>httpx"]
+    CL["buildsim/client.py<br/>BuildSim<br/>imports transport + viewer"]
+    VW["buildsim/viewer.py<br/>ViewerSessions<br/>imports transport"]
+    PB["publisher/<br/>beliefs · effects · hardware<br/>layers · people · routes<br/>imports domain/world"]
+
+    W["domain/world.py<br/>World / Space / Coupling"]
+    OC["domain/occupants.py<br/>Occupant"]
+    SE["domain/sensing.py<br/>Device"]
+
+    W --> WB
+    WB --> WK
+    TR --> CL
+    TR --> VW
+    VW --> CL
+    W --> PB
+    OC --> PB
+    SE --> PB
+
+    classDef bridge fill:#3d3520,stroke:#e67e22,color:#e0e0e0,stroke-width:1.5px
+    classDef ext fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class WB,WK,TR,CL,VW,PB bridge
+    class W,OC,SE ext
+

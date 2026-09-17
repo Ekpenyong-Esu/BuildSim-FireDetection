@@ -1,0 +1,23 @@
+---
+title: firelab/ui — Svelte Frontend
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    SRC["src/App.svelte<br/>3-column layout"]
+    LIB["src/lib/<br/>store.svelte.js · api.js<br/>one component per panel"]
+    DIST["dist/<br/>built assets<br/>served by app/main.py at /"]
+
+    SRC --> LIB
+    LIB --> DIST
+    DIST -. served .-> APP["app/main.py<br/>FastAPI StaticFiles"]
+
+    API["app/api/<br/>REST + SSE<br/>/api/state · /api/events"]
+
+    LIB -. fetch /api/*<br/>EventSource .-> API
+
+    classDef ui fill:#1e2e4a,stroke:#1565c0,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class SRC,LIB,DIST ui
+    class APP,API dep
+

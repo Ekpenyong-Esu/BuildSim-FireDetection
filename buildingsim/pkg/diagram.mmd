@@ -1,0 +1,23 @@
+---
+title: buildingsim/pkg — Core Packages
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    MODEL["model/<br/>building · graph · person<br/>session · equipment · visualization<br/>no imports"]
+    GRAPH["graph/<br/>dijkstra · multifloor<br/>imports model"]
+    STORE["store/<br/>memory.go<br/>imports model"]
+    SERVER["server/<br/>server.go + handlers + websocket<br/>imports model + graph + store"]
+    CLIENT["client/<br/>client.go<br/>standalone"]
+
+    MODEL --> GRAPH
+    MODEL --> STORE
+    MODEL --> SERVER
+    GRAPH --> SERVER
+    STORE --> SERVER
+
+    classDef noun fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:2px
+    classDef logic fill:#fff,stroke:#c62828,color:#e0e0e0,stroke-width:1.2px
+    class MODEL noun
+    class GRAPH,STORE,SERVER,CLIENT logic
+

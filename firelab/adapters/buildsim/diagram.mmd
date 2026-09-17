@@ -1,0 +1,28 @@
+---
+title: firelab/adapters/buildsim — Typed HTTP Client
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    TR["transport.py<br/>Transport<br/>httpx AsyncClient"]
+    VW["viewer.py<br/>ViewerSessions<br/>imports transport"]
+    CL["client.py<br/>BuildSim<br/>imports transport + viewer"]
+    INIT["__init__.py<br/>re-exports BuildSim<br/>BuildSimError · ViewerSessions"]
+
+    TR --> VW
+    TR --> CL
+    VW --> CL
+    TR --> INIT
+    VW --> INIT
+    CL --> INIT
+
+    BS["buildingsim<br/>Go pkg/server<br/>HTTP API"]
+
+    CL -. HTTP GET /api/* .-> BS
+    VW -. HTTP PUT /viewer/* .-> BS
+
+    classDef core fill:#3d3520,stroke:#e67e22,color:#e0e0e0,stroke-width:1.5px
+    classDef ext fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class TR,VW,CL,INIT core
+    class BS ext
+

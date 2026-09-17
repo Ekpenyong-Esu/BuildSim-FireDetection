@@ -1,0 +1,71 @@
+---
+title: firelab/tests — Unit Tests
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    H["helpers.py<br/>fixtures · fake BuildSim"]
+
+    AG["test_agent.py<br/>agent state machine"]
+    DE["test_detector.py<br/>FusionRule"]
+    PH["test_physics.py<br/>diffusion + sprinkler"]
+    OC["test_occupants.py<br/>place + advance"]
+    SO["test_sources.py<br/>emission curves"]
+    SE["test_sensing.py<br/>lag + faults"]
+    HI["test_history.py<br/>rolling record"]
+    SC["test_scoring.py<br/>detection + false alarm"]
+    IL["test_interlocks.py<br/>safety vetoes"]
+    LA["test_layering.py<br/>import rules"]
+    EV["test_evacuation.py<br/>routing + hazard"]
+    WA["test_walkways.py<br/>Dijkstra"]
+    PR["test_publishing_route.py<br/>route publishing"]
+    PD["test_publisher_doors.py<br/>blocked doors"]
+    MU["test_multifloor.py<br/>stairs + couplings"]
+    RE["test_reset.py<br/>reset vs reload"]
+    PRE["test_presets.py<br/>6 presets end-to-end"]
+
+    H --> AG
+    H --> DE
+    H --> PH
+    H --> OC
+    H --> SO
+    H --> SE
+    H --> HI
+    H --> SC
+    H --> IL
+    H --> LA
+    H --> EV
+    H --> WA
+    H --> PR
+    H --> PD
+    H --> MU
+    H --> RE
+    H --> PRE
+
+    D["domain/"]
+    A["adapters/"]
+    E["app/engine/"]
+
+    AG --> D
+    DE --> D
+    PH --> D
+    OC --> D
+    SO --> D
+    SE --> D
+    HI --> D
+    SC --> D
+    IL --> D
+    LA --> A
+    EV --> A
+    WA --> A
+    PR --> A
+    PD --> A
+    MU --> A
+    RE --> E
+    PRE --> E
+
+    classDef test fill:#1e2e4a,stroke:#1565c0,color:#e0e0e0,stroke-width:1.2px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class H,AG,DE,PH,OC,SO,SE,HI,SC,IL,LA,EV,WA,PR,PD,MU,RE,PRE test
+    class D,A,E dep
+

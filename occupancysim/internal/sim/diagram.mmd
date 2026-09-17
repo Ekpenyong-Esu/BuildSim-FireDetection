@@ -1,0 +1,21 @@
+---
+title: occupancysim/internal/sim — Movement Simulation
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    CFG["config.go<br/>Config<br/>standalone"]
+    ROOMS["rooms.go<br/>room assignment<br/>standalone"]
+    GRAPH["graph.go<br/>Node · Edge<br/>Dijkstra<br/>standalone"]
+    PLAN["plan.go<br/>Role · daily plan<br/>imports graph"]
+    SIM["sim.go<br/>State · Person<br/>imports config + plan + graph + rooms"]
+
+    CFG --> SIM
+    ROOMS --> SIM
+    GRAPH --> SIM
+    GRAPH --> PLAN
+    PLAN --> SIM
+
+    classDef sim fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    class CFG,ROOMS,GRAPH,PLAN,SIM sim
+

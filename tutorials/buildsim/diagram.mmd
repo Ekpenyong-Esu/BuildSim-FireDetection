@@ -1,0 +1,24 @@
+---
+title: tutorials/buildsim — Go Client Tutorial
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    MAIN["main.go<br/>BuildSim client example"]
+    SETUP["setup.sh<br/>setup script"]
+    GETTEMP["gettemp.sh<br/>temperature example"]
+    GOMOD["go.mod<br/>module definition"]
+
+    MAIN --> GOMOD
+    SETUP --> MAIN
+    GETTEMP --> MAIN
+
+    BS["buildingsim<br/>pkg/server<br/>HTTP API"]
+
+    MAIN -. HTTP .-> BS
+
+    classDef tut fill:#2e2a4a,stroke:#8e24aa,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#2a2a3a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class MAIN,SETUP,GETTEMP,GOMOD tut
+    class BS dep
+

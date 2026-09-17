@@ -1,0 +1,35 @@
+---
+title: firelab/domain — Pure Logic (no I/O)
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    W["world.py<br/>World / Space / Coupling<br/>UNITS_TO_METRES · T_OUT"]
+    PH["physics.py<br/>step() · approach()<br/>imports world"]
+    SE["sensing.py<br/>Device · Window<br/>imports physics"]
+    FE["features.py<br/>Features · extract()<br/>standalone"]
+    DE["detector.py<br/>FusionRule<br/>imports features"]
+    AG["agent.py<br/>RoomAgent · Command<br/>standalone"]
+    OC["occupants.py<br/>Occupant<br/>imports world + roles"]
+    SO["sources.py<br/>Source<br/>standalone"]
+    HI["history.py<br/>History<br/>standalone"]
+    SC["scoring.py<br/>Scoreboard<br/>imports sources + timeline"]
+    IL["interlocks.py<br/>interlock()<br/>imports agent"]
+    TE["tenability.py<br/>tenable()<br/>standalone"]
+    TI["timeline.py<br/>Timeline<br/>standalone"]
+    RO["roles.py<br/>ROLES<br/>standalone"]
+
+    W --> PH
+    W --> OC
+    PH --> SE
+    FE --> DE
+    RO --> OC
+    SO --> SC
+    TI --> SC
+    AG --> IL
+
+    classDef core fill:#2a2a5e,stroke:#4a90e2,color:#e0e0e0,stroke-width:2px
+    classDef leaf fill:#3a3a4a,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px
+    class W core
+    class PH,SE,FE,DE,AG,OC,SO,HI,SC,IL,TE,TI,RO leaf
+

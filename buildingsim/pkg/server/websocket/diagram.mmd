@@ -1,0 +1,20 @@
+---
+title: buildingsim/pkg/server/websocket — Real-Time Broadcast
+---
+%%{init: {'theme':'dark'}}%%
+
+flowchart TD
+    HUB["hub.go<br/>Hub<br/>Register · Unregister · Broadcast<br/>standalone"]
+
+    SV["pkg/server/server.go<br/>creates Hub"]
+    HAND["pkg/server/handlers/notify.go<br/>uses Hub"]
+
+    SV --> HUB
+    HAND --> HUB
+    HUB -. WebSocket /ws .-> BROWSER["Browser"]
+
+    classDef ws fill:#3d2a3a,stroke:#c62828,color:#e0e0e0,stroke-width:1.5px
+    classDef dep fill:#fff,stroke:#8a8aaa,color:#e0e0e0,stroke-width:1.2px,stroke-dasharray:6 4
+    class HUB ws
+    class SV,HAND,BROWSER dep
+
