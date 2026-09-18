@@ -35,7 +35,7 @@ def fed_increment(co_ppm: float, dt: float) -> float:
 class Verdict:
     """Whether a space is escapable, and the first criterion that failed."""
 
-    tenable: bool
+    tenable: bool  # True: a person could still escape through this room
     reason: str  # "" when tenable
 
 

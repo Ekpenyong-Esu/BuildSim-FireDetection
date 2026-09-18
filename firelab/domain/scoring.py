@@ -20,8 +20,8 @@ MISS_AFTER = 300.0  # a real fire burning this long unconfirmed counts as missed
 class FalseAlarm:
     """An alarm in a room where nothing dangerous was happening."""
 
-    space: str
-    at: float
+    space: str  # key of the room that alarmed
+    at: float  # simulated time the alarm was raised
     cause: str  # the nuisance that fooled it, or "none"
 
 
@@ -31,8 +31,8 @@ class Scoreboard:
 
     detected: dict[str, float] = field(default_factory=dict)  # source id -> seconds to confirm
     missed: set[str] = field(default_factory=set)  # source ids
-    false_alarms: list[FalseAlarm] = field(default_factory=list)
-    timeline: Timeline = field(default_factory=Timeline)
+    false_alarms: list[FalseAlarm] = field(default_factory=list)  # every one so far, oldest first
+    timeline: Timeline = field(default_factory=Timeline)  # ignition -> alarm -> building empty
     _alarming: set[str] = field(default_factory=set)  # rooms alarming last tick
 
     def clear(self) -> None:

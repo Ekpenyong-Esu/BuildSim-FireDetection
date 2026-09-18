@@ -18,16 +18,16 @@ PERSONAL_SPACE = 2.5  # floor-plan units of scatter, so people never share a poi
 class Occupant:
     """One person: where they are, where they are going, and whether they are out."""
 
-    id: str
-    name: str
-    space: str
-    position: list[float]
+    id: str  # "occ-<role>-<n>", e.g. "occ-student-3"; what BuildSim draws them under
+    name: str  # "<Role> <n>", e.g. "Student 3"; shown on the marker in the viewer
+    space: str  # key of the room they are in right now
+    position: list[float]  # [x, y] on the plan, in plan units
     offset: tuple[float, float] = (0.0, 0.0)  # kept for life, so crowds do not stack
     route: list[list[float]] = field(default_factory=list)  # remaining waypoints
     route_spaces: list[str] = field(default_factory=list)  # the room at each waypoint
-    status: str = "idle"
-    safe: bool = False
-    role: str = "staff"
+    status: str = "idle"  # "idle" | "evacuating" | "no route" (stranded) | "safe"
+    safe: bool = False  # reached the last waypoint of their route: out of the building
+    role: str = "staff"  # a key from roles.ROLES
     speed: float = 1.0  # their share of the configured walking speed
     figure: str = "man"  # which marker BuildSim draws
     fed: float = 0.0  # fraction of an incapacitating CO dose taken so far

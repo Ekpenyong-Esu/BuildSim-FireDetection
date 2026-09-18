@@ -12,9 +12,9 @@ from dataclasses import dataclass
 class Timeline:
     """The three milestones of a run, and the gaps between them."""
 
-    ignition_at: float | None = None
-    alarm_at: float | None = None
-    cleared_at: float | None = None
+    ignition_at: float | None = None  # when the first real fire lit
+    alarm_at: float | None = None  # when the first room reached CONFIRMED
+    cleared_at: float | None = None  # when the last person got out
     moved: bool = False  # somebody has actually started walking
 
     def clear(self) -> None:

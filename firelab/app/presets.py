@@ -7,12 +7,12 @@ from dataclasses import asdict, dataclass
 class Preset:
     """A ready-made scenario. Pick one, pick a room, and press start."""
 
-    id: str
-    name: str
-    description: str
+    id: str  # what the API is sent, e.g. "office-fire"
+    name: str  # the button's label
+    description: str  # one line under the button
     kind: str  # what to ignite: "flaming", "smouldering", "cooking", "dust", or "" for nothing
-    growth: str = "medium"
-    peak_kw: float = 2000.0
+    growth: str = "medium"  # for a flaming fire: slow, medium, fast or ultrafast
+    peak_kw: float = 2000.0  # where a flaming fire stops growing
     delay: float = 0.0  # simulated seconds to wait before igniting
     fault: str = "none"  # applied to one device in the room, to make life hard
 

@@ -1,0 +1,79 @@
+---
+title: firelab — what app/ uses (generated from the imports)
+---
+%%{init: {'theme':'dark','themeVariables':{'background':'#1e1e2e','lineColor':'#a0a0b8','clusterBkg':'#26263a','clusterBorder':'#6a6a8a','edgeLabelBackground':'#1e1e2e','fontFamily':'Arial, Helvetica, sans-serif','fontSize':'14px'},'flowchart':{'padding':12,'nodeSpacing':22,'rankSpacing':80,'curve':'basis'}}}%%
+
+%% An arrow A --> B means: A uses B. Generated; do not edit by hand. Regenerate with
+%%     python3 diagrams/make_file_connections.py
+%% Left: this layer's files. Right: the files they use, grouped by layer.
+
+flowchart LR
+    subgraph app["app/ — the running program"]
+        API["api/<br/>one router per panel"]
+        A_CONFIG["config.py"]
+        A_EVACUATION["evacuation.py"]
+        A_MAIN["main.py"]
+        A_PRESETS["presets.py"]
+        A_RUNTIME["runtime.py"]
+        SNAP["snapshot/<br/>state → JSON for the panel"]
+    end
+    subgraph engine["app/engine/ — the tick loop"]
+        E_ACTUATION["actuation.py"]
+        E_BUILDING["building.py"]
+        E_CORE["core.py"]
+        E_DEVICES["devices.py"]
+        E_SCENARIO["scenario.py"]
+        E_SESSION["session.py"]
+        E_STATE["state.py"]
+    end
+    subgraph adapters["adapters/ — the BuildSim boundary"]
+        A_WALKWAYS["walkways.py"]
+        A_WORLD_BUILDER["world_builder.py"]
+        BS_CLIENT["buildsim/<br/>client · transport · viewer"]
+        PUB["publisher/<br/>layers · effects · beliefs<br/>people · hardware · routes"]
+    end
+    subgraph domain["domain/ — the pure rules"]
+        D_HISTORY["history.py"]
+        D_OCCUPANTS["occupants.py"]
+        D_ROLES["roles.py"]
+        D_TENABILITY["tenability.py"]
+        D_WORLD["world.py"]
+    end
+
+    API --> A_PRESETS
+    API --> A_RUNTIME
+    API --> SNAP
+    A_MAIN --> API
+    A_MAIN --> A_RUNTIME
+    A_RUNTIME --> A_CONFIG
+    API --> D_HISTORY
+    API --> D_ROLES
+    API --> E_ACTUATION
+    API --> E_BUILDING
+    API --> E_DEVICES
+    API --> E_SCENARIO
+    API --> E_SESSION
+    A_CONFIG --> D_ROLES
+    A_EVACUATION --> A_WALKWAYS
+    A_EVACUATION --> A_WORLD_BUILDER
+    A_EVACUATION --> BS_CLIENT
+    A_EVACUATION --> D_OCCUPANTS
+    A_EVACUATION --> D_WORLD
+    A_EVACUATION --> PUB
+    A_RUNTIME --> E_CORE
+    SNAP --> D_ROLES
+    SNAP --> D_TENABILITY
+    SNAP --> D_WORLD
+    SNAP --> E_STATE
+
+    linkStyle default stroke:#8a8aa8,stroke-width:1px
+    classDef app      fill:#2e2a4a,stroke:#b07cd8,color:#eeeeee
+    classDef engine   fill:#1e3a2a,stroke:#58d68d,color:#eeeeee
+    classDef adapters fill:#4a3d1a,stroke:#f1c40f,color:#eeeeee
+    classDef domain   fill:#1e2e5a,stroke:#5dade2,color:#eeeeee
+    classDef ext      fill:#2a2a3a,stroke:#8a8aaa,color:#eeeeee
+    classDef note     fill:#1e1e2e,stroke:#6a6a8a,color:#c0c0d0,stroke-dasharray:4 3
+    class API,A_CONFIG,A_EVACUATION,A_MAIN,A_PRESETS,A_RUNTIME,SNAP app
+    class E_ACTUATION,E_BUILDING,E_CORE,E_DEVICES,E_SCENARIO,E_SESSION,E_STATE engine
+    class A_WALKWAYS,A_WORLD_BUILDER,BS_CLIENT,PUB adapters
+    class D_HISTORY,D_OCCUPANTS,D_ROLES,D_TENABILITY,D_WORLD domain

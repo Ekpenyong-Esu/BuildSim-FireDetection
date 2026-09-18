@@ -1,0 +1,105 @@
+---
+title: firelab — what app/engine/ uses (generated from the imports)
+---
+%%{init: {'theme':'dark','themeVariables':{'background':'#1e1e2e','lineColor':'#a0a0b8','clusterBkg':'#26263a','clusterBorder':'#6a6a8a','edgeLabelBackground':'#1e1e2e','fontFamily':'Arial, Helvetica, sans-serif','fontSize':'14px'},'flowchart':{'padding':12,'nodeSpacing':22,'rankSpacing':80,'curve':'basis'}}}%%
+
+%% An arrow A --> B means: A uses B. Generated; do not edit by hand. Regenerate with
+%%     python3 diagrams/make_file_connections.py
+%% Left: this layer's files. Right: the files they use, grouped by layer.
+
+flowchart LR
+    subgraph engine["app/engine/ — the tick loop"]
+        E_ACTUATION["actuation.py"]
+        E_BUILDING["building.py"]
+        E_CORE["core.py"]
+        E_DEVICES["devices.py"]
+        E_INTELLIGENCE["intelligence.py"]
+        E_PUBLISHING["publishing.py"]
+        E_RECORDING["recording.py"]
+        E_SCENARIO["scenario.py"]
+        E_SESSION["session.py"]
+        E_STATE["state.py"]
+        E_STREAMING["streaming.py"]
+        E_TRUTH["truth.py"]
+    end
+    subgraph app["app/ — the running program"]
+        A_CONFIG["config.py"]
+        A_EVACUATION["evacuation.py"]
+        A_PRESETS["presets.py"]
+        SNAP["snapshot/<br/>state → JSON for the panel"]
+    end
+    subgraph adapters["adapters/ — the BuildSim boundary"]
+        A_WALKWAYS["walkways.py"]
+        A_WORLD_BUILDER["world_builder.py"]
+        BS_CLIENT["buildsim/<br/>client · transport · viewer"]
+        PUB["publisher/<br/>layers · effects · beliefs<br/>people · hardware · routes"]
+    end
+    subgraph domain["domain/ — the pure rules"]
+        D_AGENT["agent.py"]
+        D_DETECTOR["detector.py"]
+        D_FEATURES["features.py"]
+        D_HISTORY["history.py"]
+        D_INTERLOCKS["interlocks.py"]
+        D_OCCUPANTS["occupants.py"]
+        D_PHYSICS["physics.py"]
+        D_SCORING["scoring.py"]
+        D_SENSING["sensing.py"]
+        D_SOURCES["sources.py"]
+        D_TENABILITY["tenability.py"]
+        D_WORLD["world.py"]
+    end
+    NOTE["every engine module takes the engine<br/>(state.py) as its first argument"]
+    E_STATE ~~~ NOTE
+
+    E_BUILDING --> E_SESSION
+    E_CORE --> E_ACTUATION
+    E_CORE --> E_BUILDING
+    E_CORE --> E_INTELLIGENCE
+    E_CORE --> E_PUBLISHING
+    E_CORE --> E_RECORDING
+    E_CORE --> E_TRUTH
+    E_PUBLISHING --> E_ACTUATION
+    E_SCENARIO --> E_DEVICES
+    E_STATE --> E_STREAMING
+    E_STATE -->|"holds one of each"| domain
+    E_ACTUATION --> D_AGENT
+    E_ACTUATION --> D_INTERLOCKS
+    E_BUILDING --> A_WALKWAYS
+    E_BUILDING --> A_WORLD_BUILDER
+    E_BUILDING --> BS_CLIENT
+    E_CORE --> D_WORLD
+    E_CORE --> SNAP
+    E_DEVICES --> BS_CLIENT
+    E_DEVICES --> D_AGENT
+    E_DEVICES --> D_FEATURES
+    E_DEVICES --> D_SENSING
+    E_DEVICES --> PUB
+    E_INTELLIGENCE --> D_AGENT
+    E_INTELLIGENCE --> D_FEATURES
+    E_PUBLISHING --> BS_CLIENT
+    E_PUBLISHING --> PUB
+    E_SCENARIO --> A_PRESETS
+    E_SCENARIO --> D_SENSING
+    E_SCENARIO --> D_SOURCES
+    E_SESSION --> D_OCCUPANTS
+    E_STATE --> A_CONFIG
+    E_STATE --> A_EVACUATION
+    E_STATE --> BS_CLIENT
+    E_TRUTH --> D_FEATURES
+    E_TRUTH --> D_PHYSICS
+    E_TRUTH --> D_SENSING
+    E_TRUTH --> D_SOURCES
+    E_TRUTH --> D_TENABILITY
+
+    linkStyle default stroke:#8a8aa8,stroke-width:1px
+    classDef app      fill:#2e2a4a,stroke:#b07cd8,color:#eeeeee
+    classDef engine   fill:#1e3a2a,stroke:#58d68d,color:#eeeeee
+    classDef adapters fill:#4a3d1a,stroke:#f1c40f,color:#eeeeee
+    classDef domain   fill:#1e2e5a,stroke:#5dade2,color:#eeeeee
+    classDef ext      fill:#2a2a3a,stroke:#8a8aaa,color:#eeeeee
+    classDef note     fill:#1e1e2e,stroke:#6a6a8a,color:#c0c0d0,stroke-dasharray:4 3
+    class A_CONFIG,A_EVACUATION,A_PRESETS,SNAP app
+    class E_ACTUATION,E_BUILDING,E_CORE,E_DEVICES,E_INTELLIGENCE,E_PUBLISHING,E_RECORDING,E_SCENARIO,E_SESSION,E_STATE,E_STREAMING,E_TRUTH engine
+    class A_WALKWAYS,A_WORLD_BUILDER,BS_CLIENT,PUB adapters
+    class D_AGENT,D_DETECTOR,D_FEATURES,D_HISTORY,D_INTERLOCKS,D_OCCUPANTS,D_PHYSICS,D_SCORING,D_SENSING,D_SOURCES,D_TENABILITY,D_WORLD domain
+    class NOTE note

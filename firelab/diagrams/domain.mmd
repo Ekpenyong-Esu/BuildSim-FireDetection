@@ -1,0 +1,44 @@
+---
+title: firelab — what domain/ uses (generated from the imports)
+---
+%%{init: {'theme':'dark','themeVariables':{'background':'#1e1e2e','lineColor':'#a0a0b8','clusterBkg':'#26263a','clusterBorder':'#6a6a8a','edgeLabelBackground':'#1e1e2e','fontFamily':'Arial, Helvetica, sans-serif','fontSize':'14px'},'flowchart':{'padding':12,'nodeSpacing':22,'rankSpacing':80,'curve':'basis'}}}%%
+
+%% An arrow A --> B means: A uses B. Generated; do not edit by hand. Regenerate with
+%%     python3 diagrams/make_file_connections.py
+%% Left: this layer's files. Right: the files they use, grouped by layer.
+
+flowchart LR
+    subgraph domain["domain/ — the pure rules"]
+        D_AGENT["agent.py"]
+        D_DETECTOR["detector.py"]
+        D_FEATURES["features.py"]
+        D_HISTORY["history.py"]
+        D_INTERLOCKS["interlocks.py"]
+        D_OCCUPANTS["occupants.py"]
+        D_PHYSICS["physics.py"]
+        D_ROLES["roles.py"]
+        D_SCORING["scoring.py"]
+        D_SENSING["sensing.py"]
+        D_SOURCES["sources.py"]
+        D_TENABILITY["tenability.py"]
+        D_TIMELINE["timeline.py"]
+        D_WORLD["world.py"]
+    end
+
+    D_DETECTOR --> D_FEATURES
+    D_INTERLOCKS --> D_AGENT
+    D_OCCUPANTS --> D_ROLES
+    D_OCCUPANTS --> D_WORLD
+    D_PHYSICS --> D_WORLD
+    D_SCORING --> D_SOURCES
+    D_SCORING --> D_TIMELINE
+    D_SENSING --> D_PHYSICS
+
+    linkStyle default stroke:#8a8aa8,stroke-width:1px
+    classDef app      fill:#2e2a4a,stroke:#b07cd8,color:#eeeeee
+    classDef engine   fill:#1e3a2a,stroke:#58d68d,color:#eeeeee
+    classDef adapters fill:#4a3d1a,stroke:#f1c40f,color:#eeeeee
+    classDef domain   fill:#1e2e5a,stroke:#5dade2,color:#eeeeee
+    classDef ext      fill:#2a2a3a,stroke:#8a8aaa,color:#eeeeee
+    classDef note     fill:#1e1e2e,stroke:#6a6a8a,color:#c0c0d0,stroke-dasharray:4 3
+    class D_AGENT,D_DETECTOR,D_FEATURES,D_HISTORY,D_INTERLOCKS,D_OCCUPANTS,D_PHYSICS,D_ROLES,D_SCORING,D_SENSING,D_SOURCES,D_TENABILITY,D_TIMELINE,D_WORLD domain

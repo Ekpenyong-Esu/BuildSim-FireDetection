@@ -18,8 +18,8 @@ class Transport:
 
     def __init__(self, base_url: str, timeout: float = 10.0) -> None:
         """Keep one httpx pool for every call made through this object."""
-        self.base_url = base_url.rstrip("/")
-        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout)
+        self.base_url = base_url.rstrip("/")  # e.g. "http://127.0.0.1:9090"; shown in the panel's header
+        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=timeout)  # the pool; closed by aclose()
 
     async def aclose(self) -> None:
         """Shut the connection pool down on exit."""

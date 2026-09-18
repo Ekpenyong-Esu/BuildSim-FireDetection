@@ -17,7 +17,7 @@ class Evacuation:
 
     def __init__(self, client: BuildSim) -> None:
         """Borrow the BuildSim client that knows how to ask for a route."""
-        self.client = client
+        self.client = client  # asked for a route only when firelab's own map finds no clear one
         # The walkable graph, once the building is loaded. It is what finds the
         # way round a burning corridor, which BuildSim's router cannot.
         self.walkways: Walkways | None = None

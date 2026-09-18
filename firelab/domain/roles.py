@@ -11,11 +11,11 @@ from dataclasses import dataclass
 class Role:
     """A kind of person on campus, and how well they get themselves out."""
 
-    key: str
+    key: str  # the id used in config, the API and Occupant.role, e.g. "student"
     label: str  # plural, for the UI
-    singular: str
+    singular: str  # used to name each person, e.g. "Student 3"
     speed: float  # multiplier on the configured walking speed
-    note: str
+    note: str  # why they walk at that speed, shown in the Population panel
 
 
 ROLES = (

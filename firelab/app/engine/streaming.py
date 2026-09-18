@@ -15,8 +15,8 @@ class Broadcaster:
 
     def __init__(self, depth: int = 4) -> None:
         """How many snapshots a slow browser may fall behind before we drop."""
-        self._depth = depth
-        self._subscribers: set[asyncio.Queue] = set()
+        self._depth = depth  # snapshots a browser may fall behind before the oldest is dropped
+        self._subscribers: set[asyncio.Queue] = set()  # one queue per open /api/events connection
 
     def subscribe(self) -> asyncio.Queue:
         """A queue for one browser connection."""

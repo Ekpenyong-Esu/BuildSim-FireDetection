@@ -29,8 +29,8 @@ class Walkways:
 
     def __init__(self, floors: dict[str, dict], cross_floor_edges: list[dict]) -> None:
         """Merge the floors BuildSim served us with the stairs that join them."""
-        self._nodes: dict[Node, dict] = {}
-        self._links: dict[Node, list[tuple[Node, float]]] = defaultdict(list)
+        self._nodes: dict[Node, dict] = {}  # (level, node id) -> the node as BuildSim sent it (x, y, name, type)
+        self._links: dict[Node, list[tuple[Node, float]]] = defaultdict(list)  # node -> [(neighbour, cost)], both ways
         self._ends: dict[tuple[str, str], Node] = {}  # where a route to or from a room starts
         landings: dict[tuple[str, str], Node] = {}  # where a stair meets a floor
         named: dict[tuple[str, str], list[Node]] = defaultdict(list)

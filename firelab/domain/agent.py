@@ -19,10 +19,12 @@ class Thresholds:
     opening and closing fire doors all day.
     """
 
-    investigate: float = 0.35
-    pre_alarm: float = 0.55
-    confirm: float = 0.75
-    clear: float = 0.25
+    # P(fire) levels, 0..1
+    investigate: float = 0.35  # NORMAL -> INVESTIGATING: start watching
+    pre_alarm: float = 0.55  # INVESTIGATING -> PRE_ALARM, once held for dwell_pre_alarm
+    confirm: float = 0.75  # PRE_ALARM -> CONFIRMED, once PRE_ALARM has lasted dwell_confirm
+    clear: float = 0.25  # at or below this for dwell_clear: stand down
+    # how long, in simulated seconds, a level must hold before the step is taken
     dwell_pre_alarm: float = 20.0
     dwell_confirm: float = 25.0
     dwell_clear: float = 90.0
@@ -33,18 +35,18 @@ class Command:
     """A request to change something physical. Still has to pass the interlocks."""
 
     kind: str  # "sprinkler" | "fire_door" | "evacuate"
-    space: str
-    value: str
-    reason: str
+    space: str  # key of the room it is about
+    value: str  # "on"/"off", "open"/"closed"/"locked", or "start"/"stop"
+    reason: str  # why the agent asked, in words; shown in the journal
 
 
 @dataclass
 class RoomAgent:
     """One room's opinion of itself: its state and how long it has been there."""
 
-    space: str
-    state: str = "NORMAL"
-    probability: float = 0.0
+    space: str  # key of the room this agent watches
+    state: str = "NORMAL"  # one of STATES
+    probability: float = 0.0  # the latest P(fire) the detector gave this room
     since: float = 0.0  # when the current state was entered
     above_since: float | None = None  # when P(fire) first went above pre_alarm
     below_since: float | None = None  # when it first went below clear

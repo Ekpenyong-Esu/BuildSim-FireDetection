@@ -37,7 +37,7 @@ class DeployBody(BaseModel):
     readings, no agent and no opinion, so it cannot alarm however hard it burns.
     """
 
-    spaces: list[str]
+    spaces: list[str]  # room keys, "<level>/<name>"
     modalities: list[str] = ["smoke", "co", "temperature"]  # undeploy ignores this
 
 
@@ -47,7 +47,7 @@ class FaultBody(BaseModel):
     The point of the whole project: see whether the rest of the system copes.
     """
 
-    device_id: str
+    device_id: str  # "fl-<level>-<room>-<modality>", as shown in the Rooms table
     fault: str  # one of domain.sensing.FAULTS
 
 
@@ -59,7 +59,7 @@ class CommandBody(BaseModel):
     """
 
     kind: str  # "sprinkler" | "fire_door" | "evacuate"
-    space: str
+    space: str  # room key, "<level>/<name>"
     value: str  # what to set it to, e.g. "on" / "closed" / "start"
 
 
@@ -70,14 +70,14 @@ class ModeBody(BaseModel):
     dropped rather than carried out until a human issues them.
     """
 
-    auto: bool
+    auto: bool  # True: the agent's commands are carried out by themselves
 
 
 class PresetBody(BaseModel):
     """`POST /api/scenario/preset` — run one of the six one-click scenarios."""
 
     preset: str  # an id from app.presets.BY_ID
-    space: str
+    space: str  # room key, "<level>/<name>": where to light it
 
 
 class PopulationBody(BaseModel):

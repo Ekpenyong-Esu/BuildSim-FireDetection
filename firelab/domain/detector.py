@@ -21,7 +21,7 @@ def _logistic(x: float) -> float:
 class Contribution:
     """One feature's push towards or away from "this is a fire"."""
 
-    name: str
+    name: str  # the feature, e.g. "smoke", or "bias" for the constant term
     value: float  # the raw feature, in its own units
     weighted: float  # what it added to the score
 

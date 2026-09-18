@@ -16,8 +16,8 @@ class BuildSim:
 
     def __init__(self, base_url: str, timeout: float = 10.0) -> None:
         """Point it at a running BuildSim and keep one connection pool."""
-        self._transport = Transport(base_url, timeout)
-        self.viewer = ViewerSessions(self._transport)
+        self._transport = Transport(base_url, timeout)  # the one connection pool; every call goes through it
+        self.viewer = ViewerSessions(self._transport)  # highlights and routes go to a viewer tab, not the building
 
     async def aclose(self) -> None:
         """Shut the connection pool down on exit."""

@@ -32,22 +32,23 @@ DEFAULTS = {
 class Device:
     """One emulated detector living in one space."""
 
-    id: str
-    space: str
-    modality: str
-    tau: float
-    bias: float
-    noise: float
-    quantum: float
-    low: float
-    high: float
+    id: str  # "fl-<level>-<room>-<modality>"; also its id in BuildSim's equipment tree
+    space: str  # key of the room it is in
+    modality: str  # one of MODALITIES: what it measures
+    # the imperfections, from DEFAULTS for its modality (see the table above)
+    tau: float  # lag, in seconds: how long it takes to catch up with the truth
+    bias: float  # constant calibration offset added to every reading
+    noise: float  # standard deviation of the random jitter on each reading
+    quantum: float  # the smallest step it can report; readings are rounded to it
+    low: float  # the lowest value it can report
+    high: float  # the highest value it can report
     interval: float = 5.0  # seconds between readings
-    fault: str = "none"
+    fault: str = "none"  # one of FAULTS
     internal: float = 0.0  # what the sensing element currently feels
     reading: float | None = None  # the last value it actually reported
     drift: float = 0.0  # accumulated error, only grows when faulty
-    next_sample: float = 0.0
-    history: list[tuple[float, float]] = field(default_factory=list)
+    next_sample: float = 0.0  # simulated time the next reading is due
+    history: list[tuple[float, float]] = field(default_factory=list)  # last 240 (t, reading) pairs
 
     @classmethod
     def create(cls, device_id: str, space: str, modality: str, **overrides) -> "Device":

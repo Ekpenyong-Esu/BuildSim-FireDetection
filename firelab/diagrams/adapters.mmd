@@ -1,0 +1,40 @@
+---
+title: firelab — what adapters/ uses (generated from the imports)
+---
+%%{init: {'theme':'dark','themeVariables':{'background':'#1e1e2e','lineColor':'#a0a0b8','clusterBkg':'#26263a','clusterBorder':'#6a6a8a','edgeLabelBackground':'#1e1e2e','fontFamily':'Arial, Helvetica, sans-serif','fontSize':'14px'},'flowchart':{'padding':12,'nodeSpacing':22,'rankSpacing':80,'curve':'basis'}}}%%
+
+%% An arrow A --> B means: A uses B. Generated; do not edit by hand. Regenerate with
+%%     python3 diagrams/make_file_connections.py
+%% Left: this layer's files. Right: the files they use, grouped by layer.
+
+flowchart LR
+    subgraph adapters["adapters/ — the BuildSim boundary"]
+        A_WALKWAYS["walkways.py"]
+        A_WORLD_BUILDER["world_builder.py"]
+        BS_CLIENT["buildsim/<br/>client · transport · viewer"]
+        PUB["publisher/<br/>layers · effects · beliefs<br/>people · hardware · routes"]
+    end
+    subgraph domain["domain/ — the pure rules"]
+        D_OCCUPANTS["occupants.py"]
+        D_SENSING["sensing.py"]
+        D_WORLD["world.py"]
+    end
+    BUILDSIM[("BuildSim<br/>port 9090")]
+    BS_CLIENT -.->|"HTTP"| BUILDSIM
+
+    A_WALKWAYS --> A_WORLD_BUILDER
+    A_WORLD_BUILDER --> D_WORLD
+    PUB --> D_OCCUPANTS
+    PUB --> D_SENSING
+    PUB --> D_WORLD
+
+    linkStyle default stroke:#8a8aa8,stroke-width:1px
+    classDef app      fill:#2e2a4a,stroke:#b07cd8,color:#eeeeee
+    classDef engine   fill:#1e3a2a,stroke:#58d68d,color:#eeeeee
+    classDef adapters fill:#4a3d1a,stroke:#f1c40f,color:#eeeeee
+    classDef domain   fill:#1e2e5a,stroke:#5dade2,color:#eeeeee
+    classDef ext      fill:#2a2a3a,stroke:#8a8aaa,color:#eeeeee
+    classDef note     fill:#1e1e2e,stroke:#6a6a8a,color:#c0c0d0,stroke-dasharray:4 3
+    class A_WALKWAYS,A_WORLD_BUILDER,BS_CLIENT,PUB adapters
+    class D_OCCUPANTS,D_SENSING,D_WORLD domain
+    class BUILDSIM ext

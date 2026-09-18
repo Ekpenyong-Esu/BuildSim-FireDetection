@@ -13,8 +13,8 @@ from .agent import Command
 class Verdict:
     """Yes or no, plus a reason plain enough to show to an operator."""
 
-    allowed: bool
-    reason: str
+    allowed: bool  # False means the command is refused this tick
+    reason: str  # why, e.g. "fire doors fail unlocked"; "" when allowed
 
 
 def check(

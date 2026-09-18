@@ -10,19 +10,25 @@ from math import exp
 # Standard t-squared fire growth coefficients, kW/s^2.
 ALPHA = {"slow": 0.0029, "medium": 0.0117, "fast": 0.0469, "ultrafast": 0.1876}
 
-KINDS = ("flaming", "smouldering", "cooking", "dust", "steam")
+KINDS = (
+    "flaming", # lots of heat, smoke, and CO.
+    "smouldering", # little heat, dense smoke, and high CO.
+    "cooking", # moderate heat and smoke, but little CO.
+    "dust", # smoke alone, with no heat or CO.
+    "steam" # steam-like particles, with no heat or CO.
+    )
 
 
 @dataclass(frozen=True)
 class Source:
     """A scripted event. `kind` is also the ground-truth label."""
 
-    id: str
-    kind: str
+    id: str  # "src-<n>-<time lit>", e.g. "src-1-28800"; what the UI removes it by
+    kind: str  # one of KINDS; "flaming" and "smouldering" are real fires, the rest nuisances
     space: str  # canonical "<level>/<name>" key
     t_start: float  # simulated seconds since midnight
-    growth: str = "medium"
-    peak_kw: float = 2000.0
+    growth: str = "medium"  # a key of ALPHA; only a flaming fire uses it
+    peak_kw: float = 2000.0  # a flaming fire stops growing here
 
 
 def _bump(t: float, rise: float, fall: float) -> float:

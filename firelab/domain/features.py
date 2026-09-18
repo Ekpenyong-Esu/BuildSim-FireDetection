@@ -9,14 +9,14 @@ WINDOW_SECONDS = 120.0  # how far back the detector is allowed to look
 class Features:
     """The summary of one room that the detector is given. Readings only."""
 
-    space: str
-    smoke: float = 0.0
-    co: float = 0.0
-    temperature: float = 20.0
+    space: str  # key of the room these describe
+    smoke: float = 0.0  # latest smoke reading, 1/m
+    co: float = 0.0  # latest CO reading, ppm
+    temperature: float = 20.0  # latest temperature reading, °C (20 if none yet)
     smoke_rate: float = 0.0  # per minute
     temperature_rise: float = 0.0  # above the building baseline
-    co_smoke_ratio: float = 0.0
-    neighbour_agreement: float = 0.0
+    co_smoke_ratio: float = 0.0  # co / smoke; high for a smoulder, low for dust or steam
+    neighbour_agreement: float = 0.0  # 0..1: share of monitored neighbours that also see smoke
     coverage: int = 0  # how many modalities reported
 
     def vector(self) -> list[float]:
@@ -35,8 +35,8 @@ class Features:
 class Window:
     """Per-space sliding window over device readings."""
 
-    space: str
-    series: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
+    space: str  # key of the room these readings came from
+    series: dict[str, list[tuple[float, float]]] = field(default_factory=dict)  # modality -> [(t, value)], last 120 s
 
     def add(self, modality: str, now: float, value: float) -> None:
         """Store one new reading and forget anything older than the window."""

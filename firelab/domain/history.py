@@ -24,7 +24,7 @@ SAMPLE_SECONDS = 5.0  # simulated seconds between samples
 class History:
     """One list of samples per room, oldest first, with a fixed maximum length."""
 
-    tracks: dict[str, list[list[float | None]]] = field(default_factory=dict)
+    tracks: dict[str, list[list[float | None]]] = field(default_factory=dict)  # room key -> rows, one per sample, in COLUMNS order
     _last: float = -1e9  # when the last sample was taken; starts long ago
 
     def clear(self) -> None:
