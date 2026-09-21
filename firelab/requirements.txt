@@ -2,4 +2,6 @@ fastapi>=0.115
 uvicorn[standard]>=0.32
 httpx>=0.27
 pydantic>=2.9
+openai>=1.50  # adapters/llm: the optional LLM detector, any OpenAI-compatible endpoint
 pytest>=8.3
+matplotlib>=3.8  # experiments/plot_results.py: the report charts

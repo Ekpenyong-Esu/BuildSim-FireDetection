@@ -1,0 +1,23 @@
+%% The per-room alarm state machine (domain/agent.py)
+stateDiagram-v2
+  direction TB
+  [*] --> NORMAL
+  NORMAL --> INVESTIGATING: P >= 0.35
+  INVESTIGATING --> NORMAL: P < 0.25
+  INVESTIGATING --> PRE_ALARM: P >= 0.55 held 20 s
+  PRE_ALARM --> INVESTIGATING: P < 0.35
+  PRE_ALARM --> CONFIRMED: P >= 0.75 after 25 s here
+  CONFIRMED --> SUPPRESSED: sprinkler running, P < 0.75 for 25 s
+  SUPPRESSED --> CONFIRMED: P >= 0.75, burning on
+  CONFIRMED --> CLEARING: P <= 0.25 for 90 s
+  SUPPRESSED --> CLEARING: P <= 0.25 for 90 s
+  CLEARING --> NORMAL: quiet for 90 s
+  CLEARING --> INVESTIGATING: P >= 0.35
+  note right of CONFIRMED
+    on entry: sprinkler on,
+    door closed, evacuate
+  end note
+  note right of CLEARING
+    on entry: sprinkler off,
+    door open, stand down
+  end note

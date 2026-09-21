@@ -4,6 +4,7 @@ The API can change these settings while Firelab is running. The engine uses the
 new values on later ticks.
 """
 
+import os
 from dataclasses import asdict, dataclass, field
 
 from ..domain.roles import DEFAULT_POPULATION
@@ -34,6 +35,19 @@ class ResponseConfig:
 
 
 @dataclass
+class DetectorConfig:
+    """Which detector scores the rooms, and how the LLM one paces itself."""
+
+    # "fusion-rule" or "llm". FIRELAB_DETECTOR in the environment (or .env) sets the
+    # start-up default; the LLM also needs LLM_BASE_URL, LLM_API_KEY and LLM_MODEL.
+    kind: str = field(default_factory=lambda: os.environ.get("FIRELAB_DETECTOR", "fusion-rule"))
+    refresh_seconds: float = 10.0  # simulated seconds between questions about the same room
+    max_age_seconds: float = 60.0  # a verdict older than this hands the room back to the rule
+    timeout_seconds: float = 30.0  # per request, real seconds; a reasoning model thinks before it answers
+    max_concurrency: int = 2  # questions in flight at once; more only slows a shared server down
+
+
+@dataclass
 class Config:
     """Every knob in one place. The UI edits this and the engine re-reads it."""
 
@@ -46,6 +60,7 @@ class Config:
     walking_speed: float = 1.3  # m/s, before each role's own factor
     sensors: SensorConfig = field(default_factory=SensorConfig)  # applies to sensors deployed after a change
     response: ResponseConfig = field(default_factory=ResponseConfig)  # re-read by the agent every tick
+    detector: DetectorConfig = field(default_factory=DetectorConfig)  # swapped by the engine when `kind` changes
     # Real doors to the outside. Only the ground floor has any, and only these
     # count as being out of the building: upper storeys are routed down the
     # stairs to one of them rather than to a landing that merely looks like an
@@ -75,5 +90,9 @@ class Config:
                 for name, item in value.items():
                     if hasattr(self.response, name):
                         setattr(self.response, name, item)
+            elif key == "detector" and isinstance(value, dict):
+                for name, item in value.items():
+                    if hasattr(self.detector, name):
+                        setattr(self.detector, name, item)
             elif hasattr(self, key):
                 setattr(self, key, value)

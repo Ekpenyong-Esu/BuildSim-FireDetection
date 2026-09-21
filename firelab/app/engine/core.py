@@ -15,6 +15,7 @@ import time
 
 from ...domain.world import UNITS_TO_METRES
 from .. import snapshot as snapshot_mod
+from ..detectors import make_detector
 from . import actuation, building, intelligence, publishing, recording, truth
 from .constants import PUBLISH_EVERY, REAL_TICK
 from .state import EngineState
@@ -28,6 +29,7 @@ class Engine(EngineState):
     async def start(self) -> None:
         """Load the building, then start the tick loop running in the background."""
         await building.load(self)
+        await self._start_detector()
         self.task = asyncio.create_task(self._loop())
 
     async def stop(self) -> None:
@@ -36,7 +38,47 @@ class Engine(EngineState):
             self.task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self.task
+        await self._stop_detector()
         await self.client.aclose()
+
+    async def set_detector(self) -> None:
+        """Install the detector the config now asks for, replacing the running one."""
+        async with self.lock:
+            await self._stop_detector()
+            self.detector = make_detector(self.config, clock=lambda: self.now, log=self.log)
+            await self._start_detector()
+            self.log("info", f"detector: {self.detector.name}")
+
+    def _pace_for_detector(self) -> None:
+        """Never run the clock faster than the detector can answer.
+
+        A detector that asks a model has a `max_speed()`: the largest speed
+        factor at which its verdicts still arrive before they expire. Above it
+        every answer is stale on arrival and the rule silently does all the
+        work, so the speed dial is capped there and the journal says so. The
+        rule has no such limit, and switching back to it lifts the cap.
+        """
+        max_speed = getattr(self.detector, "max_speed", None)
+        limit = max_speed() if max_speed is not None else None
+        if limit is None:
+            self._speed_cap = None
+            return
+        limit = max(1.0, float(int(limit)))  # whole numbers read better on the dial
+        if self.config.factor > limit:
+            self.config.factor = limit
+            if self._speed_cap != limit:
+                self.log("info", f"speed capped at {limit:g}x so the model's verdicts arrive before they expire")
+        self._speed_cap = limit
+
+    async def _start_detector(self) -> None:
+        start = getattr(self.detector, "start", None)  # only the LLM detector has a worker
+        if start is not None:
+            await start()
+
+    async def _stop_detector(self) -> None:
+        stop = getattr(self.detector, "stop", None)
+        if stop is not None:
+            await stop()
 
     def set_running(self, running: bool) -> None:
         """Play or pause simulated time."""
@@ -69,6 +111,7 @@ class Engine(EngineState):
                 await self._publish_if_dirty()
                 continue
             async with self.lock:  # a tick and an API call must not interleave
+                self._pace_for_detector()
                 await self._tick(elapsed * self.config.factor)
             self._broadcast()  # push the new snapshot to every open browser
 

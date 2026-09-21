@@ -1,0 +1,47 @@
+[
+ {
+  "mode": "none",
+  "rooms_lost": 5,
+  "lost_on_other_floors": 0,
+  "fire_room_peak_temp": 309.1,
+  "fire_room_peak_smoke": 0.703,
+  "neighbour_peak_temp": 148.5,
+  "neighbour_peak_smoke": 0.382,
+  "sprinkler": false,
+  "door": "open",
+  "door_reopened_at": null,
+  "rset": null,
+  "people_exposed": 130,
+  "over_dose": 0
+ },
+ {
+  "mode": "autonomous",
+  "rooms_lost": 4,
+  "lost_on_other_floors": 0,
+  "fire_room_peak_temp": 648.0,
+  "fire_room_peak_smoke": 0.668,
+  "neighbour_peak_temp": 151.6,
+  "neighbour_peak_smoke": 0.171,
+  "sprinkler": true,
+  "door": "closed",
+  "door_reopened_at": null,
+  "rset": 217.0,
+  "people_exposed": 130,
+  "over_dose": 0
+ },
+ {
+  "mode": "sprinkler-only",
+  "rooms_lost": 5,
+  "lost_on_other_floors": 0,
+  "fire_room_peak_temp": 648.0,
+  "fire_room_peak_smoke": 0.668,
+  "neighbour_peak_temp": 151.6,
+  "neighbour_peak_smoke": 0.171,
+  "sprinkler": true,
+  "door": "open",
+  "door_reopened_at": 106,
+  "rset": 217.0,
+  "people_exposed": 130,
+  "over_dose": 0
+ }
+]

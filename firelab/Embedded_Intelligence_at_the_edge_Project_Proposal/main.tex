@@ -15,6 +15,21 @@
 \usepackage{fancyhdr}
 \usepackage{mathtools}
 \usepackage{amsmath, amssymb}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup{font={small,it},labelfont=bf,skip=4pt}
+\usepackage{newunicodechar}
+\newunicodechar{°}{\textdegree}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{✓}{\ensuremath{\checkmark}}
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize}
+\AtBeginEnvironment{tabular}{\footnotesize}
+\setlength{\emergencystretch}{3em}
 \usepackage[pdfborder={0 0 0},colorlinks=true,urlcolor=blue,citecolor=red,bookmarks=false]{hyperref}
 
 % Colors
@@ -24,6 +39,7 @@
 \definecolor{fpred}{RGB}{200, 0, 0}
 \definecolor{fnred}{RGB}{200, 0, 0}
 \definecolor{tnblue}{RGB}{0, 0, 180}
+\newcommand{\code}[1]{\texttt{\scriptsize #1}}
  
 % Section formatting
 \titleformat{\section}{\large\bfseries\color{primaryblue}}{}{0em}{}[\titlerule]
@@ -31,7 +47,7 @@
  
 \pagestyle{fancy}
 \fancyhf{}
-\rhead{\textcolor{gray}{\small Project Proposal -- Fire Detection \& Autonomous Response}}
+\rhead{\textcolor{gray}{\small Final Report -- Fire Detection \& Autonomous Response}}
 \lhead{\textcolor{gray}{\small D7065E, Embedded Intelligence at the Edge}}
 \rfoot{\thepage}
  
@@ -51,7 +67,7 @@
 \department{School of Computer Science, Electrical and Space Engineering\\
 Luleå, Sweden}
 
-\subject{\textbf{Project Proposal\\ Group 14}\\ D7065E, Embedded Intelligence at the Edge}
+\subject{\textbf{Final Report, Architecture Document\\ Group 14}\\ D7065E, Embedded Intelligence at the Edge}
 \thesisTitle{ Fire detection and autonomous response}
 
 
@@ -68,12 +84,16 @@ Luleå, Sweden}
 
 \begin{document}
 \titlePage
-%\tableofcontents
+\tableofcontents
+\newpage
 
 \mainmatter
 % ===== Content: Modify the structure according to your needs =======
 
-\input{sections/Proposal}
+\input{sections/part1}
+\input{sections/part2}
+\input{sections/part3}
+\input{sections/part4}
 
 
 % ============================= References ============================

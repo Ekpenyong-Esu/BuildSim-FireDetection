@@ -1,0 +1,369 @@
+\section{9. Deployment and component placement}
+
+Everything runs on one laptop, so deployment is about how the system is composed
+from processes rather than where in the world they are. There are two processes
+and two browser tabs, and they talk only through the interfaces of Section~5.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{images/deploy.png}
+\caption{Deployment view. Two processes, two tabs, loopback only. The dotted box is the one thing that would ever leave the edge.}
+\label{fig:deploy}
+\end{figure}
+
+\textbf{Why this placement.} The control loop, from physics through sensors to
+the interlocks and back, lives in the firelab process and touches nothing outside
+the machine except BuildSim over loopback. In a real building that process is the
+edge node: it must keep working when the internet does not, and it must answer
+inside the tick budget, which Section~11 measures. The only work that would ever
+belong elsewhere is training a detector on recorded runs, which is slow, offline
+and off the critical path; that is why it is drawn dotted and why the CSV export
+exists. BuildSim stands in for the building's own controllers and is left
+alone.
+
+\textbf{What is lost by merging the zones into one process}, since the course
+asks: fault isolation and independent restart. If the physics throws, the agent
+dies with it. That is acceptable for a simulator on a laptop and would not be for a
+building. The mitigation built in is the layering, which keeps the zones as
+separable as separate processes would, and the seam is known: the sensing zone
+already produces per-device readings keyed by device ID, and the actuation zone
+already consumes commands with a reason, which are the two messages a broker
+would carry.
+
+\textbf{Operational notes.} The service is started with \code{make run}, which
+creates a virtual environment, builds the panel and serves it. Configuration is
+live: speed, thresholds, dwells, sensor noise and population change on the next
+tick through \code{PUT /api/config}, and a reload re-reads the floors from BuildSim
+without restarting. If BuildSim is down at startup the service says so in its
+journal and idles until a reload; if it goes away mid-run the service marks itself
+disconnected, stops writing, and keeps simulating.
+
+\section{10. Test plan}
+
+Two kinds of evidence back the requirements. The unit suite, 119 tests and 82
+subtests in 19 files, runs in two seconds with nothing else up, because the domain
+imports nothing that needs a network. The experiments (E1 to E6) drive the real
+engine tick by tick against the loaded building with publishing switched off, from
+the same seed every time, and write their measurements to
+\code{experiments/results/}. Section~11 reports them.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.12}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.44}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.16}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.28}}@{}}
+\toprule
+\textbf{ID} & \textbf{Test} & \textbf{Requirement} & \textbf{Evidence} \\
+\midrule
+\endhead
+T-1 & \code{test\_agent}: the ladder climbs one step at a time, honours every dwell, and only \textsc{confirmed} and \textsc{clearing} issue commands & FR-01, FR-04 & unit, passes \\
+T-2 & \code{test\_detector}: P(fire) equals the sum of its contributions; no opinion with no coverage; cooking scores under the confirm threshold & FR-03, FR-06 & unit, passes \\
+T-3 & \code{test\_interlocks}: water refused under 35\,°C; lock always refused; close refused when occupied or on a route & SR-01 to SR-03 & unit, passes \\
+T-4 & \code{test\_sensing}: lag, quantisation, clamp, and each of the four faults behave as specified & NFR-02 & unit, passes \\
+T-5 & \code{test\_physics}, \code{test\_sources}: relaxation, the diffusion cap, sprinkler factors, the $t^2$ curve & Section~6 & unit, passes \\
+T-6 & \code{test\_evacuation}, \code{test\_walkways}, \code{test\_multifloor}: clear routes avoid danger, upper floors reach a ground exit, the drawn route starts at the fire & FR-05 & unit, passes \\
+T-7 & \code{test\_scoring}, \code{test\_history}: catch, miss and false alarm rules; RSET milestones; the recorder's columns and length & FR-07 & unit, passes \\
+T-8 & \code{test\_layering}: the import direction and the truth boundary & NFR-04 & unit, passes \\
+T-9 & \code{test\_publishing\_route}, \code{test\_publisher\_doors}: the route is sent only when it changes and names its storeys; closed doors reach BuildSim & NFR-05 & unit, passes \\
+T-10 & \code{test\_reset}, \code{test\_presets}: a reset returns to a quiet building and forgets injected faults; every preset is well formed & NFR-03 & unit, passes \\
+E1 & Each of the six presets in A3505 for 20 simulated minutes: state times, score, response, peak truth & FR-01 to FR-04, SR-01 & Table~\ref{tab:presets}, Figure~\ref{fig:office} \\
+E2 & The office fire with the agent's commands dropped (supervised mode), then with the sprinkler alone & Section~6 loop & Table~\ref{tab:contain} \\
+E3 & Office fire and kitchen cooking at sensor noise 0, 1, 2, 3$\times$ & FR-03, NFR-03 & Table~\ref{tab:noise} \\
+E4 & Office fire with the smoke detector stuck, dropping out, drifting, or dead & NFR-02 & Table~\ref{tab:faults} \\
+E5 & Sensors in 10 to 956 rooms; wall time of one tick at 1$\times$ and 40$\times$ & NFR-01 & Figure~\ref{fig:scaling} \\
+E6 & Every experiment rerun from the same seed & NFR-03 & identical latencies to the second \\
+\bottomrule
+\end{longtable}
+
+\section{11. Evaluation and experiments}
+
+This section reports what was measured. Every number below was measured by the
+experiment harness in \code{experiments/run\_experiments.py} on the loaded
+A-building, with the fire in office A3505 on the top floor, 130 people scattered
+by the default seed, and the default thresholds. The room and its neighbours were
+instrumented with all three modalities, as the presets do.
+
+\textbf{Detection and response (E1).}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\resizebox{\linewidth}{!}{\begin{tabular}{@{}lccccccc@{}}
+\toprule
+\textbf{Preset} & \textbf{Investigating} & \textbf{Confirmed} & \textbf{Max P(fire)} & \textbf{False alarms} & \textbf{Sprinkler} & \textbf{RSET} & \textbf{Verdict} \\
+\midrule
+Office fire (flaming, fast) & 51\,s & 106\,s & 0.994 & 0 & on at 106\,s & 217\,s & caught ✓ \\
+Overnight smoulder & 136\,s & 201\,s & 0.991 & 0 & refused 201\,s, on 219\,s & 312\,s & caught ✓ \\
+Kitchen cooking & 326\,s & never & 0.688 & 0 & & & correctly ignored ✓ \\
+Dust storm & never & never & 0.129 & 0 & & & correctly ignored ✓ \\
+Fire, dead smoke detector & 61\,s & never (room); 156\,s (neighbour) & 0.748 & 0 & on next door & 267\,s & caught by the neighbour, see below \\
+Drifting sensor, no fire & never & never & 0.057 & 0 & & & correctly ignored ✓ \\
+\bottomrule
+\end{tabular}}
+\caption{One run of each preset. Times are seconds since ignition. RSET is ignition to the last of 130 people out; in every caught case the building cleared 111\,s after the alarm.}
+\label{tab:presets}
+\end{table}
+
+Both fires were confirmed well inside the 180\,s and 300\,s limits of FR-01 and
+FR-02, and none of the three nuisances raised an alarm (FR-03). Figure~\ref{fig:office}
+shows the office fire as the system saw it. The truth and the reading agree until
+the heat detector saturates at 250\,°C; the probability climbs through the three
+thresholds with the dwells visible as the flat time between crossing a level and
+changing state; and after the sprinkler releases at 106\,s the true smoke bends
+down while the temperature, in a now sealed room, keeps rising. The smoulder is the
+interlock's showcase: confirmed on CO with the room at 34\,°C, its sprinkler
+request was refused for lack of heat and journalled, then honoured 18\,s later
+when the room crossed 35\,°C. The design worked as intended, but the number deserves a second look: 35\,°C is a low bar for ``heat corroboration'', and a warm summer
+office would clear it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{images/chart_office_fire.png}
+\caption{The first ten minutes of the office fire in A3505 as the system saw it (E1). Top: the heat detector saturates at 250\,°C while the room reaches 648\,°C. Middle: smoke, where the reading tracks the truth with a 12\,s lag. Bottom: P(fire) through the three thresholds; the vertical lines are the state changes at 51, 81 and 106\,s, and the flat stretches before them are the dwells.}
+\label{fig:office}
+\end{figure}
+
+\textbf{The blind spot.} The preset with a dead smoke detector is the one result
+that did not go to plan. Heat and CO alone pushed the fire room to a probability of
+0.748, held there by the coverage factor, which caps a two-modality room at 85\,\%
+of its logistic score. The confirm threshold is 0.75. The room sat in
+\textsc{pre-alarm} for the whole run, three thousandths short. The building was
+still evacuated at 156\,s, because smoke crossed into A3500A next door, whose
+three working detectors confirmed and whose neighbour-agreement term the fire room
+fed. Two lessons: the neighbour cross-check is not decoration, it is what caught
+this fire; and the coverage penalty is tuned a hair too hard. Lowering it from 0.55
+to 0.60 at the floor, or letting a neighbour's confirmation lift the room, would
+have confirmed the room itself. This is the first change I would make.
+
+\textbf{Closing the loop, and what containment actually does (E2).}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\resizebox{\linewidth}{!}{\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Response} & \textbf{Rooms lost} & \textbf{Neighbour peak smoke} & \textbf{Neighbour peak temp} & \textbf{Fire room peak temp} & \textbf{RSET} \\
+\midrule
+None (supervised, nobody presses) & 5 & 0.382\,1/m & 149\,°C & 309\,°C & no evacuation \\
+Autonomous & 4 & 0.171\,1/m & 152\,°C & 648\,°C & 217\,s \\
+Sprinkler only, door held open & 5 & 0.171\,1/m & 152\,°C & 648\,°C & 217\,s \\
+\bottomrule
+\end{tabular}}
+\caption{The same office fire three times. ``Rooms lost'' are rooms that became untenable by the ISO 13571 limits at any point in 20 minutes.}
+\label{tab:contain}
+\end{table}
+
+The response halves the smoke reaching the neighbours and saves one room. It also
+makes the fire room hotter, and that surprised me until the journal explained it:
+with the door open, the fire room dumps heat into five neighbours every step; with
+the doors closed it keeps it. The sprinkler's 25\,\% factor does not offset that,
+because in this model water reduces the heat released and does nothing to cool the
+room directly. The third row is the more revealing one. Holding the fire room's own
+door open made no difference at all, because at 231\,s the neighbour A3500A
+confirmed on the smoke that had crossed into it and closed \emph{its} doors, one of
+which is the same doorway. Containment in this building is a property of every room
+around the fire, not of the fire room alone. Without any response, nobody is told
+to leave and the RSET is never recorded, which is the simplest argument for the
+evacuate command being automatic.
+
+\textbf{Noise (E3) and lying sensors (E4).}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{minipage}[t]{0.47\linewidth}
+\centering
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Noise} & \multicolumn{2}{c}{\textbf{Office fire}} & \multicolumn{2}{c}{\textbf{Kitchen cooking}} \\
+ & confirmed & max P & alarms & max P \\
+\midrule
+0$\times$ & 106\,s & 0.994 & 0 & 0.447 \\
+1$\times$ & 106\,s & 0.994 & 0 & 0.688 \\
+2$\times$ & 106\,s & 0.995 & 0 & 0.749 \\
+3$\times$ & 106\,s & 0.996 & 0 & 0.741 \\
+\bottomrule
+\end{tabular}
+\caption{Sensor noise sweep (E3).}
+\label{tab:noise}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Smoke detector} & \textbf{Confirmed} & \textbf{Max P} \\
+\midrule
+healthy & 106\,s & 0.994 \\
+dropout (40\,\% lost) & 101\,s & 0.995 \\
+drift & 106\,s & 0.995 \\
+stuck & 156\,s & 0.880 \\
+dead & never (neighbour 156\,s) & 0.748 \\
+\bottomrule
+\end{tabular}
+\caption{Faults on the fire room's smoke detector during the office fire (E4).}
+\label{tab:faults}
+\end{minipage}
+\end{table}
+
+Detection latency did not move by a second across the noise sweep, and no
+nuisance alarmed, which is the dwell times doing their job. The number to worry
+about is the cooking peak at 2$\times$ noise: 0.749 against a confirm threshold of
+0.75. It did not confirm, and it could not have without first holding 0.55 for
+20\,s and then sitting 25\,s in pre-alarm, which it never did; but the margin on the
+probability itself is one noise sample wide. The CO term is what keeps cooking down,
+so the accurate statement is that this detector separates cooking from fire on CO
+and time, not on any single reading. On faults, a dropping-out detector was caught
+slightly faster because the samples it did deliver happened to land on rising
+edges; a stuck one cost 50\,s because the rate term went flat; drift did nothing in
+twenty minutes; and dead is the blind spot above.
+
+\textbf{Scaling and the breaking point (E5).} The tick loop wakes every 250\,ms
+of real time and must finish before it wakes again. At 1$\times$ speed one tick is one
+physics step over the whole building plus one intelligence pass over the monitored
+rooms; at 40$\times$ it is forty physics steps and one pass.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\linewidth]{images/chart_scaling.png}
+\caption{Wall time of one engine tick against the number of monitored rooms (E5), on the laptop the demo runs on. The building has 956 rooms and 1005 doorways.}
+\label{fig:scaling}
+\end{figure}
+
+At real time the whole building fits with room to spare: 23\,ms per tick with all
+956 rooms monitored and 2868 devices sampling. At 40$\times$ the budget is crossed at
+about 450 monitored rooms. The shape says where the cost is. With only 10 rooms
+monitored a 40$\times$ tick already takes 180\,ms, so the forty physics steps over
+the full graph are the fixed cost, about 4.5\,ms a step; the intelligence adds about
+0.18\,ms per monitored room on top. The physics does not scale with the number of
+sensors, so the fix for a bigger building or a faster clock is a sparser diffusion
+step, not a faster detector. When the budget is exceeded nothing breaks: the loop
+runs slower than the speed dial claims, and the tick caps itself at sixty
+physics steps so a stall cannot snowball.
+
+\textbf{Headline results.}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\resizebox{\linewidth}{!}{\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Metric} & \textbf{Measured} & \textbf{Requirement} & \\
+\midrule
+Flaming fire confirmed & 106\,s & $\le 180$\,s (FR-01) & ✓ \\
+Smouldering fire confirmed & 201\,s & $\le 300$\,s (FR-02) & ✓ \\
+False alarms, 3 nuisances $\times$ 4 noise levels & 0 & 0 (FR-03) & ✓ \\
+Commands on confirmation & sprinkler, door, evacuate, same tick, with reasons & (FR-04) & ✓ \\
+Sprinkler refused without heat & yes, released 18\,s later & (SR-01) & ✓ \\
+Fire caught with a stuck, dropping or drifting smoke detector & yes, worst 156\,s & (NFR-02) & ✓ \\
+Fire room confirmed with a dead smoke detector & no; caught next door at 156\,s & (NFR-02) & partial \\
+Tick at 1$\times$, full building & 23\,ms & $\le 250$\,ms (NFR-01) & ✓ \\
+Breaking point at 40$\times$ & about 450 monitored rooms & measured (NFR-01) & ✓ \\
+Building of 130 cleared after the alarm & 111\,s & reported (FR-07) & ✓ \\
+Same seed, same run & identical to the second, every rerun & (NFR-03) & ✓ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\section{12. Dashboard}
+
+The dashboard is two browser tabs that are meant to be read together, and each
+has its own job. The BuildSim viewer shows the
+building: heat maps of the true temperature, smoke and CO on the floor plates,
+flames and smoke in the burning room, the sprinkler running, every one of the 130
+people walking, the alarming rooms outlined in red, orange or yellow by state, and
+the one escape route drawn as a red line from the fire room down the stairs to a
+ground-floor exit. The control panel shows the system: what it is being told, what
+it believes, and what it did about it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{images/dashboard.png}
+\caption{The control panel during the office fire. Rooms table: truth on the left, readings in the middle, P(fire) and state on the right. Room detail: truth against reading for each modality, and the ``Why'' bars that make the detector's number auditable. Response: the interlocked manual commands and the live thresholds.}
+\label{fig:dashboard}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.49\linewidth]{images/viewer_route.png}\hfill
+\includegraphics[width=0.49\linewidth]{images/viewer_plan.png}
+\caption{The BuildSim viewer with firelab's overlays. Left: the 3D view with the fire in the top-floor office and the escape route descending through the stairwell. Right: the same route on the floor-2 plan, from the burning room to the exit.}
+\label{fig:viewer}
+\end{figure}
+
+The most useful part of the panel is the least visual: the Rooms table places the
+true value of each modality beside what its sensor reported, and the room detail
+draws both on one chart. A saturated heat detector, a stuck smoke detector or a
+drifting one is visible as a gap between two lines, which is the thing an operator
+of a real building never gets to see and the thing this project is about.
+Beside it the ``Why'' bars decompose the probability into its contributions, so a
+99\,\% is not a claim but a sum. The journal below records every state change,
+every command with its reason, and every refusal with the interlock's reason, and
+the scorecard grades the run as it happens: catches, misses, false alarms, the alarm
+delay and the RSET. Everything on the panel arrives over the event stream, one
+snapshot per tick, and the whole record leaves as a labelled CSV.
+
+\section{13. Risks and critical reflection}
+
+The system does what the requirements ask, and the evaluation found four things
+that deserve more scepticism than a tick mark.
+
+\textbf{The dead-detector blind spot is real.} A room with two of three
+modalities working stalled three thousandths below the confirm threshold, and was
+rescued by its neighbour. That is a good outcome in this building, where offices
+share doorways with corridors, but it depends on the building's layout rather than on the detector. The coverage
+penalty should be softened, or a confirmed neighbour should be allowed to confirm
+the room. Both are one-line changes; choosing between them needs more runs than
+one.
+
+\textbf{The margins are thinner than the zeros suggest.} No nuisance alarmed, but
+cooking reached 0.749 against a threshold of 0.75. The dwells are what actually
+kept it quiet. A different kitchen, a bigger pan, or a slightly different noise
+draw would push the probability over; whether it would then hold for 45 seconds is
+the real question, and it was not measured across enough seeds to say. The false-alarm rate reported here is zero in the runs performed, not
+zero.
+
+\textbf{Containment is modelled too kindly to the neighbours and too harshly to
+the fire room.} Closing the doors halved the smoke next door, which is right, and
+raised the fire room from 309 to 648\,°C, which is a consequence of a model in which
+water only reduces heat release and a sealed room cannot run out of oxygen. In a
+zone model the sprinkler would cool the gas layer and the fire would starve. The
+relative comparisons in Section~11 stand; the absolute temperatures should not be
+quoted. The sprinkler interlock's 35\,°C bar is also low, and the smoulder cleared
+it in 18\,s; a rate-of-rise condition would be more defensible.
+
+\textbf{One process is the right call for a simulator and the wrong one for a
+building.} The proposal wanted nine containers and the report has one. The
+justification, one simulated clock, is genuine, and the layering test keeps the
+zones separable. But nothing here demonstrates fault isolation, and a fire safety
+system that dies with its physics engine would not be certified. The migration
+path is known and narrow: the sensing zone already emits per-device readings and
+the actuation zone already consumes reasoned commands, which are the two topics a
+broker would carry, and simulated time would travel as a field in every message.
+The evacuation model is optimistic in the same direction: 130 people out in 111\,s
+is a walking-speed number with no queueing at doors and no one who hesitates.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.34}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.26}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.40}}@{}}
+\toprule
+\textbf{Risk / assumption} & \textbf{Impact} & \textbf{Mitigation / decision} \\
+\midrule
+\endhead
+Coverage penalty caps a two-modality room below confirm & A fire with a dead smoke detector is caught only through its neighbour & Soften the floor of the coverage factor, or let a confirmed neighbour confirm the room; measure over many seeds \\
+Nuisance probability within 0.001 of the threshold & A false alarm under a different noise draw & Dwell times hold; add a multi-seed false-alarm rate to the harness before tuning \\
+Lumped physics with no oxygen limit and no direct cooling & Sealed fire rooms overheat; absolute temperatures flatter or damn the response & Read results relatively; a two-layer zone model is the next physics step \\
+Heat corroboration at 35\,°C & Water released on a warm smoulder or a hot day & Require a temperature rise rate as well as a level \\
+Single process, no fault isolation & A crash in one zone stops detection & Acceptable on the laptop; the zone seams are the broker topics of the split \\
+Evacuation without queueing or hesitation & RSET is a lower bound & Report it as such; add door capacity and a pre-movement delay per role \\
+Hand-tuned detector weights & May not transfer to other buildings or sensor mixes & The CSV export and the Detector protocol exist for a trained replacement; the rule is its baseline \\
+Route drawn to one viewer tab, sent once & A second tab, or a reload at the wrong moment, sees no line & Re-send on session change is in; a per-tab replay on connect would finish it \\
+\bottomrule
+\end{longtable}
+
+If I had another two weeks they would go, in order, to a multi-seed false-alarm
+rate, the coverage fix with that rate as its test, and the trained detector the
+proposal promised, judged against the rule on the same recorded runs and on
+whether its ``Why'' can be drawn as bars. The system as it stands is small,
+explainable, and measured, and the places where it is weak are written down here
+rather than discovered in the demo.

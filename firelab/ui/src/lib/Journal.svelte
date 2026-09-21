@@ -32,7 +32,7 @@
 
 <style>
   .journal { display: flex; flex-direction: column; min-height: 0; }
-  .list { flex: 1; min-height: 0; max-height: 260px; display: grid; gap: 4px; align-content: start; }
+  .list { flex: 1; min-height: 0; overflow: auto; display: grid; gap: 4px; align-content: start; }
   .entry {
     display: grid; grid-template-columns: 66px 74px 1fr; gap: 8px; align-items: baseline;
     font-size: 12px; padding: 3px 0; border-bottom: 1px solid #16202f;
@@ -48,4 +48,5 @@
   .kind.interlock { background: #43230d; color: #fdba74; }
   .kind.error { background: #4c1414; color: #fecaca; }
   .kind.scenario { background: #2a1840; color: #d8b4fe; }
+  .kind.detector { background: #3b2a12; color: #fcd34d; }
 </style>

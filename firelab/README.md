@@ -83,6 +83,27 @@ Every blocked command is written to the journal, which is where the interesting
 lessons show up. A smouldering fire, for example, confirms on CO alone and then
 gets its sprinkler request *refused* for lack of heat.
 
+## The LLM detector
+
+A second detector can be switched in from the settings panel or with
+`PUT /api/config {"detector": {"kind": "llm"}}`. It sends each active room's
+readings (never the truth) to any OpenAI-compatible chat endpoint and uses the
+model's probability in place of the rule's. Three environment variables point
+it at your endpoint:
+
+```bash
+export LLM_BASE_URL=https://your-endpoint/v1
+export LLM_API_KEY=...
+export LLM_MODEL=the-model-your-endpoint-serves
+```
+
+The tick loop never waits for the model. Questions go out in the background, at
+most one per room every ten simulated seconds and only for rooms where something
+is happening; the rule scores any room the model has no fresh verdict for, and
+the journal records each hand-over. The alarm ladder and the interlocks are the
+same whichever detector is installed, so a wrong model still cannot trap anyone
+or release water without heat. The code is in `adapters/llm/`, one file per job.
+
 ## Layout
 
 ```
@@ -202,7 +223,7 @@ make test
 
 ## Not built yet
 
-- a trained detector (autoencoder or isolation forest) fed from recorded runs;
+- a trained detector (autoencoder or isolation forest) fed from recorded runs; the LLM detector in `adapters/llm/` is the first alternative behind the `Detector` protocol;
 - fire-spread prediction ahead of the sensors;
 - splitting the zones into separate containers over MQTT.
 

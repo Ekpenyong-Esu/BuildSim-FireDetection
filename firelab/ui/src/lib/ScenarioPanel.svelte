@@ -47,7 +47,7 @@
   </div>
 
   <div class="presets">
-    <span class="legend">Presets — instrument the room and its neighbours, then set the scene</span>
+    <span class="legend">Presets: instrument the room and its neighbours, then set the scene</span>
     {#each store.presets as preset (preset.id)}
       <button
         class="preset"

@@ -1,0 +1,223 @@
+\section{4. Architecture}
+
+\subsection{4.1 Context diagram (C4 Level 1)}
+
+The context view fixes the boundary. Everything the system knows about the building
+comes through BuildSim's REST API, and everything it does to the building goes back
+the same way. The operator uses a browser. The occupants are simulated inside the
+system and are shown here as the people the system is for, because their presence
+is what the safety interlocks protect. There is no external compute: the proposal's
+overnight model training would have been the one candidate, and it was not needed.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\linewidth]{images/context.png}
+\caption{C4 System Context (Level 1). The system in scope is blue; BuildSim is grey, external and unmodified. Every arrow names its purpose and protocol.}
+\label{fig:context}
+\end{figure}
+
+\subsection{4.2 Container diagram (C4 Level 2)}
+
+The container view opens the box. There are four separately running parts, and only
+one of them is this project's code.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\linewidth]{images/container.png}
+\caption{C4 Container diagram (Level 2). The dashed boundary is the system; the two grey containers are BuildSim's. Every arrow carries its protocol.}
+\label{fig:container}
+\end{figure}
+
+\textbf{Why one service.} The proposal's nine containers would each have held one
+of the four zones. I did not build it that way, for one
+reason: simulated time. The whole point of the system is to run a fire at
+forty times real time and still have a 25-second dwell mean 25 simulated seconds.
+Across a broker, every message would need a simulated timestamp, every subscriber
+would need to wait for every publisher before advancing, and a slow dashboard
+consumer could stall the physics. Inside one process the tick loop advances the
+world, samples the sensors, thinks and acts in a fixed order under one lock, and
+``now'' is one number. The price is that the zones share a process, so a crash in
+one takes the others with it. Section~13 says what that costs and what would change
+if the system left the laptop.
+
+\textbf{What keeps the zones apart}, since process boundaries do not, is the
+package layering: \code{domain} (pure, standard library only, no clock, no network),
+\code{adapters} (everything that speaks HTTP to BuildSim), \code{app} (the tick loop,
+the API and the snapshot). The dependency arrow only points inward, and a test,
+\code{test\_layering}, fails the build if any module imports the wrong way or if
+anything in the intelligence path touches the true room state.
+
+\textbf{The control panel} is a separate container because it has a different
+lifecycle: it is built once with Vite into static files, served by the service, and
+talks to it only through the REST endpoints and the server-sent event stream, the
+same interface a script would use. It has no knowledge of the engine's internals.
+
+\subsection{4.3 Component diagram (C4 Level 3): inside the firelab service}
+
+The service is the one container complex enough to need its own picture. Its
+components are the four zones of one tick, plus the three things that sit around
+them. The three groups are the truth boundary: the components in the orange group
+may read the real state of the rooms, the components in the two blue groups may
+not, and the only thing that leaves the orange group is a sensor reading.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.00\linewidth]{images/component.png}
+\caption{C4 Component diagram (Level 3) of the firelab service. The four zones run in this order every tick: world, sensing, intelligence, actuation. Only readings leave the orange group, and the layering test fails if anything else does. The bottom arrow into the orange group is the actuation zone writing sprinkler and door state into the world.}
+\label{fig:component}
+\end{figure}
+
+\textbf{Component responsibilities.} Each component has one job, and the reason it
+is separate is the question the oral examination will ask.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.15}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.31}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.24}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.30}}@{}}
+\toprule
+\textbf{Component} & \textbf{Responsibility (one job)} & \textbf{Module} & \textbf{Reason for separation} \\
+\midrule
+\endhead
+Sources & What a fire or nuisance emits over time; carries the ground-truth label & \code{domain/sources.py} & The label must never leak: only the scoreboard reads \code{kind} \\
+World / physics & One lumped node per room; relax towards the source-driven equilibrium; diffuse through doors and stairs & \code{domain/physics.py} & Owns every time constant, so sources stay a few lines each \\
+Sensing & Turn truth into a reading through the corruption chain; hold faults & \code{domain/sensing.py} & The truth-to-observation boundary; the one place noise and faults live \\
+Features & A 120\,s window per room; rate of rise, ratio, neighbour agreement & \code{domain/features.py} & Sees readings only; the detector's input contract \\
+Detector & Features → P(fire), with a contribution per feature & \code{domain/detector.py} & A protocol, so a trained model can replace the rule without touching the agent \\
+Room agent & The alarm ladder with dwell times; proposes commands with reasons & \code{domain/agent.py} & Decides but never acts; testable with no actuators \\
+Interlocks & Allow or refuse a command; say why & \code{domain/interlocks.py} & Kept outside the agent, so a mistrained agent still cannot trap anyone \\
+Actuation & The only door between deciding and doing; writes sprinkler and door state into the world & \code{app/engine/actuation.py} & Closes the loop; a single audit point for every change \\
+Evacuation & Route people around danger; walk them; choose the one route drawn & \code{app/evacuation.py}, \code{adapters/walkways.py} & The one domain-level job that needs a route lookup \\
+Scoreboard & Detections, misses, false alarms, RSET, tenability & \code{domain/scoring.py}, \code{timeline.py}, \code{tenability.py} & Grades the run; the only consumer of the truth on the right-hand side \\
+Publisher + API & Engine state → BuildSim payloads and the UI snapshot; REST, SSE, CSV & \code{adapters/publisher/}, \code{app/api/}, \code{app/snapshot/} & Presentation kept out of the loop; BuildSim's payload shapes in one place \\
+\bottomrule
+\end{longtable}
+
+\subsection{4.4 Design decisions and justifications}
+
+Each row names the option taken, the alternative I considered, the
+requirement it serves and the price paid. A decision with no rejected alternative
+would only be an assumption.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.14}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.18}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.30}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.18}}@{}}
+\toprule
+\textbf{Decision} & \textbf{Chosen} & \textbf{Alternatives} & \textbf{Justification (requirement)} & \textbf{Trade-off} \\
+\midrule
+\endhead
+Process model & One tick loop, four zones, one lock & One container per zone over MQTT (the proposal) & Dwell times and rates need one simulated clock; at 40$\times$ a brokered reading is stale on arrival (NFR-01, NFR-03) & No fault isolation between zones; the split is a future step \\
+Zone separation & Import layering checked by a test & Trust the code review & The truth is one attribute away from the detector; a test makes restraint checkable (NFR-04) & A test to maintain as modules move \\
+Detector & Hand-written fusion rule behind a protocol & Isolation forest; autoencoder & Caught every fire, zero false alarms at every noise level, and explains itself term by term (FR-01, FR-03, FR-06) & Weights tuned by hand; no learning from data \\
+Alarm logic & State machine with dwell times & Threshold on P(fire) & A single threshold flickers on noise; dwells cost seconds but stop doors cycling (FR-03) & Adds 45\,s to the confirmation of a clear fire \\
+Safety & Interlocks outside the agent & Rules inside the agent's policy & Whoever is wrong upstream, the building stays safe; the same gate applies to a person's click (SR-01 to SR-03) & A confirmed fire in an occupied room gets no door \\
+Deferred commands & A refused request stands until honoured & Refuse once and forget & ``Not yet'' must not become ``never''; the smoulder's sprinkler was refused at 201\,s and released at 219\,s once heat arrived (SR-01) & Re-checked every tick \\
+Route search & Own Dijkstra over BuildSim's graph with alarming rooms removed & Ask BuildSim's router per exit & BuildSim only returns the shortest path, and a fire in a corridor makes every shortest path run through it (FR-05) & A second copy of the graph to keep consistent \\
+Sensor emulation & Lag, bias, noise, quantisation, clamp, faults per device & Truth plus Gaussian noise & The interesting failures (saturation, stuck, dead) are not noise; the temperature clamp at 250\,°C is what a real heat detector does (NFR-02) & More parameters to defend \\
+Physics & Lumped node per room, first-order relaxation, door-gated diffusion & CFD; zone model with layers & Enough structure to make the loop close and the trends right, and cheap enough for 956 rooms 40 times a second (NFR-01) & Fire room overheats when sealed; no oxygen limit (Section~13) \\
+Storage & In-memory rolling windows; CSV export & Time-series database; ThingsBoard & 120\,s is all the detector may see and 20 minutes is all the charts need; a database was a process to keep in step with the clock (NFR-01) & History is lost on restart; long runs are exported, not stored \\
+UI transport & Server-sent events, one snapshot per tick & Polling; WebSocket & One-way push with automatic reconnect, and a plain HTTP stream any tool can read & Snapshot rebuilt every tick even with no listener \\
+BuildSim writes & Once per simulated second, complete collections, 24 sensor values per publish & Every tick; deltas & BuildSim replaces a whole collection per write; too many writes buried it (NFR-05) & Sensor labels in the tree lag behind the truth \\
+\bottomrule
+\end{longtable}
+
+\section{5. Interfaces and communication}
+
+Three patterns are used, each where it fits. \textbf{REST} carries every command
+and every call to BuildSim, because each is a one-to-one request whose result the
+caller must know: a refused command comes back with the interlock's reason.
+\textbf{Server-sent events} carry the snapshot to the control panel, because that is
+one-way, high-rate and needs no reply. \textbf{WebSocket} is BuildSim's own channel
+to its viewer and is used, not built. There is no pub/sub, for the reason given in
+Section~4.2.
+
+\textbf{Naming.} A room is addressed everywhere as \code{level/name}, for instance
+\code{level2/A3505}, because a bare name is not unique across storeys. A device is
+\code{fl-<level>-<room>-<modality>}, so its room and kind can be read off its ID.
+Units are fixed and never carried in messages: temperature in °C, smoke as optical
+obscuration in 1/m, CO in ppm, distances on the plan in half-metre units, and
+simulated time in seconds since midnight.
+
+\textbf{The control-panel API.} Every request body is a typed model; unknown keys
+are rejected by the framework before the engine sees them.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.10}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.30}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.30}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.30}}@{}}
+\toprule
+\textbf{Method} & \textbf{Path} & \textbf{Body} & \textbf{Semantics} \\
+\midrule
+\endhead
+GET & \code{/api/state} & & The full snapshot, once \\
+GET & \code{/api/events} & & SSE: one snapshot per tick, 4\,Hz \\
+GET & \code{/api/rooms} & & Every space for the pickers \\
+GET, PUT & \code{/api/config} & partial config & Live settings: speed, thresholds, dwells, noise, population \\
+POST & \code{/api/clock} & \code{\{seconds?, factor?, running?\}} & Play, pause, jump, 0.1--600$\times$ \\
+POST & \code{/api/scenario/ignite} & \code{\{space, kind, growth, delay, peak\_kw\}} & Schedule a source; \code{kind} is also the label \\
+POST & \code{/api/scenario/preset} & \code{\{preset, space\}} & Instrument the room and its neighbours, then ignite \\
+DELETE & \code{/api/scenario/\{id\}} & & Put a source out; what it emitted still disperses \\
+POST & \code{/api/sensors/deploy} & \code{\{spaces, modalities\}} & Install devices; a room without devices is unmonitored \\
+POST & \code{/api/sensors/fault} & \code{\{device\_id, fault\}} & \code{stuck | dropout | drift | dead | none} \\
+POST & \code{/api/agent/mode} & \code{\{auto\}} & \code{false} is supervised: decisions shown, not carried out \\
+POST & \code{/api/actuators/command} & \code{\{kind, space, value\}} & A manual command; passes the same interlocks; returns \code{\{allowed, reason\}} \\
+GET & \code{/api/history?space=} & & The last 240 samples of one room \\
+GET & \code{/api/export.csv} & & Truth beside reading beside P(fire), every room, labelled \\
+POST & \code{/api/reset}, \code{/api/reload} & & Quiet building; reload floors from BuildSim \\
+\bottomrule
+\end{longtable}
+
+\textbf{The snapshot} is the one data structure the panel reads. Each monitored
+room appears as below, and the three columns of the Rooms table are the three
+objects in it: what is true, what was reported, and what the system believes.
+
+\begin{verbatim}
+{"key": "level2/A3505", "level": "level2", "name": "A3505", "kind": "room",
+ "truth":   {"temperature": 648.0, "smoke": 0.668, "co": 107.0},
+ "reading": {"temperature": 250.0, "smoke": 0.665, "co": 101.0},
+ "p_fire": 0.994, "state": "CONFIRMED", "tenable": false,
+ "sprinkler": true, "door": "closed", "occupants": 0,
+ "devices": [{"id": "fl-level2-A3505-smoke", "modality": "smoke",
+              "fault": "none", "reading": 0.665}, ...]}
+\end{verbatim}
+
+The temperature reading of 250 against a truth of 648 is not a bug in the example.
+It is the heat detector's range clamp, and it is the kind of thing the snapshot
+exists to make visible.
+
+\textbf{The BuildSim interface.} Truth and belief are published to different
+endpoints so that a false positive shows on screen as a room glowing
+red on the belief layer while cool on the heat map.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.36}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.10}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.32}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.22}}@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Direction} & \textbf{Carries} & \textbf{When} \\
+\midrule
+\endhead
+\code{GET /api/building/floors/\{level\}} & read & rooms, polygons, walkable graph & once, at load \\
+\code{GET /api/building/cross-floor-edges} & read & stairs and lifts joining storeys & once, at load \\
+\code{GET /api/graph/route} & read & a shortest path, multi-floor & fallback when no clear route exists \\
+\code{PUT /api/room-layers} & write & true temperature, smoke, CO; and P(fire) as its own layer & every simulated second \\
+\code{PUT /api/effects} & write & fire, smoke and sprinkler particles & every simulated second \\
+\code{PUT /api/alerts} & write & the agent's alarm markers with P(fire) & every simulated second \\
+\code{PUT /api/doors} & write & fire-door state; also blocks the walkable router & every simulated second \\
+\code{PUT /api/entities}, \code{/api/occupancy} & write & every occupant's position and figure; head count per room & every simulated second \\
+\code{PUT /api/sensors/\{id\}/value} & write & one device's latest reading, into the equipment tree & 24 per publish, round robin \\
+\code{PUT /api/sessions/\{id\}/highlights} & write & red, orange, yellow outlines by alarm state & when they change \\
+\code{PUT /api/sessions/\{id\}/route} & write & the one escape route drawn, each node with its storey & when it changes \\
+\bottomrule
+\end{longtable}
+
+A route is a list of waypoints, each carrying its level so that a path down the
+stairs is drawn on the storeys it crosses, plus its length in metres. A closed
+door is published to BuildSim as well as applied in the physics, so that BuildSim's
+own router, which the viewer's route finder uses, stops sending people into a
+sealed room.

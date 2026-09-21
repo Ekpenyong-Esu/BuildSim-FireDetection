@@ -20,12 +20,109 @@
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \babel@aux{british}{}
-\@writefile{toc}{\contentsline {section}{\numberline {1.}1. Use case, and why}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.}2. Scenario}{1}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.}3. What will be built (rough sketch)}{1}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4.}4. Simulating the building}{2}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.}5. The autonomous part}{2}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6.}6. Biggest unknowns \& risks}{2}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7.}7. First step \& rough plan}{3}{section.7}\protected@file@percent }
+\gdef \LT@i {\LT@entry 
+    {1}{122.14107pt}\LT@entry 
+    {1}{304.65027pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.}1. Summary}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.}2. Use case and building context (BuildSim)}{1}{section.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces C4 System Landscape. Several building systems share one BuildSim; the highlighted one is designed here.\relax }}{2}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:landscape}{{1}{2}{C4 System Landscape. Several building systems share one BuildSim; the highlighted one is designed here.\relax }{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.}3. Requirements}{2}{section.3}\protected@file@percent }
+\gdef \LT@ii {\LT@entry 
+    {1}{36.304pt}\LT@entry 
+    {1}{118.06111pt}\LT@entry 
+    {1}{42.304pt}\LT@entry 
+    {1}{125.63855pt}\LT@entry 
+    {1}{104.48366pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.}4. Architecture}{3}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.}4.1 Context diagram (C4 Level 1)}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces C4 System Context (Level 1). The system in scope is blue; BuildSim is grey, external and unmodified. Every arrow names its purpose and protocol.\relax }}{4}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:context}{{2}{4}{C4 System Context (Level 1). The system in scope is blue; BuildSim is grey, external and unmodified. Every arrow names its purpose and protocol.\relax }{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.}4.2 Container diagram (C4 Level 2)}{4}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces C4 Container diagram (Level 2). The dashed boundary is the system; the two grey containers are BuildSim's. Every arrow carries its protocol.\relax }}{5}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:container}{{3}{5}{C4 Container diagram (Level 2). The dashed boundary is the system; the two grey containers are BuildSim's. Every arrow carries its protocol.\relax }{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.}4.3 Component diagram (C4 Level 3): inside the firelab service}{5}{subsection.4.3}\protected@file@percent }
+\gdef \LT@iii {\LT@entry 
+    {1}{64.6163pt}\LT@entry 
+    {1}{133.14436pt}\LT@entry 
+    {1}{105.79207pt}\LT@entry 
+    {1}{123.23859pt}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces C4 Component diagram (Level 3) of the firelab service. The four zones run in this order every tick: world, sensing, intelligence, actuation. Only readings leave the orange group, and the layering test fails if anything else does. The bottom arrow into the orange group is the actuation zone writing sprinkler and door state into the world.\relax }}{6}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:component}{{4}{6}{C4 Component diagram (Level 3) of the firelab service. The four zones run in this order every tick: world, sensing, intelligence, actuation. Only readings leave the orange group, and the layering test fails if anything else does. The bottom arrow into the orange group is the actuation zone writing sprinkler and door state into the world.\relax }{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.}4.4 Design decisions and justifications}{6}{subsection.4.4}\protected@file@percent }
+\gdef \LT@iv {\LT@entry 
+    {1}{59.03055pt}\LT@entry 
+    {1}{87.75711pt}\LT@entry 
+    {1}{80.17966pt}\LT@entry 
+    {1}{125.63855pt}\LT@entry 
+    {1}{74.17966pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.}5. Interfaces and communication}{7}{section.5}\protected@file@percent }
+\gdef \LT@v {\LT@entry 
+    {1}{45.08151pt}\LT@entry 
+    {1}{129.23859pt}\LT@entry 
+    {1}{129.23859pt}\LT@entry 
+    {1}{123.23859pt}}
+\gdef \LT@vi {\LT@entry 
+    {1}{146.68512pt}\LT@entry 
+    {1}{51.08151pt}\LT@entry 
+    {1}{137.05609pt}\LT@entry 
+    {1}{91.97456pt}}
+\gdef \LT@vii {\LT@entry 
+    {1}{68.52805pt}\LT@entry 
+    {1}{74.52805pt}\LT@entry 
+    {1}{144.86761pt}\LT@entry 
+    {1}{138.86761pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.}6. Simulating the sensor values (the physical model)}{9}{section.6}\protected@file@percent }
+\gdef \LT@viii {\LT@entry 
+    {1}{62.76791pt}\LT@entry 
+    {1}{61.67056pt}\LT@entry 
+    {1}{61.67056pt}\LT@entry 
+    {1}{61.67056pt}\LT@entry 
+    {1}{61.67056pt}\LT@entry 
+    {1}{61.67056pt}\LT@entry 
+    {1}{55.67056pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.}7. Autonomous services and data engineering}{10}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1.}7.1 The autonomous service}{10}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.}7.2 The data pipeline}{11}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.}8. Behaviour}{12}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1.}8.1 Key scenario, dynamic diagram}{12}{subsection.8.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces C4 Dynamic diagram of the office fire, with the times measured in Section~11. Steps 3 to 5 are the dwells; step 7 is where the interlocks decide; step 10 is the loop closing.\relax }}{12}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:dynamic}{{5}{12}{C4 Dynamic diagram of the office fire, with the times measured in Section~11. Steps 3 to 5 are the dwells; step 7 is where the interlocks decide; step 10 is the loop closing.\relax }{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2.}8.2 Process lifecycle, state machine}{12}{subsection.8.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces The per-room alarm state machine. Only two states ask for anything; every other arrow only changes what the room believes.\relax }}{13}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:state}{{6}{13}{The per-room alarm state machine. Only two states ask for anything; every other arrow only changes what the room believes.\relax }{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.}9. Deployment and component placement}{13}{section.9}\protected@file@percent }
+\gdef \LT@ix {\LT@entry 
+    {1}{52.89305pt}\LT@entry 
+    {1}{183.94914pt}\LT@entry 
+    {1}{74.52805pt}\LT@entry 
+    {1}{115.4211pt}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Deployment view. Two processes, two tabs, loopback only. The dotted box is the one thing that would ever leave the edge.\relax }}{14}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:deploy}{{7}{14}{Deployment view. Two processes, two tabs, loopback only. The dotted box is the one thing that would ever leave the edge.\relax }{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.}10. Test plan}{14}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11.}11. Evaluation and experiments}{15}{section.11}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces One run of each preset. Times are seconds since ignition. RSET is ignition to the last of 130 people out; in every caught case the building cleared 111\,s after the alarm.\relax }}{15}{table.caption.9}\protected@file@percent }
+\newlabel{tab:presets}{{10}{15}{One run of each preset. Times are seconds since ignition. RSET is ignition to the last of 130 people out; in every caught case the building cleared 111\,s after the alarm.\relax }{table.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces The first ten minutes of the office fire in A3505 as the system saw it (E1). Top: the heat detector saturates at 250\,°C while the room reaches 648\,°C. Middle: smoke, where the reading tracks the truth with a 12\,s lag. Bottom: P(fire) through the three thresholds; the vertical lines are the state changes at 51, 81 and 106\,s, and the flat stretches before them are the dwells.\relax }}{16}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:office}{{8}{16}{The first ten minutes of the office fire in A3505 as the system saw it (E1). Top: the heat detector saturates at 250\,°C while the room reaches 648\,°C. Middle: smoke, where the reading tracks the truth with a 12\,s lag. Bottom: P(fire) through the three thresholds; the vertical lines are the state changes at 51, 81 and 106\,s, and the flat stretches before them are the dwells.\relax }{figure.caption.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces The same office fire three times. ``Rooms lost'' are rooms that became untenable by the ISO 13571 limits at any point in 20 minutes.\relax }}{16}{table.caption.11}\protected@file@percent }
+\newlabel{tab:contain}{{11}{16}{The same office fire three times. ``Rooms lost'' are rooms that became untenable by the ISO 13571 limits at any point in 20 minutes.\relax }{table.caption.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Sensor noise sweep (E3).\relax }}{17}{table.caption.12}\protected@file@percent }
+\newlabel{tab:noise}{{12}{17}{Sensor noise sweep (E3).\relax }{table.caption.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Faults on the fire room's smoke detector during the office fire (E4).\relax }}{17}{table.caption.12}\protected@file@percent }
+\newlabel{tab:faults}{{13}{17}{Faults on the fire room's smoke detector during the office fire (E4).\relax }{table.caption.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Wall time of one engine tick against the number of monitored rooms (E5), on the laptop the demo runs on. The building has 956 rooms and 1005 doorways.\relax }}{17}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:scaling}{{9}{17}{Wall time of one engine tick against the number of monitored rooms (E5), on the laptop the demo runs on. The building has 956 rooms and 1005 doorways.\relax }{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {12.}12. Dashboard}{18}{section.12}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces The control panel during the office fire. Rooms table: truth on the left, readings in the middle, P(fire) and state on the right. Room detail: truth against reading for each modality, and the ``Why'' bars that make the detector's number auditable. Response: the interlocked manual commands and the live thresholds.\relax }}{18}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:dashboard}{{10}{18}{The control panel during the office fire. Rooms table: truth on the left, readings in the middle, P(fire) and state on the right. Room detail: truth against reading for each modality, and the ``Why'' bars that make the detector's number auditable. Response: the interlocked manual commands and the live thresholds.\relax }{figure.caption.15}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces The BuildSim viewer with firelab's overlays. Left: the 3D view with the fire in the top-floor office and the escape route descending through the stairwell. Right: the same route on the floor-2 plan, from the burning room to the exit.\relax }}{19}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:viewer}{{11}{19}{The BuildSim viewer with firelab's overlays. Left: the 3D view with the fire in the top-floor office and the escape route descending through the stairwell. Right: the same route on the floor-2 plan, from the burning room to the exit.\relax }{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {13.}13. Risks and critical reflection}{19}{section.13}\protected@file@percent }
+\gdef \LT@x {\LT@entry 
+    {1}{142.94757pt}\LT@entry 
+    {1}{116.72353pt}\LT@entry 
+    {1}{167.11407pt}}
 \abx@aux@read@bbl@mdfivesum{nobblfile}
-\gdef \@abspage@last{4}
+\gdef \@abspage@last{22}

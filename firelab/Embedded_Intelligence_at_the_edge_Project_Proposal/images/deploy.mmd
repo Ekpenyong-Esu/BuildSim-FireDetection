@@ -1,0 +1,29 @@
+%% Deployment view: two processes, two tabs, loopback only
+flowchart LR
+  subgraph LAPTOP["Laptop, loopback network only"]
+    direction LR
+    subgraph FIRE["this project"]
+      direction TB
+      PANEL["<b>Control panel</b><br/>static Svelte bundle in a browser tab,<br/>served by the service"]
+      SVC["<b>firelab service</b><br/>uvicorn, Python 3.10, 127.0.0.1:8090<br/>one asyncio process; a tick every 250 ms"]
+      PANEL -- "REST + SSE" --> SVC
+    end
+    subgraph BSIDE["BuildSim"]
+      direction TB
+      BS["<b>BuildSim</b><br/>Go binary, 127.0.0.1:9090<br/>building state; serves its own viewer"]
+      VIEWER["<b>3D viewer</b><br/>browser tab served by BuildSim"]
+      BS -- WebSocket --> VIEWER
+    end
+    FIRE -- "REST (service to BuildSim)" --> BSIDE
+  end
+  CLOUD["<b>External compute</b><br/>not used; would train a detector<br/>offline from exported CSV"]
+  LAPTOP -. "labelled CSV, carried by hand" .-> CLOUD
+  classDef cont fill:#438cde,stroke:#0b3d7a,color:#ffffff
+  classDef ext fill:#999999,stroke:#666666,color:#ffffff
+  classDef cloud fill:#ffffff,stroke:#999999,stroke-dasharray:5 4,color:#555555
+  class SVC,PANEL cont
+  class BS,VIEWER ext
+  class CLOUD cloud
+  style LAPTOP fill:#ffffff,stroke:#1c68c4,stroke-dasharray:6 4
+  style FIRE fill:#eef4fc,stroke:#1c68c4
+  style BSIDE fill:#f3f3f3,stroke:#999999

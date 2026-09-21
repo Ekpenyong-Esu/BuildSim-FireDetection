@@ -38,7 +38,7 @@
     <div>
       <h2>Rooms</h2>
       <p class="hint">
-        Only rooms with sensors appear here — {monitored.length} of {store.rooms.length}. Simulated
+        Only rooms with sensors appear here, {monitored.length} of {store.rooms.length}. Simulated
         truth on the left, what the sensors report in the middle, what the system believes on the
         right. Divergence between them is the whole exercise.
       </p>

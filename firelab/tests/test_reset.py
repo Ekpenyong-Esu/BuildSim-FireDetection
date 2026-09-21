@@ -123,3 +123,28 @@ class TestResetKeepsWhatItPromises(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestEngineBuildsWithTheLLMSelected(unittest.TestCase):
+    """FIRELAB_DETECTOR=llm at start-up must not crash the engine's constructor.
+
+    Building the LLM detector writes to the journal, so the journal has to exist
+    before the detector is made. It once did not, and `make run` died on start.
+    """
+
+    def test_constructor_survives_llm_default(self):
+        import os
+        from firelab.app.config import Config
+        from firelab.app.engine.core import Engine
+        saved = {k: os.environ.get(k) for k in ("FIRELAB_DETECTOR", "LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL")}
+        os.environ.update(FIRELAB_DETECTOR="llm", LLM_BASE_URL="http://127.0.0.1:9/v1", LLM_API_KEY="x", LLM_MODEL="m")
+        try:
+            engine = Engine(Config())
+            self.assertEqual(engine.detector.name, "llm")
+            self.assertTrue(any("LLM detector" in line["message"] for line in engine.journal))
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v

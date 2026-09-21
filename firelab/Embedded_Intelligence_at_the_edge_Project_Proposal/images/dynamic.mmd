@@ -1,0 +1,20 @@
+%% C4 Dynamic diagram: the office fire, times as measured in Section 11
+sequenceDiagram
+  participant SRC as Source and physics
+  participant SEN as Sensors
+  participant INT as Intelligence
+  participant ACT as Interlocks and actuation
+  participant EVA as Evacuation
+  participant BS as BuildSim
+  SRC->>SEN: 1: fire lit at t=0.<br/>Smoke, CO and heat<br/>rise every step
+  SEN->>INT: 2: a reading every 5 s,<br/>lagged, noisy, clamped
+  Note over INT: 3: t=51 s, P reaches 0.35: INVESTIGATING
+  Note over INT: 4: t=81 s, P above 0.55 for 20 s: PRE-ALARM
+  Note over INT: 5: t=106 s, 25 s in pre-alarm, P=0.91: CONFIRMED
+  INT->>ACT: 6: sprinkler on, door closed,<br/>evacuate, each with its reason
+  ACT->>SRC: 7: allowed. 331 °C corroborates the smoke, the room is empty and off-route.<br/>Sprinkler on and door openness 0.15 are written into the world
+  ACT->>EVA: 8: everyone in the building<br/>starts evacuating
+  EVA->>BS: 9: the route out of the fire room,<br/>41 nodes down to exit A1016
+  SRC->>SEN: 10: next step, heat x0.25<br/>and smoke x0.4.<br/>The readings bend
+  SRC->>BS: 11: once a simulated second: heat maps, effects, alerts, doors, people, sensor labels
+  EVA->>BS: 12: t=217 s, last person out.<br/>RSET recorded

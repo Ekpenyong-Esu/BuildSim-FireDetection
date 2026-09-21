@@ -1,0 +1,40 @@
+%% C4 Component diagram (Level 3): inside the firelab service.
+%% Edges between the three groups are drawn group to group so that each
+%% group keeps its own left-to-right layout.
+flowchart TB
+  subgraph TRUTH["May read the truth"]
+    direction LR
+    SRC["<b>Sources</b><br/>fires and nuisances;<br/>the ground-truth label"]
+    PHY["<b>World / physics</b><br/>heat, smoke, CO per room;<br/>diffusion through doors"]
+    SEN["<b>Sensing</b><br/>lag, bias, noise,<br/>quantise, clamp, faults"]
+    SCO["<b>Scoreboard</b><br/>catches, misses, false alarms,<br/>RSET, tenability"]
+    SRC -- emissions --> PHY
+    PHY -- truth --> SEN
+    SRC -- labels --> SCO
+  end
+  subgraph READ["Readings only: beyond the truth boundary"]
+    direction LR
+    FEA["<b>Features</b><br/>120 s window per room;<br/>neighbour agreement"]
+    DET["<b>Detector</b><br/>fusion rule to P(fire)<br/>and its contributions"]
+    AGT["<b>Room agent</b><br/>alarm ladder with dwells;<br/>proposes commands"]
+    FEA -- vector --> DET
+    DET -- "P(fire)" --> AGT
+  end
+  subgraph ACT["Acting and showing"]
+    direction LR
+    ILK["<b>Interlocks</b><br/>heat corroboration; never lock;<br/>never seal people in"]
+    ACTU["<b>Actuation</b><br/>sprinkler, door openness,<br/>evacuate; the journal"]
+    EVA["<b>Evacuation</b><br/>Dijkstra on the walkable graph<br/>minus alarming rooms"]
+    PUB["<b>Publisher + API</b><br/>BuildSim payloads;<br/>snapshot; SSE; CSV"]
+    ILK -- allowed --> ACTU
+    ACTU -- evacuate --> EVA
+    EVA -- "route, people" --> PUB
+  end
+  TRUTH -- "readings (Sensing to Features)" --> READ
+  READ -- "proposed commands (Agent to Interlocks); states to the Scoreboard" --> ACT
+  ACT -- "sprinkler on/off and door openness written into the world: the loop closes here" --> TRUTH
+  classDef comp fill:#85b6eb,stroke:#0b3d7a,color:#000000
+  class SRC,PHY,SEN,SCO,FEA,DET,AGT,ILK,ACTU,EVA,PUB comp
+  style TRUTH fill:#fff4ee,stroke:#e25822,stroke-dasharray:6 4
+  style READ fill:#eef4fc,stroke:#1c68c4,stroke-dasharray:6 4
+  style ACT fill:#eef4fc,stroke:#1c68c4,stroke-dasharray:6 4

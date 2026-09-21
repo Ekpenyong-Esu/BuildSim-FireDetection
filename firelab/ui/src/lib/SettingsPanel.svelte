@@ -8,6 +8,7 @@
   let interval = $state(5);
   let speed = $state(1.3);
   let seed = $state(1);
+  let detector = $state('fusion-rule');
   let ready = $state(false);
 
   $effect(() => {
@@ -16,6 +17,7 @@
       interval = store.config.sensors.interval;
       speed = store.config.walking_speed;
       seed = store.config.seed;
+      detector = store.config.detector?.kind ?? 'fusion-rule';
       ready = true;
     }
   });
@@ -35,6 +37,18 @@
   </p>
 
   <div class="field">
+    <label for="set-detector">Detector <span class="mono">{store.snapshot?.detector ?? ''}</span></label>
+    <select id="set-detector" bind:value={detector} onchange={() => api.putConfig({ detector: { kind: detector } })}>
+      <option value="fusion-rule">Fusion rule (hand-written, explainable)</option>
+      <option value="llm">Language model (needs LLM_BASE_URL, LLM_API_KEY, LLM_MODEL)</option>
+    </select>
+    <span class="hint">
+      The rule scores every room every tick. The model answers in the background and the rule covers
+      any room it has no fresh verdict for.
+    </span>
+  </div>
+
+  <div class="field">
     <label for="set-noise">Sensor noise <span class="mono">{noise.toFixed(1)}×</span></label>
     <input
       id="set-noise"
@@ -45,7 +59,7 @@
       bind:value={noise}
       onchange={() => sensors({ noise_scale: Number(noise) })}
     />
-    <span class="hint">0 is a perfect instrument, 3 is a badly behaved one — currently {quality}.</span>
+    <span class="hint">0 is a perfect instrument, 3 is a badly behaved one. Currently {quality}.</span>
   </div>
 
   <div class="field">
@@ -86,7 +100,7 @@
         bind:value={seed}
         onchange={() => api.putConfig({ seed: Number(seed) })}
       />
-      <span class="hint">Same seed, same run — quote it in your report.</span>
+      <span class="hint">Same seed, same run. Quote it in your report.</span>
     </div>
   </div>
 </section>

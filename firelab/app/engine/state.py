@@ -14,11 +14,11 @@ from ...domain import agent as agent_mod
 from ...domain import occupants as occupants_mod
 from ...domain import sensing, sources
 from ...domain import world as world_mod
-from ...domain.detector import FusionRule
 from ...domain.features import Features, Window
 from ...domain.history import History
 from ...domain.scoring import Scoreboard
 from ..config import Config
+from ..detectors import make_detector
 from ..evacuation import Evacuation
 from .streaming import Broadcaster
 
@@ -34,7 +34,6 @@ class EngineState:
         """Build a fresh, empty run ready to be loaded and started."""
         self.config = config or Config()  # the settings; edited live through PUT /api/config
         self.client = BuildSim(self.config.buildsim_url)  # the only way out to BuildSim
-        self.detector = FusionRule()  # swap this line to try a trained model
         self.evacuation = Evacuation(self.client)  # routes people out; keeps the drawn route
         self.rng = Random(self.config.seed)  # one seeded source of randomness
 
@@ -58,6 +57,8 @@ class EngineState:
         self.doors: dict[str, str] = {}  # space key -> "open" | "closed"
         self.blocks: dict[tuple[str, str, str], str] = {}  # held command -> why, for the log
         self.journal: list[dict] = []  # the last 200 log lines, oldest first; the panel shows 40
+        # After the journal, because building the LLM detector writes a line to it.
+        self.detector = make_detector(self.config, clock=lambda: self.now, log=self.log)  # the rule, or the LLM
         self.score = Scoreboard()  # detections, misses, false alarms, and the evacuation clock
         self.history = History()  # truth beside reading, per room, every 5 s, for charts and the CSV
 
@@ -69,6 +70,7 @@ class EngineState:
         self.lock = asyncio.Lock()  # a tick and an API call must not interleave
         self.last_publish = -1e9  # simulated time BuildSim was last drawn; long ago, so the first tick draws
         self.dirty = False  # something changed while paused; publish once
+        self._speed_cap: float | None = None  # the detector's speed limit last applied, for the journal
         self.stream = Broadcaster()  # the open /api/events connections, one queue each
 
     def log(self, kind: str, message: str) -> None:

@@ -35,9 +35,12 @@ async def get_config() -> dict:
 @router.put("/api/config")
 async def put_config(patch: dict) -> dict:
     """Change some settings. Send only the fields you want to change."""
+    before = engine.config.detector.kind
     engine.config.apply(patch)
     if "seed" in patch:
         session.reseed(engine)  # a run is only repeatable if the randomness restarts too
+    if engine.config.detector.kind != before:
+        await engine.set_detector()
     return engine.config.to_dict()
 
 

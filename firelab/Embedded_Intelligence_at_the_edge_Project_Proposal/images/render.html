@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>body{margin:24px;background:#fff;font-family:"Trebuchet MS",Arial,sans-serif} #out svg{display:block}</style>
+</head><body><div id="out"></div>
+<script>
+(async () => {
+  const f = new URLSearchParams(location.search).get('f');
+  const text = await (await fetch(f + '?t=' + Date.now())).text();
+  mermaid.initialize({startOnLoad:false, theme:'neutral', securityLevel:'loose', fontFamily:'"Trebuchet MS", Arial, sans-serif',
+    flowchart:{htmlLabels:true, useMaxWidth:false, curve:'basis', nodeSpacing:40, rankSpacing:55},
+    sequence:{useMaxWidth:false, mirrorActors:false, messageMargin:36, width:170},
+    state:{useMaxWidth:false}});
+  try { const {svg} = await mermaid.render('g' + Date.now(), text); document.getElementById('out').innerHTML = svg; window.__svg = svg; window.__done = true; }
+  catch (e) { document.body.textContent = 'ERROR ' + e.message; window.__err = e.message; window.__done = true; }
+})();
+</script></body></html>

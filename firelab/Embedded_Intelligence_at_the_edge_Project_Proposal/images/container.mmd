@@ -1,0 +1,18 @@
+%% C4 Container diagram (Level 2). The edge from the system boundary to
+%% BuildSim is the firelab service's REST traffic.
+flowchart LR
+  subgraph SYS["Fire detection &amp; response [Software System]"]
+    direction TB
+    UI["<b>Control panel</b><br/>[Container: Svelte 5, browser tab]<br/>scenario, sensors, rooms, response,<br/>scorecard, journal"]
+    SVC["<b>firelab service</b><br/>[Container: Python 3, FastAPI + asyncio]<br/>the tick loop: world, sensing, intelligence,<br/>actuation, evacuation, publishing"]
+    UI -- "commands [REST]<br/>one snapshot per tick [SSE]" --> SVC
+  end
+  BS["<b>BuildSim</b><br/>[Container: Go, :9090]<br/>building state, equipment tree,<br/>session API"]
+  VIEWER["<b>BuildSim 3D viewer</b><br/>[Container: browser tab]<br/>heat maps, effects, people,<br/>outlines, route"]
+  SYS -- "firelab service: GET floors, stairs, routes;<br/>PUT layers, effects, alerts, doors, people,<br/>sensor values, session outlines and route<br/>[REST, once a simulated second]" --> BS
+  BS -- "live state [WebSocket]" --> VIEWER
+  classDef cont fill:#438cde,stroke:#0b3d7a,color:#ffffff
+  classDef ext fill:#999999,stroke:#666666,color:#ffffff
+  class UI,SVC cont
+  class VIEWER,BS ext
+  style SYS fill:#ffffff,stroke:#1c68c4,stroke-dasharray:6 4

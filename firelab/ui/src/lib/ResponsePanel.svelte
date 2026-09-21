@@ -26,7 +26,7 @@
   // reason is shown either way: a refusal is as informative as an action.
   async function send(kind, value) {
     const result = await api.command({ kind, space: selected, value });
-    verdict = `${result.allowed ? 'allowed' : 'blocked'} — ${result.reason}`;
+    verdict = `${result.allowed ? 'allowed' : 'blocked'}: ${result.reason}`;
   }
 
   function push() {

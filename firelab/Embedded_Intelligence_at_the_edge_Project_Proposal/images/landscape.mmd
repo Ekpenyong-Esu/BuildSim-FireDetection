@@ -1,0 +1,19 @@
+%% C4 System Landscape: several building systems share one BuildSim
+flowchart TB
+  FM["<b>Facilities staff</b><br/>[Person]"]
+  FIRE["<b>Fire detection &amp; response</b><br/>[Software System, this project]"]
+  VENT["<b>Ventilation &amp; climate</b><br/>[Software System]"]
+  SEC["<b>Security &amp; access</b><br/>[Software System]"]
+  BS["<b>BuildSim</b><br/>[Building environment]"]
+  FM -- monitors --> FIRE
+  FM -- monitors --> VENT
+  FM -- monitors --> SEC
+  FIRE -- "sensors / actuators" --> BS
+  VENT -- "sensors / actuators" --> BS
+  SEC -- "sensors / actuators" --> BS
+  classDef person fill:#084298,stroke:#052c65,color:#ffffff
+  classDef sys fill:#1c68c4,stroke:#0b3d7a,color:#ffffff
+  classDef ext fill:#999999,stroke:#666666,color:#ffffff
+  class FM person
+  class FIRE sys
+  class VENT,SEC,BS ext

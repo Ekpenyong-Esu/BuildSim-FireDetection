@@ -26,7 +26,7 @@ PRESETS = (
     Preset(
         id="office-fire",
         name="Office fire",
-        description="Fast flaming fire. The easy case — everything corroborates.",
+        description="Fast flaming fire. The easy case: everything corroborates.",
         kind="flaming",
         growth="fast",
     ),
@@ -51,7 +51,7 @@ PRESETS = (
     Preset(
         id="blind-spot",
         name="Fire with a dead detector",
-        description="Flaming fire while the smoke detector is dead — CO and heat must carry it.",
+        description="Flaming fire while the smoke detector is dead, so CO and heat must carry it.",
         kind="flaming",
         growth="fast",
         fault="dead",

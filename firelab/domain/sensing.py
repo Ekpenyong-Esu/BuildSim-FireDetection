@@ -24,7 +24,7 @@ FAULTS = ("none", "stuck", "dropout", "drift", "dead")
 # noise = random jitter, quantum = the smallest step it can report, lo/hi = range.
 # Temperature is the slowest because a real heat detector has thermal mass.
 DEFAULTS = {
-    #            tau   bias  noise  quantum  lo      hi
+    #        tau   bias  noise  quantum  lo  hi
     "smoke": (12.0, 0.0, 0.010, 0.005, 0.0, 3.0),
     "co": (25.0, 0.0, 3.0, 1.0, 0.0, 2000.0),
     "temperature": (30.0, 0.0, 0.15, 0.1, -20.0, 250.0),
