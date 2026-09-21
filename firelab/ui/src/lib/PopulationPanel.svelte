@@ -1,3 +1,4 @@
+<!-- Configures role counts and displays how each population group is progressing. -->
 <script>
   import { store, api } from './store.svelte.js';
 

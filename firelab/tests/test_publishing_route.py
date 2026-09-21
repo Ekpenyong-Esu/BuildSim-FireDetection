@@ -1,4 +1,4 @@
-"""When the escape route is (re)sent to the viewer, and when it is taken down.
+"""Verify route overlays are sent and removed at the correct publishing times.
 
 The viewer re-frames its camera on every route it receives, so an unchanged
 route is not sent again. But "unchanged" has to mean unchanged *for that tab*:

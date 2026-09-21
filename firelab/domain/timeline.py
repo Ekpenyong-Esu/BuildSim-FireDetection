@@ -1,4 +1,7 @@
-"""The evacuation clock: ignition, alarm, building empty.
+"""Track when a fire starts, an alarm sounds, and people get out.
+
+``Scoreboard`` updates this object on every tick. The UI uses it to show alarm
+delay and evacuation time.
 
 Detection latency is only half the story. RSET — how long people actually
 needed to get out — is a different question from whether the alarm was

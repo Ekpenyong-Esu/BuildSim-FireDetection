@@ -1,3 +1,4 @@
+<!-- Selected-room detail: sensor history, detector evidence, and alarm state. -->
 <script>
   import { store, api } from './store.svelte.js';
   import Chart from './Chart.svelte';

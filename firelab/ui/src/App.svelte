@@ -1,3 +1,5 @@
+<!-- Root workspace layout: connects the store to the scenario, room, response,
+     safety, population, and settings panels served by the Firelab API. -->
 <script>
   import { onMount } from 'svelte';
   import { bootstrap } from './lib/store.svelte.js';

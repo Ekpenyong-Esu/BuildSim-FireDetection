@@ -9,8 +9,6 @@ This file is only about *when* things happen. *What* happens lives in the
 sibling modules, and the state they all work on lives in `state.py`.
 """
 
-from __future__ import annotations
-
 import asyncio
 import contextlib
 import time

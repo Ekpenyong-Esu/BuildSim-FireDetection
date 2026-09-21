@@ -1,4 +1,7 @@
-"""Escape routes searched here, over the same walkable graph BuildSim routes on.
+"""Find routes for people who need to leave the building.
+
+The evacuation code calls this file when it places people or avoids a burning
+room. It uses the same walkable map that BuildSim uses.
 
 BuildSim answers "the shortest way from A to B" and nothing else. It steers
 round a burning *room* only because we publish that room's doors as blocked,

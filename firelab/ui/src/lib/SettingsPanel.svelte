@@ -1,3 +1,4 @@
+<!-- Edits runtime settings that the app engine applies on subsequent ticks. -->
 <script>
   import { store, api } from './store.svelte.js';
 

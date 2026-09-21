@@ -1,4 +1,4 @@
-"""The request bodies.
+"""Define the data the browser may send to the API.
 
 Pydantic checks the types, so a bad request is rejected before it ever reaches
 the engine. Each class is the contract for exactly one endpoint, named in its

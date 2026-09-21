@@ -1,3 +1,4 @@
+<!-- Starts fires, nuisances, and presets through the scenario API. -->
 <script>
   import { store, api } from './store.svelte.js';
   import RoomPicker from './RoomPicker.svelte';

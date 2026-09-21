@@ -1,4 +1,4 @@
-"""Sensing is the truth-to-observation boundary; every blind spot is injected here."""
+"""Check sensor delay, noise, rounding, and faults."""
 
 import unittest
 from random import Random

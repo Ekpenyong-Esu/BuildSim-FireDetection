@@ -1,3 +1,4 @@
+<!-- Main comparison table: physical truth beside readings and detector belief. -->
 <script>
   import { store } from './store.svelte.js';
   import DeviceList from './DeviceList.svelte';

@@ -1,4 +1,4 @@
-"""Running the clock: play, pause, fast-forward, start again."""
+"""Play, pause, speed up, and reset the simulation clock."""
 
 from fastapi import APIRouter
 

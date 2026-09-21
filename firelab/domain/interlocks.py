@@ -1,4 +1,7 @@
-"""Safety rules the agent cannot override.
+"""Check commands before they can change the simulated building.
+
+The engine sends both automatic and manual commands through ``check``. Only
+allowed commands reach the building, and blocked commands are recorded.
 
 They live here, not in the agent, so a buggy or mistrained agent still cannot
 trap anyone or flood a dry room.

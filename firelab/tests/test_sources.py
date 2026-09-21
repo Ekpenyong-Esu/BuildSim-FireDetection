@@ -1,4 +1,4 @@
-"""Sources define the ground truth; the detector must learn to tell them apart."""
+"""Check what heat, smoke, and CO each source makes."""
 
 import unittest
 

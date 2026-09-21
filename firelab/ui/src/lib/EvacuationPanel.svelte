@@ -1,3 +1,4 @@
+<!-- Displays evacuation progress computed from occupants, routes, and tenability. -->
 <script>
   import { store } from './store.svelte.js';
 

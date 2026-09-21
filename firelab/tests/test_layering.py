@@ -1,4 +1,4 @@
-"""The layer rules the docstrings claim, checked instead of merely stated.
+"""Check that files import only from the layers they are allowed to use.
 
 `domain/` says it is pure and `intelligence.py` says it never touches the truth.
 Both were only ever promises in prose until this file existed.

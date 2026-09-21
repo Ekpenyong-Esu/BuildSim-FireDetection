@@ -1,4 +1,4 @@
-"""Supervision: who is allowed to act, and manual overrides."""
+"""Choose automatic or supervised response and send manual commands."""
 
 from fastapi import APIRouter
 

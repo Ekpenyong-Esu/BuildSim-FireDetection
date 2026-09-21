@@ -1,8 +1,14 @@
-"""Escape routes in BuildSim's shape.
+"""Translate evacuation routes into BuildSim's route-overlay shape.
+
+The app computes routes through the walkway adapter and passes them here when
+the active route changes. Use this module for outbound geometry and viewer
+cleanup, not for route search or occupant movement.
 
 BuildSim draws a route as a list of waypoints plus a distance, and it wants that
 distance in metres while the floor plan is in 0.5 m units.
 """
+
+import itertools
 
 from ...domain.world import UNITS_TO_METRES
 
@@ -11,7 +17,7 @@ def path_length(path: list[dict]) -> float:
     """Total walking distance of a route: add up the gaps between waypoints."""
     return sum(
         ((b["x"] - a["x"]) ** 2 + (b["y"] - a["y"]) ** 2) ** 0.5
-        for a, b in zip(path, path[1:])
+        for a, b in itertools.pairwise(path)
     )
 
 

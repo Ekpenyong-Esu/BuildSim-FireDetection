@@ -1,4 +1,4 @@
-"""One run per preset, end to end: physics -> sensors -> detector -> agent -> actuators.
+"""Check each preset through a complete simulation run.
 
 The other test files check mechanisms in isolation. These check outcomes, which
 is the level every bug that has ever mattered here lived at: each preset makes a

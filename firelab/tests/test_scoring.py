@@ -1,4 +1,4 @@
-"""Scoring grades the system against the ground truth the sources carry."""
+"""Check detections, misses, false alarms, and evacuation times."""
 
 import unittest
 

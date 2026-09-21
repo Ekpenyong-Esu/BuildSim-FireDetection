@@ -1,4 +1,7 @@
-"""One-click scenarios. A preset is a template; the room comes from the UI."""
+"""The ready-made fire and nuisance scenarios shown in the UI.
+
+The scenario API adds the selected room and starts the chosen preset.
+"""
 
 from dataclasses import asdict, dataclass
 

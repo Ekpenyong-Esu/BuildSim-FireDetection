@@ -1,4 +1,4 @@
-"""Build the JSON the UI reads. Reads engine state, never changes it.
+"""Build the read-only data that the browser displays.
 
 One module per section of the snapshot, so a change to the room table cannot
 disturb the life-safety numbers.

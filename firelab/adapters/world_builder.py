@@ -1,4 +1,7 @@
-"""Turn BuildSim floor payloads into the pure `World` the physics runs on.
+"""Turn BuildSim floor plans into Firelab's ``World`` object.
+
+The engine calls this when it starts. It gives physics and evacuation the same
+rooms, doors, stairs, and room names.
 
 Spaces come from the room list; couplings come from the walkable graph, where
 an edge between two nodes carrying different names is a physical opening

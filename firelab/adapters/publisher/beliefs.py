@@ -1,4 +1,9 @@
-"""What the system believes: room outlines and the alert banner."""
+"""Publish detector and agent belief state to BuildSim's visual overlays.
+
+The engine uses this after intelligence runs so operators can compare the
+system's alarm state with physical truth. Keep these payloads belief-only;
+physical layers belong in ``layers`` and ``effects``.
+"""
 
 from ...domain.world import World
 

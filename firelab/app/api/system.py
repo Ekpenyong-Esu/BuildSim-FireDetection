@@ -1,4 +1,4 @@
-"""Health, the current snapshot, the room list and the settings."""
+"""Return health, current state, rooms, and settings."""
 
 from fastapi import APIRouter
 

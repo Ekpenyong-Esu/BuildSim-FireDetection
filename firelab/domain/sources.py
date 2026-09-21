@@ -1,4 +1,8 @@
-"""Ignition sources and their multi-modal signatures.
+"""The fires and harmless events that can happen in a run.
+
+The scenario API creates ``Source`` objects. The engine asks ``emission`` how
+much heat, smoke, and CO each one makes. Scoring uses ``kind`` as the truth,
+but sensors and the detector never see it.
 
 Pure: standard library only. A source declares how much heat, smoke and CO it
 contributes; the room dynamics in physics.py own every time constant.

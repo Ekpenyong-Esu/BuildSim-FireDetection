@@ -1,3 +1,4 @@
+<!-- Reusable history chart for the selected room; data comes from the API snapshot. -->
 <script>
   // A plain SVG line chart. No dependency, no axes clutter: shape over precision.
   let { series = [], height = 74, label = '', unit = '' } = $props();

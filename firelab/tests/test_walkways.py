@@ -1,4 +1,4 @@
-"""Finding the way round a burning corridor, which BuildSim's router cannot.
+"""Check routes around burning rooms and between floors.
 
 BuildSim steers round a burning room by its blocked doors, and a corridor has
 none. Every shortest route out of the wing below runs through CORRIDOR, so the

@@ -1,4 +1,4 @@
-"""What pressing Reset actually clears, and what it deliberately keeps.
+"""Verify reset clears run state while preserving intended configuration.
 
 Reset is not reload: the floor plans and the sensors you installed survive, and
 so do your settings, because the Settings panel promises they will. Everything

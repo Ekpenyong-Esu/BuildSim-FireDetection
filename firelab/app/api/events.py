@@ -1,4 +1,4 @@
-"""The live state stream the browser holds open."""
+"""Keep the browser updated with live snapshots."""
 
 import asyncio
 import json

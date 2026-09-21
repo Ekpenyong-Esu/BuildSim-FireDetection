@@ -1,11 +1,14 @@
-"""Occupants: where they are and how they follow a route. Pure.
+"""Place people in the building and move them along escape routes.
+
+The app calls ``place`` at the start of a run and ``advance`` on every tick.
+The UI then shows their positions and progress.
 
 Who they are lives in `roles.py`; this file is only about position and movement.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from random import Random
-from typing import Iterable
 
 from .roles import ROLES
 from .world import Space

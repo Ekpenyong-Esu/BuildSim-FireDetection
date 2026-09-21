@@ -1,4 +1,4 @@
-"""ACTUATION: the single door between deciding and doing.
+"""Apply automatic and manual commands after checking safety rules.
 
 Agent commands and button presses both come through `apply`, so the interlocks
 cannot be bypassed by clicking instead of waiting. A command the interlocks

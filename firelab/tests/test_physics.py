@@ -1,4 +1,4 @@
-"""Physics is lumped per room; diffusion is the only way smoke leaves the fire room."""
+"""Check room heat, smoke, CO, spread, and sprinkler effects."""
 
 import unittest
 

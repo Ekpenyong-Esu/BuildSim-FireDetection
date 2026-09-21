@@ -1,4 +1,9 @@
-"""Particle effects for the 3D scene: what is physically happening."""
+"""Publish physical fire, smoke, and sprinkler effects to BuildSim.
+
+The engine derives these particles from domain truth after physics advances.
+Use this adapter for viewer effect payloads, while alarm highlights remain the
+responsibility of ``beliefs``.
+"""
 
 from ...domain.world import World
 

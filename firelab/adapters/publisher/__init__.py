@@ -1,4 +1,7 @@
-"""Map simulation state onto BuildSim's visual and device APIs.
+"""Send Firelab's current state to BuildSim for display.
+
+The engine calls one small publisher for each kind of update: room colors,
+effects, alarms, equipment, people, and routes.
 
 One module per writer, deliberately kept apart:
 

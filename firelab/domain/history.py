@@ -1,4 +1,7 @@
-"""A short rolling record per space, for the charts and the CSV export.
+"""Keep a short record for each room's charts and CSV export.
+
+The engine adds truth, readings, and P(fire) every few simulated seconds. The
+snapshot and API code read the saved rows later.
 
 Stored as flat rows so the whole thing serialises cheaply. Pure: it is told
 the time and never samples faster than `SAMPLE_SECONDS` of simulated time.

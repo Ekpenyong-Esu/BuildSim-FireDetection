@@ -1,4 +1,9 @@
-"""Readings -> feature vectors. Nothing here may see the truth."""
+"""Turn recent sensor readings into numbers for the detector.
+
+The engine keeps a short ``Window`` for each room and calls ``extract`` before
+asking for P(fire). This code only sees readings, never the real room state.
+
+Nothing here may see the truth."""
 
 from dataclasses import dataclass, field
 

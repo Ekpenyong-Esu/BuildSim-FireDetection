@@ -1,4 +1,4 @@
-"""Interlocks are the safety rules the agent cannot override."""
+"""Check that automatic and manual commands follow safety rules."""
 
 import unittest
 

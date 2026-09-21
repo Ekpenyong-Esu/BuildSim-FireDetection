@@ -1,3 +1,4 @@
+<!-- Shows scoring results: detections, misses, and false alarms from the run. -->
 <script>
   import { store } from './store.svelte.js';
 

@@ -1,4 +1,4 @@
-// The one entry point Vite builds from: attach App to the empty div in index.html.
+// Start the browser app. App reads snapshots and sends commands through the store.
 import { mount } from 'svelte';
 import './app.css';
 import App from './App.svelte';

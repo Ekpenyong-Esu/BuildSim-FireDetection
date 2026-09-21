@@ -1,4 +1,4 @@
-"""Why the detector thinks what it thinks, for one room at a time."""
+"""Show why the detector gave one room its fire score."""
 
 from __future__ import annotations
 

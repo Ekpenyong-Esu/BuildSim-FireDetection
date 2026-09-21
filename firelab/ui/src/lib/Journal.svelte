@@ -1,3 +1,4 @@
+<!-- Operator journal: state changes, commands, and interlocks that blocked them. -->
 <script>
   import { store } from './store.svelte.js';
 

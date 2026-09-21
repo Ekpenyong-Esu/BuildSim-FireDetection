@@ -1,4 +1,4 @@
-"""History is a rolling record for charts and CSV export."""
+"""Check the saved data used by room charts and CSV export."""
 
 import unittest
 

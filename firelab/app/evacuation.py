@@ -1,4 +1,4 @@
-"""Evacuation: find escape routes and walk people along them.
+"""Find routes and move people out of the building.
 
 The only reason this is not in `domain/` is the route lookup, which is a
 network call. Everything else here delegates to `domain.occupants`.

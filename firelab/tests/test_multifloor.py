@@ -1,4 +1,4 @@
-"""Joining the storeys: stairwells as couplings, and escapes that leave the floor.
+"""Check building setup and evacuation across multiple floors.
 
 Each floor's walkable graph stops at the slab, so on their own the storeys are
 sealed from one another. BuildSim publishes the stairs separately and merges

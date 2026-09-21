@@ -1,4 +1,4 @@
-"""Every mutable value in the simulation, and nothing that acts on them.
+"""Hold all changing values for one Firelab simulation.
 
 Splitting the state out from the tick loop is what lets each phase module take
 the engine as a plain argument without importing the engine that calls it.

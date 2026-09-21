@@ -1,4 +1,4 @@
-"""Life safety: where the building has stopped being escapable, and who is still in it."""
+"""Show which rooms are safe and how evacuation is going."""
 
 from __future__ import annotations
 

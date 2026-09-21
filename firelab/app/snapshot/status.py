@@ -1,4 +1,4 @@
-"""Header numbers: the clock, the BuildSim connection and the tallies."""
+"""Build the top of the UI: clock, connection, and totals."""
 
 from __future__ import annotations
 

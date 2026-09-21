@@ -1,4 +1,8 @@
-"""The building as the physics sees it: rooms, doorways, and the state in each.
+"""The building model used by the whole Firelab simulation.
+
+The adapter builds a ``World`` from BuildSim floor plans. Physics, sensing,
+evacuation, people, and publishers all use it. A room is named as
+``level/name`` throughout the project.
 
 These are the nouns the rest of the project shares. Ten modules import `World`
 or `Space` without ever running the solver, which is why they live here and not

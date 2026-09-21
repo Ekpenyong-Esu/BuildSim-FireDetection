@@ -1,4 +1,10 @@
-"""The alarm state machine: NORMAL -> INVESTIGATING -> PRE_ALARM -> CONFIRMED -> SUPPRESSED.
+"""Decide what the alarm for one room should do next.
+
+The engine gives ``update`` the fire score and current simulation time. This
+file returns possible commands, but does not change the building. Interlocks
+check the commands before anything happens.
+
+The state machine is: NORMAL -> INVESTIGATING -> PRE_ALARM -> CONFIRMED -> SUPPRESSED.
 
 The agent issues commands. It never writes actuator state, and it never sees
 the truth - only P(fire) from the detector. A command it asks for stays asked

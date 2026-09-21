@@ -1,4 +1,4 @@
-"""Installing, removing and breaking sensors.
+"""Install, remove, and break simulated sensors.
 
 Deployment is what makes a room monitored at all: a room with no device here
 has no readings, no features and no agent, and so is invisible to the system.

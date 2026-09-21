@@ -1,4 +1,4 @@
-"""Installing sensors and breaking them on purpose."""
+"""Add sensors, remove sensors, and add sensor faults."""
 
 from fastapi import APIRouter, HTTPException
 

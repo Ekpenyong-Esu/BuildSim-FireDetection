@@ -1,4 +1,7 @@
-"""Who is in the building, and how well they get themselves out.
+"""The kinds of people used in evacuation scenarios.
+
+The API chooses how many of each role to add. ``occupants.py`` creates the
+people, and the UI shows these names and speeds.
 
 Speed differences are about familiarity, not fitness: knowing where the back
 stairs are matters more than how fast you can run.

@@ -1,4 +1,8 @@
-"""Runtime configuration. Everything here is editable from the UI."""
+"""Settings used by the engine, API, and UI.
+
+The API can change these settings while Firelab is running. The engine uses the
+new values on later ticks.
+"""
 
 from dataclasses import asdict, dataclass, field
 

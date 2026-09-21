@@ -1,4 +1,4 @@
-"""Assemble the application: routers for the API, static files for the built UI.
+"""Start the API and serve the built browser UI.
 
 Everything you can actually ask the server to do lives in `api/`; this file only
 wires it together and ties the engine's lifetime to the server's.

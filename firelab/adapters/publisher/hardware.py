@@ -1,9 +1,14 @@
-"""Building hardware mirrored into BuildSim: fire doors and the equipment tree."""
+"""Mirror Firelab devices and fire-door state into BuildSim hardware views.
 
-from typing import Iterable
+The publishing zone calls this after interlocks and actuation have changed
+allowed hardware state. It translates domain/device state into BuildSim's
+equipment and door payloads without deciding whether a command is safe.
+"""
 
-from ...domain.world import World
+from collections.abc import Iterable
+
 from ...domain.sensing import Device
+from ...domain.world import World
 
 EQUIPMENT_TYPES = {
     # our modality -> (BuildSim type, display label, unit)

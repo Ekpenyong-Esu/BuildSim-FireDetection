@@ -1,4 +1,8 @@
 \documentclass[times, 10pt]{thesisMDH}
+% The class ignores its own `times` option and falls back to Computer Modern,
+% which renders thin and faint in Adobe Reader. mathptmx sets Times for both
+% text and maths, as the option intended.
+\usepackage{mathptmx}
 \usepackage[useregional]{datetime2}
 \usepackage{float}
 \usepackage{enumitem}

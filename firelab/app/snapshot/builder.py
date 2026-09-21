@@ -1,4 +1,4 @@
-"""Assemble the one dictionary that is the entire contract with the UI."""
+"""Put all current simulation data into one browser snapshot."""
 
 from __future__ import annotations
 

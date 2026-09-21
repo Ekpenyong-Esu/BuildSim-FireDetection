@@ -1,4 +1,4 @@
-"""The room table: for each watched room, the truth beside the reading."""
+"""Build the main room table shown in Firelab."""
 
 from __future__ import annotations
 

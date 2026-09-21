@@ -1,4 +1,9 @@
-"""Heat maps painted on the floor plans: three truths and one belief."""
+"""Publish floor-plan heat maps for truth and detector belief.
+
+The engine uses these payloads to show temperature, smoke, CO, and P(fire) in
+BuildSim. Keep truth maps sourced from the world and the belief map sourced
+from detector state so the viewer preserves Firelab's observability boundary.
+"""
 
 from ...domain.world import World
 

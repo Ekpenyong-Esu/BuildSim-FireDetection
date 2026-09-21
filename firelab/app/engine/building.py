@@ -1,4 +1,4 @@
-"""Turning BuildSim's floor plans into the world the physics runs on."""
+"""Load the building from BuildSim when the engine starts."""
 
 from __future__ import annotations
 

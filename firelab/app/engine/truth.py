@@ -1,4 +1,4 @@
-"""The zones that are allowed to read the ground truth.
+"""Update the real building state and take sensor readings.
 
 WORLD advances the physics, SENSING turns the truth into readings, and exposure
 charges each person for the CO they breathe. Everything downstream of this file

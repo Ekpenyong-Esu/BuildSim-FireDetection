@@ -1,3 +1,4 @@
+<!-- Shows installed room devices and exposes the sensor fault controls. -->
 <script>
   import { api } from './store.svelte.js';
 

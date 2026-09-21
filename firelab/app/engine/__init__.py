@@ -1,4 +1,4 @@
-"""The engine.
+"""The simulation engine and the jobs it runs on every tick.
 
 `core` holds the state and the tick loop; every other module is one thing the
 engine can be asked to do, and takes the engine as its first argument.

@@ -1,4 +1,4 @@
-"""The detector must separate real fires from nuisances on readings alone."""
+"""Check that readings separate real fires from harmless nuisances."""
 
 import unittest
 

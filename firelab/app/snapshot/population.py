@@ -1,4 +1,4 @@
-"""How each kind of person is getting on during the evacuation."""
+"""Show how each group of people is doing during evacuation."""
 
 from __future__ import annotations
 

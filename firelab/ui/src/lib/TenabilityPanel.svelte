@@ -1,3 +1,4 @@
+<!-- Shows escape conditions and exposure based on physical truth and movement. -->
 <script>
   import { store } from './store.svelte.js';
 

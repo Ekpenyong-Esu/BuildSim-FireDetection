@@ -1,4 +1,4 @@
-"""Everything that writes the visual state out to BuildSim.
+"""Send changed simulation state to BuildSim at the right time.
 
 The publisher module turns state into payloads; this module decides what is
 worth sending and when, which is a separate problem: BuildSim is slow enough

@@ -1,4 +1,4 @@
-"""Setting up what happens: fires, nuisances and the one-click presets."""
+"""Start fires, start nuisances, remove sources, and use presets."""
 
 from fastapi import APIRouter, HTTPException
 

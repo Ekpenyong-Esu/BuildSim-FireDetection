@@ -1,4 +1,4 @@
-"""Placing and removing what burns: sources, and the presets built from them."""
+"""Start and remove fires or nuisance sources in the running simulation."""
 
 from __future__ import annotations
 

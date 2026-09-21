@@ -1,3 +1,4 @@
+<!-- Selects supervised/automatic response and sends manual interlocked commands. -->
 <script>
   import { store, api } from './store.svelte.js';
 

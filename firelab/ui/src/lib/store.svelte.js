@@ -1,4 +1,5 @@
-// Single source of truth for the UI: one SSE stream in, small commands out.
+// One place for browser data: snapshots come from FastAPI and commands go back.
+// App and all panels use this store.
 
 // $state makes this reactive: any component that reads it re-renders on its own,
 // so nothing has to subscribe and nothing keeps a second copy.

@@ -1,4 +1,4 @@
-"""Occupants are scattered over routable rooms and walk along waypoints."""
+"""Check where people start and how they follow their routes."""
 
 import unittest
 from random import Random

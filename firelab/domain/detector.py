@@ -1,4 +1,8 @@
-"""P(fire) per space.
+"""Turn sensor features into a fire score and an explanation.
+
+The engine passes each room's ``Features`` here before updating its alarm.
+``FusionRule`` is the current detector. A trained detector can use the same
+interface later.
 
 The rule and any trained model are interchangeable behind `Detector`, so the
 agent never learns which one is installed.

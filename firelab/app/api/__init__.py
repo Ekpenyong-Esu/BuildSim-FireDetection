@@ -1,4 +1,8 @@
-"""The REST and SSE surface, one router per thing you can ask the engine to do."""
+"""The API routes used by the browser.
+
+Each route checks the request and passes the work to the shared engine. The
+engine and domain files make the simulation decisions.
+"""
 
 from . import clock, data, events, population, response, scenario, sensors, system
 

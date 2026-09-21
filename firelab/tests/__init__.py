@@ -1,4 +1,4 @@
-"""The test suite.
+"""Tests for Firelab's rules, connections, and complete run.
 
 Four kinds of test, in rough order of how much they cover:
 

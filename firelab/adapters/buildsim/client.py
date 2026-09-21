@@ -1,4 +1,7 @@
-"""One method per BuildSim URL. Every method is exactly one HTTP call.
+"""Small Python methods for BuildSim's HTTP endpoints.
+
+The engine uses this file to load rooms, find routes, and send updates. Each
+method makes one request and leaves decisions to the caller.
 
 Nothing here decides anything: no retries, no caching, no opinion about fire.
 Keeping the whole catalogue flat in one file means you can find any URL the
@@ -12,7 +15,15 @@ from .viewer import ViewerSessions
 
 
 class BuildSim:
-    """A typed wrapper around BuildSim's REST API."""
+    """A typed wrapper around BuildSim's REST API.
+
+    Three groups of calls, in the order a run uses them: reading the building
+    (once, at startup, plus a route lookup whenever someone needs a way out),
+    writing what to draw (about once a second while running), and installing
+    the emulated sensors as equipment (once, on deploy). Every method returns
+    BuildSim's decoded JSON reply, or None, and raises `BuildSimError` on any
+    failure; `health()` is the one exception and answers True/False instead.
+    """
 
     def __init__(self, base_url: str, timeout: float = 10.0) -> None:
         """Point it at a running BuildSim and keep one connection pool."""
@@ -34,11 +45,20 @@ class BuildSim:
             return False
 
     async def building(self) -> dict:
-        """The building's name and its list of levels."""
+        """The building's name and its list of levels.
+
+        Nothing in the engine calls this today (the floor list comes from
+        config); it is here so a script can ask BuildSim what it is serving.
+        """
         return await self._transport.request("GET", "/api/building")
 
     async def floor(self, level: str) -> dict:
-        """One level's rooms and its walkable graph."""
+        """One level's rooms and its walkable graph.
+
+        `level` is BuildSim's short name, e.g. "level0". The answer is the whole
+        floor plan: rooms with polygons, walls, and the walkable graph that
+        `world_builder.py` turns into Spaces and Couplings.
+        """
         return await self._transport.request("GET", f"/api/building/floors/{level}")
 
     async def route(
@@ -58,7 +78,9 @@ class BuildSim:
         to a door. The qualified levels also disambiguate a room name that
         appears on more than one storey.
 
-        Returns None when there is no path, which is normal rather than an error.
+        `graph` selects which of BuildSim's graphs to search; "walkable" is the
+        one people actually move on. Returns None when there is no path, which
+        is normal rather than an error: it is how "no route" is discovered.
         """
         try:
             return await self._transport.request(
@@ -86,7 +108,8 @@ class BuildSim:
     # --- writing state --------------------------------------------------------
     # Each of these replaces the whole collection, so anything left out
     # disappears from the viewer. That is why the publisher always sends
-    # a complete list.
+    # a complete list, and why sending an empty one is how things are erased.
+    # The payload shapes are built in `adapters/publisher/`, one module each.
 
     async def put_room_layers(self, layers: list[dict]) -> None:
         """Colour the room floors."""
@@ -113,6 +136,10 @@ class BuildSim:
         await self._transport.request("PUT", "/api/occupancy", json=occupancy)
 
     # --- equipment, sensors, actuators ---------------------------------------
+    # BuildSim keeps an equipment tree (compressors, pumps, and our detectors)
+    # with sensors and actuators hanging off each item. firelab installs one
+    # equipment item per emulated device on deploy, then pushes readings to
+    # its sensor so they show on the label in the viewer.
 
     async def create_equipment_bulk(self, items: list[dict]) -> Any:
         """Install many sensors and actuators in one call, rather than 3000."""

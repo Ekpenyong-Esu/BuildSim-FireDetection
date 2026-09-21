@@ -1,4 +1,4 @@
-"""Routing people out: the one changed module the preset runs never exercise.
+"""Check routes and people moving around rooms with fires.
 
 `test_presets.py` deliberately asks nobody to walk anywhere, so everything here
 is uncovered by it. BuildSim is faked: these are questions about which path is

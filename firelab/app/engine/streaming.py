@@ -1,6 +1,5 @@
-"""Fan-out of snapshots to the open browser connections behind /api/events."""
+"""Send live snapshots to browsers through ``/api/events``."""
 
-from __future__ import annotations
 
 import asyncio
 import contextlib

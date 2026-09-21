@@ -1,4 +1,7 @@
-"""The boundary where truth becomes observation.
+"""Make sensor readings from the real room conditions.
+
+The engine calls ``sample`` after physics runs. The readings include delay,
+noise, rounding, and faults, so the detector sees what a real sensor might say.
 
 Each device applies its own corruption chain:
 

@@ -1,4 +1,4 @@
-"""Who is in the building."""
+"""Set how many people of each role are in the building."""
 
 from fastapi import APIRouter, HTTPException
 

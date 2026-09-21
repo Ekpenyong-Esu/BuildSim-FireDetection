@@ -1,4 +1,8 @@
-"""Whether a room is still survivable, and how much dose people have taken.
+"""Check whether a room is still safe enough to escape through.
+
+The evacuation code calls ``assess`` and updates each person's exposure with
+``fed_increment``. This is about escape safety, not deciding if an alarm is
+real.
 
 Pure: standard library only. The criteria are the escape thresholds from
 ISO 13571 — they mark the point where conditions stop people getting out, which

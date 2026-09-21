@@ -1,4 +1,10 @@
-"""Where the occupants are: viewer markers and per-room occupancy."""
+"""Publish occupant positions and room occupancy to BuildSim.
+
+The evacuation loop updates domain occupants, then the engine calls this
+adapter so the viewer can show people moving and the current room counts.
+This module only shapes outbound payloads; placement and movement live in the
+domain/app layers.
+"""
 
 from ...domain.occupants import Occupant
 from ...domain.world import World

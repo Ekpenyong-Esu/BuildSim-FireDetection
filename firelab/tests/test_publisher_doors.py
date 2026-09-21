@@ -1,4 +1,4 @@
-"""Telling BuildSim which rooms are alight, so its router avoids them.
+"""Verify publisher door payloads make active fire rooms avoidable by routing.
 
 BuildSim's walkable router drops the entries of any door marked `blocked` from
 the graph. Publishing our belief there is what turns "reject the path BuildSim

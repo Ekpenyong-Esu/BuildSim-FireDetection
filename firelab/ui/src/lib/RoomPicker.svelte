@@ -1,3 +1,4 @@
+<!-- Shared room selector used by scenario controls and room detail views. -->
 <script>
   // A search box over 956 rooms: a plain dropdown would be unusable at that size.
   // `value` is bindable so the parent owns the chosen room key.

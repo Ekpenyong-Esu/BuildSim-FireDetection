@@ -1,4 +1,7 @@
-"""Lumped per-space fire physics over the building adjacency graph.
+"""Update heat, smoke, and CO in every room.
+
+The engine gathers source emissions and calls ``step`` with the shared
+``World``. Sensors read the result. The alarm code must not read it directly.
 
 Pure: standard library only, no clock, no network. Heat, smoke and CO relax
 towards a source-driven equilibrium and diffuse to neighbours across door-gated

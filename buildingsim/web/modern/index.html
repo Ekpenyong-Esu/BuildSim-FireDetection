@@ -9922,15 +9922,25 @@ function openBuilding(opts) {
     else if (o.frame) { const s = overviewShot(); animateCamera3D(s.pos, s.look, 900); }
     return;
   }
+  // Already opening: ride the animation that is running instead of starting
+  // another. A restart superseded the first one, and whatever the first was
+  // asked to do when it finished (frame a route, apply a viewport) was lost.
+  if (peelAnim !== null && peelTarget > 0.5) {
+    if (o.then) _openThen.push(o.then);
+    return;
+  }
   const dur = o.duration || 2300;
   const shot = o.shot || overviewShot();
   if (!o.still) swingCamera(shot, dur);
   animatePeel(1, dur, () => {
     gateOverlays();
     if (o.then) o.then();
+    const queued = _openThen; _openThen = [];
+    queued.forEach(f => f());
   });
   updateBuildingButton();
 }
+let _openThen = [];   // callbacks waiting on the open animation that is running
 
 // The camera takes a short arc round the building while it transforms, rather
 // than sliding to the new pose in a straight line: the swing is what makes the
@@ -9965,6 +9975,7 @@ function closeBuilding(opts) {
   viewMode = 'exterior';
   const shot = heroCameraShot();
   const dur = o.duration || 2000;
+  _openThen = [];                  // nothing waits for an opening that was abandoned
   if (!o.still) swingCamera(shot, dur);
   animatePeel(0, dur * 0.92, () => { gateOverlays(); if (o.then) o.then(); });
   updateBuildingButton();
@@ -10004,15 +10015,18 @@ applyViewport = function (vp) {
   openBuilding({ shot: shot || overviewShot(), then: () => _peel_applyViewport(vp) });
 };
 
+// Drawn at once, whatever state the building is in. The outlines only become
+// visible when the peel gate opens (gateOverlays), so nothing shows early; but
+// drawing inside the open animation's callback lost them whenever a second
+// open request (a route arriving in the same publish) superseded the first
+// animation, and its callback was never run. Only the camera framing waits.
 const _peel_applyHighlights = applyHighlights;
 applyHighlights = function (h) {
-  const draw = () => {
-    _peel_applyHighlights(h);
-    buildHighlightBeacons();
-    if (h && h.length && is3DView) frameHighlights();
-  };
-  if (h && h.length && is3DView && peelT < 0.9) { openBuilding({ then: draw }); return; }
-  draw();
+  _peel_applyHighlights(h);
+  buildHighlightBeacons();
+  const frame = () => { if (h && h.length && is3DView) frameHighlights(); };
+  if (h && h.length && is3DView && peelT < 0.9) { openBuilding({ then: frame }); return; }
+  frame();
 };
 
 // In the stacked view a highlighted room on a lower floor sits under the plate
@@ -10109,15 +10123,16 @@ function frameHighlights() {
   fitCameraToRoute(pts);
 }
 
+// Same as highlights: the line is built now and revealed by the gate. The
+// building is still opened so the route is actually on screen, and the
+// "route ready" offer (which re-frames on the whole path) waits for that.
 const _peel_applyRoute = applyRoute;
 applyRoute = function (route) {
-  const draw = () => {
-    _peel_applyRoute(route);
-    if (route && route.path && route.path.length > 2) offerRouteFlight();
-  };
+  _peel_applyRoute(route);
+  const show = () => { if (route && route.path && route.path.length > 2) offerRouteFlight(); };
   if (route && route.path && route.path.length > 1 && is3DView && peelT < 0.9) {
-    openBuilding({ then: draw });
-  } else draw();
+    openBuilding({ then: show });
+  } else show();
 };
 
 const _peel_switchTo3D = switchTo3D;

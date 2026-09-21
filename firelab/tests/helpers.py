@@ -1,4 +1,4 @@
-"""Shared fixtures: a two-room building with a doorway between them."""
+"""Small test buildings and fake services shared by the tests."""
 
 from firelab.domain import world as world_mod
 

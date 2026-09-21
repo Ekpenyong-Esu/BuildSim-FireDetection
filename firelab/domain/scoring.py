@@ -1,4 +1,8 @@
-"""Grade the system against the ground truth the sources carry.
+"""Keep score for alarms and evacuation during a run.
+
+The engine updates ``Scoreboard`` after each tick. The UI and CSV export show
+detections, misses, false alarms, and evacuation times. Source kinds are the
+truth used for the score.
 
 Every source knows whether it is a real fire or a nuisance, so the run can be
 scored while it happens: how fast real fires were caught, which nuisances the

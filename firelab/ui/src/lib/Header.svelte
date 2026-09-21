@@ -1,3 +1,4 @@
+<!-- Global clock controls and headline status from the current snapshot. -->
 <script>
   import { store, api } from './store.svelte.js';
 

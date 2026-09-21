@@ -1,4 +1,4 @@
-"""The agent is a per-room state machine with dwell times to prevent flicker."""
+"""Check room alarms and the waiting times that stop false flickers."""
 
 import unittest
 

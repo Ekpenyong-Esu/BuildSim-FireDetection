@@ -1,3 +1,4 @@
+<!-- Deploys and removes detector modalities in selected rooms. -->
 <script>
   import { store, api } from './store.svelte.js';
 

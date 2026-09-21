@@ -1,4 +1,4 @@
-"""Getting the recorded run back out: one room's chart, or the whole CSV."""
+"""Return room history for charts and the full run as a CSV file."""
 
 import csv
 import io
