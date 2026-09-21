@@ -58,11 +58,9 @@
   const span = $derived(Math.max(1, ...why.map((t) => Math.abs(t.weighted))));
 </script>
 
-<section class="panel detail" class:open={!!space}>
+{#if space}
+<section class="panel detail open">
   <h2>Room detail</h2>
-  {#if !space}
-    <p class="muted small">Select a room in the table to see its history and its verdict.</p>
-  {:else}
     <p class="hint">
       <strong>{space.name}</strong> · {space.level} · {points.length} samples
     </p>
@@ -129,14 +127,13 @@
         {/if}
       </div>
     </div>
-  {/if}
 </section>
+{/if}
 
 <style>
-  /* A one-line prompt until a room is picked; then roughly two thirds of what the
-     table leaves, with the journal taking the rest. */
-  .detail { flex: 0 0 auto; }
-  .detail.open { flex: 2 1 auto; min-height: 320px; max-height: 62%; overflow: auto; }
+  /* Only present once a room is picked; then roughly two thirds of what the table
+     leaves, with the journal taking the rest. */
+  .detail { flex: 2 1 auto; min-height: 320px; max-height: 62%; overflow: auto; }
   .split { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); }
   .charts { display: grid; gap: 6px 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   h3 {
