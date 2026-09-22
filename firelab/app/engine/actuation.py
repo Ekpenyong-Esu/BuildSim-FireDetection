@@ -26,7 +26,7 @@ def apply(
 
     occupants = sum(1 for o in engine.occupants if o.space == cmd.space and not o.safe)
     on_route = any(cmd.space in o.route_spaces for o in engine.occupants)
-    verdict = interlocks.check(cmd, space.temperature, occupants, on_route)
+    verdict = interlocks.check(cmd, space.temperature, occupants, on_route, neighbours_alarming(engine, cmd.space))
     held = (cmd.space, cmd.kind, cmd.value)
     if not verdict.allowed:
         # A held command is retried every tick, so only say so when the answer changes.
@@ -73,6 +73,15 @@ def override(engine: EngineState, kind: str, space: str, value: str) -> dict:
     cmd = agent_mod.Command(kind=kind, space=space, value=value, reason="manual override")
     verdict = apply(engine, cmd, manual=True)
     return {"allowed": verdict.allowed, "reason": verdict.reason}
+
+
+ALARMING = ("CONFIRMED", "SUPPRESSED")  # a fire that is burning or being held, not merely suspected
+
+
+def neighbours_alarming(engine: EngineState, space: str) -> int:
+    """How many rooms through a doorway from `space` still have a fire on their hands."""
+    adjacent = engine.world.adjacency().get(space, set())
+    return sum(1 for key in adjacent if engine.agents.get(key) is not None and engine.agents[key].state in ALARMING)
 
 
 def danger(engine: EngineState) -> set[str]:

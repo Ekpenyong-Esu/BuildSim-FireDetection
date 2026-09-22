@@ -27,3 +27,18 @@ class TestInterlocks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestStandingDownNextToAFire(unittest.TestCase):
+    """A neighbour's own sprinkler makes its readings look safe; the fire next door has not moved."""
+
+    def test_no_standing_down_beside_an_alarming_room(self):
+        for kind, value in (("sprinkler", "off"), ("fire_door", "open")):
+            with self.subTest(kind=kind):
+                command = agent.Command(kind, "level0/A", value, "clearing")
+                self.assertFalse(interlocks.check(command, 30.0, 0, False, neighbours_alarming=1).allowed)
+                self.assertTrue(interlocks.check(command, 30.0, 0, False, neighbours_alarming=0).allowed)
+
+    def test_raising_the_alarm_is_never_held_back_by_a_neighbour(self):
+        command = agent.Command("sprinkler", "level0/A", "on", "confirmed")
+        self.assertTrue(interlocks.check(command, 80.0, 0, False, neighbours_alarming=3).allowed)

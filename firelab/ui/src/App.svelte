@@ -40,12 +40,12 @@
     <div class="column center">
       <RoomTable bind:selected />
       <RoomDetail {selected} />
+      <Journal />
     </div>
     <div class="column">
       <ResponsePanel {selected} />
       <TenabilityPanel />
       <SettingsPanel />
-      <Journal />
     </div>
   </div>
 </main>
@@ -62,6 +62,8 @@
   }
   .column { display: flex; flex-direction: column; gap: 16px; min-height: 0; overflow: auto; }
   .center { overflow: hidden; }
+  /* the journal takes whatever height the table and the detail leave, and scrolls inside */
+  .center > :global(.journal) { flex: 1; min-height: 160px; }
   @media (max-width: 1400px) {
     main { height: auto; }
     .layout { grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr); }
