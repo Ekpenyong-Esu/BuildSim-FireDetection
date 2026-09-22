@@ -73,11 +73,13 @@ NORMAL → INVESTIGATING → PRE_ALARM → CONFIRMED → CLEARING
 ```
 
 **Actuation** (`domain/interlocks.py`) — the agent proposes, the interlocks
-dispose. Three rules the agent cannot override:
+dispose. Four rules the agent cannot override:
 
 - sprinklers need heat corroboration — smoke alone never releases water;
 - fire doors fail unlocked, always;
-- a room that is occupied or on an active escape route cannot be sealed.
+- a room that is occupied or on an active escape route cannot be sealed;
+- a room next to a fire that is still alarming does not stand down: its door stays
+  closed and its sprinkler stays on until the neighbour clears.
 
 Every blocked command is written to the journal, which is where the interesting
 lessons show up. A smouldering fire, for example, confirms on CO alone and then

@@ -25,11 +25,13 @@ def check(
     temperature: float,
     occupants: int,
     on_escape_route: bool,
+    neighbours_alarming: int = 0,
 ) -> Verdict:
     """Validate one command against the interlocks.
 
     Every command passes through here, whether the agent proposed it or a person
-    clicked it. There is no way round.
+    clicked it. There is no way round. `neighbours_alarming` is how many rooms
+    next door are still in an alarm state; standing down beside one is refused.
     """
     if command.kind == "sprinkler" and command.value == "on":
         # Smoke on its own is not enough to soak a room: burnt toast would do it.
@@ -46,5 +48,13 @@ def check(
         if occupants > 0:
             return Verdict(False, f"{occupants} occupant(s) still inside")
         return Verdict(True, "compartment empty and off-route")
+
+    if command.kind in ("sprinkler", "fire_door") and command.value in ("off", "open"):
+        # A room next to a fire that is still burning does not get to reopen its
+        # door and switch its water off on its own evidence: its own sprinkler is
+        # what made its readings look safe, and the danger next door has not moved.
+        if neighbours_alarming > 0:
+            return Verdict(False, f"{neighbours_alarming} neighbouring room(s) still alarming: not standing down")
+        return Verdict(True, "no fire next door")
 
     return Verdict(True, "no interlock applies")
