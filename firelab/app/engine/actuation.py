@@ -26,7 +26,9 @@ def apply(
 
     occupants = sum(1 for o in engine.occupants if o.space == cmd.space and not o.safe)
     on_route = any(cmd.space in o.route_spaces for o in engine.occupants)
-    verdict = interlocks.check(cmd, space.temperature, occupants, on_route, neighbours_alarming(engine, cmd.space))
+    verdict = interlocks.check(
+        cmd, space.temperature, occupants, on_route, neighbours_alarming(engine, cmd.space), manual=manual
+    )
     held = (cmd.space, cmd.kind, cmd.value)
     if not verdict.allowed:
         # A held command is retried every tick, so only say so when the answer changes.
@@ -63,7 +65,8 @@ def apply(
     if room_agent is not None:
         agent_mod.retire(room_agent, cmd)  # a human pressing the button settles it too
     prefix = "manual" if manual else "auto"
-    engine.log("actuator", f"{prefix} {cmd.kind}={cmd.value} in {space.name}")
+    note = f" ({verdict.reason})" if verdict.reason.startswith("manual override") else ""
+    engine.log("actuator", f"{prefix} {cmd.kind}={cmd.value} in {space.name}{note}")
     engine.mark_dirty()
     return verdict
 

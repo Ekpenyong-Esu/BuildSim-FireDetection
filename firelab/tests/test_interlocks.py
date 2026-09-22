@@ -42,3 +42,11 @@ class TestStandingDownNextToAFire(unittest.TestCase):
     def test_raising_the_alarm_is_never_held_back_by_a_neighbour(self):
         command = agent.Command("sprinkler", "level0/A", "on", "confirmed")
         self.assertTrue(interlocks.check(command, 80.0, 0, False, neighbours_alarming=3).allowed)
+
+    def test_a_person_may_stand_down_beside_a_fire_but_never_lock_or_seal(self):
+        opened = agent.Command("fire_door", "level0/A", "open", "override")
+        self.assertTrue(interlocks.check(opened, 30.0, 0, False, neighbours_alarming=2, manual=True).allowed)
+        locked = agent.Command("fire_door", "level0/A", "locked", "override")
+        self.assertFalse(interlocks.check(locked, 30.0, 0, False, manual=True).allowed)
+        sealed = agent.Command("fire_door", "level0/A", "closed", "override")
+        self.assertFalse(interlocks.check(sealed, 80.0, 2, False, manual=True).allowed)

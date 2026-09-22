@@ -62,10 +62,10 @@
     <p class="target">{space.name} <span class="state {space.state}">{space.state}</span></p>
     <div class="row">
       <button onclick={() => send('sprinkler', space.sprinkler ? 'off' : 'on')}>
-        Sprinkler {space.sprinkler ? 'off' : 'on'}
+        <span class="state">Sprinkler is {space.sprinkler ? 'on' : 'off'}</span> turn {space.sprinkler ? 'off' : 'on'}
       </button>
       <button onclick={() => send('fire_door', space.door === 'open' ? 'closed' : 'open')}>
-        Door {space.door === 'open' ? 'close' : 'open'}
+        <span class="state">Door is {space.door === 'open' ? 'open' : 'closed'}</span> {space.door === 'open' ? 'close' : 'open'} it
       </button>
       <button onclick={() => send('evacuate', 'start')}>Evacuate</button>
     </div>
@@ -108,6 +108,8 @@
   .stats span { font-size: 11px; color: var(--muted); }
   .target { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; }
   .verdict { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  /* the current state in small muted text above the action the button takes */
+  .state { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
   .small { font-size: 12px; }
   .slider {
     display: grid; grid-template-columns: 84px 1fr 42px; align-items: center; gap: 8px;

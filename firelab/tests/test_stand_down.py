@@ -42,3 +42,15 @@ class TestStandDown(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestManualOverride(unittest.TestCase):
+    def test_a_click_opens_the_door_beside_a_fire_and_is_journalled_as_an_override(self):
+        engine = Engine(Config())
+        for key in ("level0/FIRE", "level0/NEXT"):
+            engine.world.spaces[key] = room(key)
+        engine.world.couplings.append(world_mod.Coupling(a="level0/FIRE", b="level0/NEXT", conductance=1.0))
+        engine.agents["level0/FIRE"] = agent_mod.RoomAgent(space="level0/FIRE", state="CONFIRMED")
+        result = actuation.override(engine, "fire_door", "level0/NEXT", "open")
+        self.assertTrue(result["allowed"])
+        self.assertTrue(any("manual override beside 1 alarming room" in line["message"] for line in engine.journal))

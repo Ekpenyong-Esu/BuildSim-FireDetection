@@ -78,8 +78,9 @@ dispose. Four rules the agent cannot override:
 - sprinklers need heat corroboration — smoke alone never releases water;
 - fire doors fail unlocked, always;
 - a room that is occupied or on an active escape route cannot be sealed;
-- a room next to a fire that is still alarming does not stand down: its door stays
-  closed and its sprinkler stays on until the neighbour clears.
+- a room next to a fire that is still alarming does not stand down on its own: its
+  door stays closed and its sprinkler stays on until the neighbour clears. A
+  person's click is allowed past this one rule, and the journal says so.
 
 Every blocked command is written to the journal, which is where the interesting
 lessons show up. A smouldering fire, for example, confirms on CO alone and then
