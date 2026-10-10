@@ -143,7 +143,7 @@ def _on_enter(agent: RoomAgent) -> list[Command]:
     reason = f"P(fire)={agent.probability:.2f} in {agent.space}"
     if agent.state == "CONFIRMED":
         return [
-            Command("sprinkler", agent.space, "on", reason),
+            Com mand("sprinkler", agent.space, "on", reason),
             Command("fire_door", agent.space, "closed", reason),
             Command("evacuate", agent.space, "start", reason),
         ]

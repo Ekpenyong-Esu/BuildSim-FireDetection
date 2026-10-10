@@ -1,11 +1,11 @@
-%% Deployment view: two processes, two tabs, loopback only
+%% Deployment view: two processes, two tabs, loopback only; one optional call out
 flowchart LR
-  subgraph LAPTOP["Laptop, loopback network only"]
+  subgraph LAPTOP["Laptop, loopback network"]
     direction LR
     subgraph FIRE["this project"]
       direction TB
       PANEL["<b>Control panel</b><br/>static Svelte bundle in a browser tab,<br/>served by the service"]
-      SVC["<b>firelab service</b><br/>uvicorn, Python 3.10, 127.0.0.1:8090<br/>one asyncio process; a tick every 250 ms"]
+      SVC["<b>firelab service</b><br/>uvicorn, Python 3.10, 127.0.0.1:8090<br/>one asyncio process; a tick every 250 ms;<br/>the model's worker task beside it"]
       PANEL -- "REST + SSE" --> SVC
     end
     subgraph BSIDE["BuildSim"]
@@ -16,14 +16,14 @@ flowchart LR
     end
     FIRE -- "REST (service to BuildSim)" --> BSIDE
   end
-  CLOUD["<b>External compute</b><br/>not used; would train a detector<br/>offline from exported CSV"]
-  LAPTOP -. "labelled CSV, carried by hand" .-> CLOUD
+  LLM["<b>Language model endpoint</b><br/>canopus.eislab.se, HTTPS<br/>OpenAI-compatible chat API, qwen3.8-27b<br/>optional: without it, or when it is slow,<br/>the rule scores the rooms and the clock is capped"]
+  SVC -. "one room's readings, a JSON verdict;<br/>in the background, never on the tick" .-> LLM
   classDef cont fill:#438cde,stroke:#0b3d7a,color:#ffffff
   classDef ext fill:#999999,stroke:#666666,color:#ffffff
-  classDef cloud fill:#ffffff,stroke:#999999,stroke-dasharray:5 4,color:#555555
+  classDef cloud fill:#f3f3f3,stroke:#999999,stroke-dasharray:5 4,color:#333333
   class SVC,PANEL cont
   class BS,VIEWER ext
-  class CLOUD cloud
+  class LLM cloud
   style LAPTOP fill:#ffffff,stroke:#1c68c4,stroke-dasharray:6 4
   style FIRE fill:#eef4fc,stroke:#1c68c4
   style BSIDE fill:#f3f3f3,stroke:#999999

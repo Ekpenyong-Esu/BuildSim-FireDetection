@@ -7,7 +7,7 @@ Nothing here may see the truth."""
 
 from dataclasses import dataclass, field
 
-WINDOW_SECONDS = 120.0  # how far back the detector is allowed to look
+WINDOW_SECONDS = 120.0  # how far back the detector is allowed to look which is 120 seconds that is two minutes
 
 
 @dataclass

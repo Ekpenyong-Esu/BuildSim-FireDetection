@@ -1,30 +1,34 @@
-\section{4. Architecture}
+\section{4. Architecture}\label{sec:architecture}
 
-\subsection{4.1 Context diagram (C4 Level 1)}
+\subsection{4.1 Context diagram (C4 Level 1)}\label{sec:context}
 
 The context view fixes the boundary. Everything the system knows about the building
 comes through BuildSim's REST API, and everything it does to the building goes back
 the same way. The operator uses a browser. The occupants are simulated inside the
 system and are shown here as the people the system is for, because their presence
-is what the safety interlocks protect. There is no external compute: the proposal's
-overnight model training would have been the one candidate, and it was not needed.
+is what the safety interlocks protect. There is one piece of external compute,
+and it is optional: the language model endpoint, which the service asks about one
+room at a time when that detector is selected. The proposal's overnight model
+training would have been the other candidate, and it was not needed. Nothing the
+system does to the building depends on the endpoint answering.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.78\linewidth]{images/context.png}
-\caption{C4 System Context (Level 1). The system in scope is blue; BuildSim is grey, external and unmodified. Every arrow names its purpose and protocol.}
+\caption{C4 System Context (Level 1). The system in scope is blue; BuildSim and the language model endpoint are grey and external. Every arrow names its purpose and protocol. The model only ever receives readings, never the truth.}
 \label{fig:context}
 \end{figure}
 
-\subsection{4.2 Container diagram (C4 Level 2)}
+\subsection{4.2 Container diagram (C4 Level 2)}\label{sec:container}
 
-The container view opens the box. There are four separately running parts, and only
-one of them is this project's code.
+The container view opens the box. There are five separately running parts, and only
+one of them is this project's code. The fifth, the model endpoint, is the only
+one that is not on the laptop and the only one the system runs happily without.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.90\linewidth]{images/container.png}
-\caption{C4 Container diagram (Level 2). The dashed boundary is the system; the two grey containers are BuildSim's. Every arrow carries its protocol.}
+\caption{C4 Container diagram (Level 2). The dashed boundary is the system; the grey containers are BuildSim's and the model endpoint. Every arrow carries its protocol. The call to the model is made by a background task, never by the tick.}
 \label{fig:container}
 \end{figure}
 
@@ -52,18 +56,32 @@ lifecycle: it is built once with Vite into static files, served by the service, 
 talks to it only through the REST endpoints and the server-sent event stream, the
 same interface a script would use. It has no knowledge of the engine's internals.
 
-\subsection{4.3 Component diagram (C4 Level 3): inside the firelab service}
+\textbf{The model endpoint} is outside the boundary for the opposite reason: it is
+not mine, it is shared with other users, and it answers in about eight real
+seconds when the tick has 250 milliseconds. Those two facts shaped the adapter in
+front of it. The service never waits for it, asks it about one room at a time,
+uses an answer for at most a minute of simulated time, and slows the clock down to
+what the measured answer time allows rather than letting verdicts go stale
+(Section~7.1). An OpenAI-compatible chat API was chosen because every hosted and
+local model server speaks it, so the endpoint, the key and the model name are
+three environment variables and nothing in the code names a vendor.
+
+\subsection{4.3 Component diagram (C4 Level 3): inside the firelab service}\label{sec:component}
 
 The service is the one container complex enough to need its own picture. Its
-components are the four zones of one tick, plus the three things that sit around
+components are the four zones of one tick, plus the things that sit around
 them. The three groups are the truth boundary: the components in the orange group
 may read the real state of the rooms, the components in the two blue groups may
-not, and the only thing that leaves the orange group is a sensor reading.
+not, and the only thing that leaves the orange group is a sensor reading. The LLM
+adapter sits in the readings-only group on purpose. It speaks HTTPS, so by the
+layering rules it lives under \code{adapters}, but what it sends is the same
+feature vector the rule sees, and the layering test checks that it imports
+nothing that could tell it the truth.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1.00\linewidth]{images/component.png}
-\caption{C4 Component diagram (Level 3) of the firelab service. The four zones run in this order every tick: world, sensing, intelligence, actuation. Only readings leave the orange group, and the layering test fails if anything else does. The bottom arrow into the orange group is the actuation zone writing sprinkler and door state into the world.}
+\caption{C4 Component diagram (Level 3) of the firelab service. The four zones run in this order every tick: world, sensing, intelligence, actuation. Only readings leave the orange group, and the layering test fails if anything else does. The arrow into the orange group is the actuation zone writing sprinkler and door state into the world. The dotted arrow is the one call that leaves the process: the LLM adapter asking the model endpoint about a room, off the tick.}
 \label{fig:component}
 \end{figure}
 
@@ -83,7 +101,8 @@ Sources & What a fire or nuisance emits over time; carries the ground-truth labe
 World / physics & One lumped node per room; relax towards the source-driven equilibrium; diffuse through doors and stairs & \code{domain/physics.py} & Owns every time constant, so sources stay a few lines each \\
 Sensing & Turn truth into a reading through the corruption chain; hold faults & \code{domain/sensing.py} & The truth-to-observation boundary; the one place noise and faults live \\
 Features & A 120\,s window per room; rate of rise, ratio, neighbour agreement & \code{domain/features.py} & Sees readings only; the detector's input contract \\
-Detector & Features → P(fire), with a contribution per feature & \code{domain/detector.py} & A protocol, so a trained model can replace the rule without touching the agent \\
+Detector & Features → P(fire), with a contribution per feature; the fusion rule is one implementation & \code{domain/detector.py} & A protocol, so a second detector replaces the rule without touching the agent, and one did \\
+LLM adapter & The same protocol, answered from a cache of the model's verdicts; asks in the background; the rule covers any room without a fresh verdict & \code{adapters/llm/} & The network must never hold the tick up; one file per job (prompt, verdict, policy, client, detector) so each is testable without an endpoint \\
 Room agent & The alarm ladder with dwell times; proposes commands with reasons & \code{domain/agent.py} & Decides but never acts; testable with no actuators \\
 Interlocks & Allow or refuse a command; say why & \code{domain/interlocks.py} & Kept outside the agent, so a mistrained agent still cannot trap anyone \\
 Actuation & The only door between deciding and doing; writes sprinkler and door state into the world & \code{app/engine/actuation.py} & Closes the loop; a single audit point for every change \\
@@ -93,7 +112,7 @@ Publisher + API & Engine state → BuildSim payloads and the UI snapshot; REST, 
 \bottomrule
 \end{longtable}
 
-\subsection{4.4 Design decisions and justifications}
+\subsection{4.4 Design decisions and justifications}\label{sec:decisions}
 
 Each row names the option taken, the alternative I considered, the
 requirement it serves and the price paid. A decision with no rejected alternative
@@ -111,7 +130,11 @@ would only be an assumption.
 \endhead
 Process model & One tick loop, four zones, one lock & One container per zone over MQTT (the proposal) & Dwell times and rates need one simulated clock; at 40$\times$ a brokered reading is stale on arrival (NFR-01, NFR-03) & No fault isolation between zones; the split is a future step \\
 Zone separation & Import layering checked by a test & Trust the code review & The truth is one attribute away from the detector; a test makes restraint checkable (NFR-04) & A test to maintain as modules move \\
-Detector & Hand-written fusion rule behind a protocol & Isolation forest; autoencoder & Caught every fire, zero false alarms at every noise level, and explains itself term by term (FR-01, FR-03, FR-06) & Weights tuned by hand; no learning from data \\
+Detector & Hand-written fusion rule behind a protocol, as the default & Isolation forest; autoencoder; the model alone & Caught every fire, zero false alarms at every noise level, explains itself term by term, and costs nothing per room (FR-01, FR-03, FR-06) & Weights tuned by hand; no learning from data \\
+Second detector & A language model over an OpenAI-compatible API, given readings only & Isolation forest trained on exported runs; no second detector & The comparison the proposal promised, without training on the simulator's own output; the verdict comes with evidence and a reason, so FR-06 still holds (FR-08) & About 8\,s an answer, not repeatable, an external dependency \\
+Model off the tick & Background worker, cached verdicts good for 60\,s, rule fallback & Ask synchronously and wait; use stale verdicts & A tick has 250\,ms and an answer takes seconds; a room must always have a number and a stale one is a wrong one (NFR-06, NFR-07) & Two detectors are in play at once, and the journal has to say which one is speaking \\
+Pacing & Cap the speed dial at what measured answer times allow & Let the clock run and accept that verdicts expire & At 40$\times$ every answer arrived 320 simulated seconds late and the rule silently did all the work; a capped dial is honest (NFR-07) & With this endpoint the demo runs at 3$\times$ instead of 40$\times$ \\
+Questions in flight & One at a time, most suspicious room first & Several at once & The endpoint answers requests one after another, so two in flight doubled the latency and halved the speed the clock could run at; the fire room gets its answer first & Quiet neighbours are mostly scored by the rule \\
 Alarm logic & State machine with dwell times & Threshold on P(fire) & A single threshold flickers on noise; dwells cost seconds but stop doors cycling (FR-03) & Adds 45\,s to the confirmation of a clear fire \\
 Safety & Interlocks outside the agent & Rules inside the agent's policy & Whoever is wrong upstream, the building stays safe; the same gate applies to a person's click (SR-01 to SR-03) & A confirmed fire in an occupied room gets no door \\
 Deferred commands & A refused request stands until honoured & Refuse once and forget & ``Not yet'' must not become ``never''; the smoulder's sprinkler was refused at 201\,s and released at 219\,s once heat arrived (SR-01) & Re-checked every tick \\
@@ -124,15 +147,17 @@ BuildSim writes & Once per simulated second, complete collections, 24 sensor val
 \bottomrule
 \end{longtable}
 
-\section{5. Interfaces and communication}
+\section{5. Interfaces and communication}\label{sec:interfaces}
 
-Three patterns are used, each where it fits. \textbf{REST} carries every command
+Four patterns are used, each where it fits. \textbf{REST} carries every command
 and every call to BuildSim, because each is a one-to-one request whose result the
 caller must know: a refused command comes back with the interlock's reason.
 \textbf{Server-sent events} carry the snapshot to the control panel, because that is
 one-way, high-rate and needs no reply. \textbf{WebSocket} is BuildSim's own channel
-to its viewer and is used, not built. There is no pub/sub, for the reason given in
-Section~4.2.
+to its viewer and is used, not built. \textbf{HTTPS chat completions} carry one
+room's readings to the language model and a JSON verdict back; the call is made
+by a background task with a 30\,s timeout and one retry, and its result is a cache
+entry, never a tick. There is no pub/sub, for the reason given in Section~4.2.
 
 \textbf{Naming.} A room is addressed everywhere as \code{level/name}, for instance
 \code{level2/A3505}, because a bare name is not unique across storeys. A device is
@@ -156,7 +181,7 @@ are rejected by the framework before the engine sees them.
 GET & \code{/api/state} & & The full snapshot, once \\
 GET & \code{/api/events} & & SSE: one snapshot per tick, 4\,Hz \\
 GET & \code{/api/rooms} & & Every space for the pickers \\
-GET, PUT & \code{/api/config} & partial config & Live settings: speed, thresholds, dwells, noise, population \\
+GET, PUT & \code{/api/config} & partial config & Live settings: speed, thresholds, dwells, noise, population; \code{detector.kind} swaps the detector on the next tick \\
 POST & \code{/api/clock} & \code{\{seconds?, factor?, running?\}} & Play, pause, jump, 0.1--600$\times$ \\
 POST & \code{/api/scenario/ignite} & \code{\{space, kind, growth, delay, peak\_kw\}} & Schedule a source; \code{kind} is also the label \\
 POST & \code{/api/scenario/preset} & \code{\{preset, space\}} & Instrument the room and its neighbours, then ignite \\
@@ -221,3 +246,22 @@ stairs is drawn on the storeys it crosses, plus its length in metres. A closed
 door is published to BuildSim as well as applied in the physics, so that BuildSim's
 own router, which the viewer's route finder uses, stops sending people into a
 sealed room.
+
+\textbf{The model interface.} One request per room, \code{POST /chat/completions}
+on whatever base URL is configured, with the fixed system prompt and the room's
+readings as plain lines with units. The prompt is the whole contract: it tells the
+model it sees only the sensors, never the room, and it lists what separates a fire
+from a nuisance in the same terms the rule uses. The reply must be one JSON
+object:
+
+\begin{verbatim}
+{"p_fire": 0.92,
+ "evidence": [{"name": "CO 95 ppm", "weight": 0.30},
+              {"name": "smoke rising", "weight": 0.25}, ...],
+ "reason": "Smoke, CO and temperature are rising together."}
+\end{verbatim}
+
+Anything that does not parse as that, or whose probability is not a number, is
+refused rather than repaired, and the room stays with the rule. The evidence
+becomes the ``Why'' bars on the panel, alongside a bar for the verdict itself on
+the rule's logit scale, so the two detectors read the same way on screen.

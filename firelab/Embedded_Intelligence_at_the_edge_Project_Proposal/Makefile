@@ -1,7 +1,8 @@
 # Build the final report.
 #
 #   make            build main.pdf (pdflatex twice)
-#   make data       rerun the experiments against a live BuildSim, then redraw the charts
+#   make data       rerun the rule's experiments against a live BuildSim, then redraw the charts
+#   make compare    rerun the language-model comparison (about an hour; needs the endpoint), then redraw
 #   make charts     redraw images/chart_*.png from experiments/results/results.json
 #   make diagrams   re-render images/*.mmd to png and svg (needs the helper browser, see below)
 #   make clean      remove LaTeX intermediates
@@ -17,7 +18,7 @@ DOC      := main
 PY       := ../.venv/bin/python
 ROOT     := ../..
 
-.PHONY: all data charts diagrams clean distclean
+.PHONY: all data compare charts diagrams clean distclean
 
 all: $(DOC).pdf
 	@echo "==> $(DOC).pdf ready"
@@ -30,6 +31,10 @@ $(DOC).pdf: $(DOC).tex sections/*.tex images/*.png
 data:
 	cd $(ROOT) && firelab/.venv/bin/python -m firelab.experiments.run_experiments
 	cd $(ROOT) && firelab/.venv/bin/python -m firelab.experiments.containment
+	cd $(ROOT) && firelab/.venv/bin/python firelab/experiments/plot_results.py
+
+compare:
+	cd $(ROOT) && firelab/.venv/bin/python firelab/experiments/compare_detectors.py
 	cd $(ROOT) && firelab/.venv/bin/python firelab/experiments/plot_results.py
 
 charts:

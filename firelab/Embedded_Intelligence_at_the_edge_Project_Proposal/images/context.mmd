@@ -1,16 +1,18 @@
 %% C4 System Context (Level 1)
 flowchart TB
-  OP["<b>Operator</b><br/>[Person]<br/>watches, ignites, breaks sensors, may override"]
+  OP["<b>Operator</b><br/>[Person]<br/>watches, ignites, breaks sensors,<br/>chooses the detector, may override"]
   OCC["<b>Occupants</b><br/>[Person, simulated]<br/>sensed, evacuated, never sealed in"]
-  SYS["<b>Fire detection &amp; autonomous response</b><br/>[Software System]<br/>fire physics, emulated sensors, detection,<br/>interlocked response, evacuation"]
+  SYS["<b>Fire detection &amp; autonomous response</b><br/>[Software System]<br/>fire physics, emulated sensors, two detectors<br/>(fusion rule, language model), interlocked response, evacuation"]
   BS["<b>BuildSim</b><br/>[Software System, external]<br/>floor plans, walkable graph, equipment tree, 3D viewer"]
+  LLM["<b>Language model endpoint</b><br/>[Software System, external, optional]<br/>OpenAI-compatible chat API;<br/>scores one room's readings on request"]
   OP -- "control panel [HTTP REST + SSE]" --> SYS
   SYS -- "moves and protects" --> OCC
   SYS -- "reads floors, stairs and routes;<br/>writes readings, heat maps, effects, doors,<br/>people, alerts, outlines and the route [REST]" --> BS
+  SYS -- "one room's readings, never the truth;<br/>P(fire), evidence and a reason back [HTTPS, JSON]" --> LLM
   BS -- "3D view [WebSocket]" --> OP
   classDef person fill:#084298,stroke:#052c65,color:#ffffff
   classDef sys fill:#1c68c4,stroke:#0b3d7a,color:#ffffff
   classDef ext fill:#999999,stroke:#666666,color:#ffffff
   class OP,OCC person
   class SYS sys
-  class BS ext
+  class BS,LLM ext

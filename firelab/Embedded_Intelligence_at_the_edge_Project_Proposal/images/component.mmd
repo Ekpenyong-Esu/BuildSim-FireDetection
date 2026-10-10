@@ -15,10 +15,13 @@ flowchart TB
   subgraph READ["Readings only: beyond the truth boundary"]
     direction LR
     FEA["<b>Features</b><br/>120 s window per room;<br/>neighbour agreement"]
-    DET["<b>Detector</b><br/>fusion rule to P(fire)<br/>and its contributions"]
+    DET["<b>Detector</b><br/>one protocol, two detectors:<br/>the fusion rule, or the LLM adapter"]
+    LLMA["<b>LLM adapter</b><br/>readings to a prompt; verdicts cached 60 s;<br/>asks in the background; the rule covers the rest"]
     AGT["<b>Room agent</b><br/>alarm ladder with dwells;<br/>proposes commands"]
     FEA -- vector --> DET
     DET -- "P(fire)" --> AGT
+    DET -- "features, when due" --> LLMA
+    LLMA -- "fresh verdict, or the rule's number" --> DET
   end
   subgraph ACT["Acting and showing"]
     direction LR
@@ -30,11 +33,15 @@ flowchart TB
     ACTU -- evacuate --> EVA
     EVA -- "route, people" --> PUB
   end
+  EP["<b>Language model endpoint</b><br/>[external, HTTPS, optional]"]
   TRUTH -- "readings (Sensing to Features)" --> READ
   READ -- "proposed commands (Agent to Interlocks); states to the Scoreboard" --> ACT
   ACT -- "sprinkler on/off and door openness written into the world: the loop closes here" --> TRUTH
+  LLMA -. "one room's readings; JSON verdict back,<br/>about 8 s later, off the tick" .-> EP
   classDef comp fill:#85b6eb,stroke:#0b3d7a,color:#000000
-  class SRC,PHY,SEN,SCO,FEA,DET,AGT,ILK,ACTU,EVA,PUB comp
+  classDef ext fill:#999999,stroke:#666666,color:#ffffff
+  class SRC,PHY,SEN,SCO,FEA,DET,LLMA,AGT,ILK,ACTU,EVA,PUB comp
+  class EP ext
   style TRUTH fill:#fff4ee,stroke:#e25822,stroke-dasharray:6 4
   style READ fill:#eef4fc,stroke:#1c68c4,stroke-dasharray:6 4
   style ACT fill:#eef4fc,stroke:#1c68c4,stroke-dasharray:6 4

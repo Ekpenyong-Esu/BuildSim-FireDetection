@@ -7,13 +7,14 @@ measure what happened, and save the numbers. They drive the same engine the
 server runs, tick by tick, from the same seed every time, so a run today gives
 the same result as a run tomorrow.
 
-There are three scripts:
+There are four scripts:
 
 | Script | What it does | Output |
 |---|---|---|
-| `run_experiments.py` | Runs every preset scenario, a noise sweep, a sensor-fault sweep, and a scaling test | `results/results.json` |
+| `run_experiments.py` | Runs every preset scenario, a noise sweep, a sensor-fault sweep, and a scaling test with the fusion rule | `results/results.json` |
 | `containment.py` | Runs the office fire three times: no response, full response, sprinkler only, and counts the rooms that became unsafe | `results/containment.json` |
-| `plot_results.py` | Draws the report's two evaluation charts from `results.json` with matplotlib | `../Embedded_Intelligence_at_the_edge_Project_Proposal/images/chart_*.png` |
+| `compare_detectors.py` | Runs nine of the same scenarios with the language-model detector, paced to the wall clock the way the live engine is | `results/results_llm.json` |
+| `plot_results.py` | Draws the report's evaluation charts from the results with matplotlib | `../Embedded_Intelligence_at_the_edge_Project_Proposal/images/chart_*.png` |
 
 Every scenario is run in the same office, A3505 on the top floor, with the room
 and its neighbours instrumented, 130 people scattered by the default seed, and
@@ -64,8 +65,9 @@ protecting its neighbours.
    ```
 
    This writes `chart_office_fire.png` and `chart_scaling.png` into the report's
-   images folder. To change how a chart looks, edit the two functions in that
-   file; it is plain matplotlib.
+   images folder, and `chart_detectors.png` as well if `results_llm.json`
+   exists. To change how a chart looks, edit the functions in that file; it is
+   plain matplotlib.
 
 4. Rebuild the report, which includes those PNGs:
 
@@ -73,23 +75,45 @@ protecting its neighbours.
    cd Embedded_Intelligence_at_the_edge_Project_Proposal && make
    ```
 
-   Steps 2 and 3 are also available there as `make data`, and step 3 alone as
-   `make charts`.
+   Steps 2 and 3 are also available there as `make data`, step 3 alone as
+   `make charts`, and the model comparison as `make compare`.
 
 ## Comparing the two detectors
 
-The runs above use the hand-written fusion rule. To score the same scenarios
-with the language-model detector instead, point it at your endpoint and set the
-detector before running:
+The runs above use the hand-written fusion rule. `compare_detectors.py` scores
+nine of the same scenarios with the language-model detector: the six presets,
+kitchen cooking at 2x and 3x noise, and the office fire with a stuck smoke
+detector. Point it at your endpoint (or fill in `firelab/.env`) and run it:
 
 ```
 export LLM_BASE_URL=https://your-endpoint/v1 LLM_API_KEY=... LLM_MODEL=...
-FIRELAB_DETECTOR=llm .venv/bin/python experiments/run_experiments.py
+.venv/bin/python experiments/compare_detectors.py
 ```
 
-The model answers in the background and the rule scores any room it has no
-fresh verdict for, so the numbers measure the pair, not the model alone. They
-are also not repeatable from the seed the way the rule's are.
+It is slow on purpose. The rule's harness runs twenty simulated minutes in a
+few seconds because nothing waits; the model takes about eight real seconds an
+answer and a verdict is only good for a minute of simulated time, so the script
+sleeps between ticks exactly as the live engine paces itself, at the speed the
+detector has measured it can keep up with (about 3x for the endpoint used in the
+report). One scenario is therefore six to seven real minutes and the whole set
+about an hour. The script is resumable: each finished scenario is written to
+`results/results_llm.json` at once and skipped on the next start.
+
+Each run carries the same fields as the rule's plus an `llm` block: the model
+name, how many questions were asked, answered and failed, the median and worst
+answer time, the speed the clock was capped at, the share of the fire room's
+samples the model scored (`model_share`; the rule covers the rest), the highest
+probability the model itself gave, a 5-second trace of who scored the room, and
+every journal line in which the model gave its reason.
+
+The numbers measure the pair, not the model alone, and they are not repeatable
+from the seed the way the rule's are: the model is asked at temperature 0, but
+what it is asked depends on real answer times. Run it twice to see how much
+moves.
+
+`FIRELAB_DETECTOR=llm .venv/bin/python experiments/run_experiments.py` still
+works but is not what you want: unpaced, the run is over before the first
+answer arrives and the rule scores everything.
 
 ## Reading the results
 

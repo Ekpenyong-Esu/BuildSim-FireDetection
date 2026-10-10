@@ -44,7 +44,9 @@ class DetectorConfig:
     refresh_seconds: float = 10.0  # simulated seconds between questions about the same room
     max_age_seconds: float = 60.0  # a verdict older than this hands the room back to the rule
     timeout_seconds: float = 30.0  # per request, real seconds; a reasoning model thinks before it answers
-    max_concurrency: int = 2  # questions in flight at once; more only slows a shared server down
+    # Questions in flight at once. The endpoint used here answers them one after another, so two in
+    # flight only doubles each answer's latency and halves the speed the clock may run at.
+    max_concurrency: int = 1
 
 
 @dataclass

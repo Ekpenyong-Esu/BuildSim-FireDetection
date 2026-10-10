@@ -1,13 +1,15 @@
-\section{9. Deployment and component placement}
+\section{9. Deployment and component placement}\label{sec:deployment}
 
-Everything runs on one laptop, so deployment is about how the system is composed
-from processes rather than where in the world they are. There are two processes
-and two browser tabs, and they talk only through the interfaces of Section~5.
+Everything that matters runs on one laptop, so deployment is about how the
+system is composed from processes rather than where in the world they are. There
+are two processes and two browser tabs, and they talk only through the interfaces
+of Section~5. One optional call leaves the machine: the language model, when it
+is the chosen detector, is a shared server on the university network.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\linewidth]{images/deploy.png}
-\caption{Deployment view. Two processes, two tabs, loopback only. The dotted box is the one thing that would ever leave the edge.}
+\caption{Deployment view. Two processes, two tabs, loopback only. The dotted box is the one thing that leaves the edge, and the system keeps detecting without it.}
 \label{fig:deploy}
 \end{figure}
 
@@ -15,11 +17,14 @@ and two browser tabs, and they talk only through the interfaces of Section~5.
 the interlocks and back, lives in the firelab process and touches nothing outside
 the machine except BuildSim over loopback. In a real building that process is the
 edge node: it must keep working when the internet does not, and it must answer
-inside the tick budget, which Section~11 measures. The only work that would ever
-belong elsewhere is training a detector on recorded runs, which is slow, offline
-and off the critical path; that is why it is drawn dotted and why the CSV export
-exists. BuildSim stands in for the building's own controllers and is left
-alone.
+inside the tick budget, which Section~11 measures. The model endpoint is the
+test of that principle. It is off the edge, it is slow, and it is somebody
+else's, so the adapter treats it as advice rather than as a dependency: the rule
+scores every room the model has not answered for, the tick never blocks on the
+call, and if the endpoint disappears the journal says so and nothing else
+changes. That is the design a real building would need for any cloud service on
+the detection path, and it is why the box is dotted. BuildSim stands in for the
+building's own controllers and is left alone.
 
 \textbf{What is lost by merging the zones into one process}, since the course
 asks: fault isolation and independent restart. If the physics throws, the agent
@@ -38,14 +43,16 @@ without restarting. If BuildSim is down at startup the service says so in its
 journal and idles until a reload; if it goes away mid-run the service marks itself
 disconnected, stops writing, and keeps simulating.
 
-\section{10. Test plan}
+\section{10. Test plan}\label{sec:testplan}
 
-Two kinds of evidence back the requirements. The unit suite, 119 tests and 82
-subtests in 19 files, runs in two seconds with nothing else up, because the domain
-imports nothing that needs a network. The experiments (E1 to E6) drive the real
+Two kinds of evidence back the requirements. The unit suite, 162 tests and 98
+subtests in 22 files, runs in three seconds with nothing else up, because the domain
+imports nothing that needs a network and the model detector is tested against a
+fake endpoint and a fake clock. The experiments (E1 to E7) drive the real
 engine tick by tick against the loaded building with publishing switched off, from
 the same seed every time, and write their measurements to
-\code{experiments/results/}. Section~11 reports them.
+\code{experiments/results/}. E7, the model comparison, is the one that also
+needs the endpoint and a wall clock. Section~11 reports them.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.12}}
@@ -66,16 +73,19 @@ T-7 & \code{test\_scoring}, \code{test\_history}: catch, miss and false alarm ru
 T-8 & \code{test\_layering}: the import direction and the truth boundary & NFR-04 & unit, passes \\
 T-9 & \code{test\_publishing\_route}, \code{test\_publisher\_doors}: the route is sent only when it changes and names its storeys; closed doors reach BuildSim & NFR-05 & unit, passes \\
 T-10 & \code{test\_reset}, \code{test\_presets}: a reset returns to a quiet building and forgets injected faults; every preset is well formed & NFR-03 & unit, passes \\
+T-11 & \code{test\_llm\_detector}: the prompt carries readings only; a good reply becomes a verdict and a bad one is refused; the rule answers until the model has spoken and again once a verdict expires; a quiet room costs no question; one question per room at a time, most suspicious first; the speed limit follows measured answer times & FR-06, FR-08, NFR-06, NFR-07 & unit, passes \\
+T-12 & \code{test\_pacing}: the rule has no speed limit; a slow detector caps the dial once and says so; switching back lifts the cap & NFR-07 & unit, passes \\
 E1 & Each of the six presets in A3505 for 20 simulated minutes: state times, score, response, peak truth & FR-01 to FR-04, SR-01 & Table~\ref{tab:presets}, Figure~\ref{fig:office} \\
 E2 & The office fire with the agent's commands dropped (supervised mode), then with the sprinkler alone & Section~6 loop & Table~\ref{tab:contain} \\
 E3 & Office fire and kitchen cooking at sensor noise 0, 1, 2, 3$\times$ & FR-03, NFR-03 & Table~\ref{tab:noise} \\
 E4 & Office fire with the smoke detector stuck, dropping out, drifting, or dead & NFR-02 & Table~\ref{tab:faults} \\
 E5 & Sensors in 10 to 956 rooms; wall time of one tick at 1$\times$ and 40$\times$ & NFR-01 & Figure~\ref{fig:scaling} \\
 E6 & Every experiment rerun from the same seed & NFR-03 & identical latencies to the second \\
+E7 & The six presets, cooking at 2 and 3$\times$ noise, and the fire with a stuck smoke detector, scored by the language model at the pace it can sustain & FR-08, NFR-06, NFR-07 & Table~\ref{tab:detectors}, Figure~\ref{fig:detectors} \\
 \bottomrule
 \end{longtable}
 
-\section{11. Evaluation and experiments}
+\section{11. Evaluation and experiments}\label{sec:evaluation}
 
 This section reports what was measured. Every number below was measured by the
 experiment harness in \code{experiments/run\_experiments.py} on the loaded
@@ -264,7 +274,7 @@ Same seed, same run & identical to the second, every rerun & (NFR-03) & ✓ \\
 \end{tabular}}
 \end{table}
 
-\section{12. Dashboard}
+\section{12. Dashboard}\label{sec:dashboard}
 
 The dashboard is two browser tabs that are meant to be read together, and each
 has its own job. The BuildSim viewer shows the
@@ -278,7 +288,7 @@ it believes, and what it did about it.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{images/dashboard.png}
-\caption{The control panel during the office fire. Rooms table: truth on the left, readings in the middle, P(fire) and state on the right. Room detail: truth against reading for each modality, and the ``Why'' bars that make the detector's number auditable. Response: the interlocked manual commands and the live thresholds.}
+\caption{The control panel during the office fire with the language model as the detector. Rooms table: truth on the left, readings in the middle, P(fire) and state on the right. Room detail: truth against reading for each modality, and the ``Why'' bars, here the model's own evidence with its verdict as the top bar. Journal: the model's hand-overs. Bottom right: the detector selector.}
 \label{fig:dashboard}
 \end{figure}
 
@@ -296,13 +306,20 @@ draws both on one chart. A saturated heat detector, a stuck smoke detector or a
 drifting one is visible as a gap between two lines, which is the thing an operator
 of a real building never gets to see and the thing this project is about.
 Beside it the ``Why'' bars decompose the probability into its contributions, so a
-99\,\% is not a claim but a sum. The journal below records every state change,
-every command with its reason, and every refusal with the interlock's reason, and
-the scorecard grades the run as it happens: catches, misses, false alarms, the alarm
-delay and the RSET. Everything on the panel arrives over the event stream, one
-snapshot per tick, and the whole record leaves as a labelled CSV.
+99\,\% is not a claim but a sum. With the model installed the same bars show what
+the model said it weighed, the verdict itself as the top bar, and the heading
+names which detector is speaking; the P(fire) trace in Figure~\ref{fig:dashboard}
+shows the model's first verdict dragging the room back to normal before its
+second lifted it, which is the kind of thing a number alone would hide. The
+journal below records every state change, every command with its reason, every
+refusal with the interlock's reason, and every hand-over between the model and
+the rule, and the scorecard grades the run as it happens: catches, misses, false
+alarms, the alarm delay and the RSET. The detector is chosen from the settings
+panel and can be changed mid-fire; the speed dial then shows the cap the model
+imposes. Everything on the panel arrives over the event stream, one snapshot per
+tick, and the whole record leaves as a labelled CSV.
 
-\section{13. Risks and critical reflection}
+\section{13. Risks and critical reflection}\label{sec:risks}
 
 The system does what the requirements ask, and the evaluation found four things
 that deserve more scepticism than a tick mark.

@@ -61,9 +61,12 @@ class LLMDetector:
         self._asked: dict[str, float] = {}  # room -> when it was last asked about
         self._pending: dict[str, Features] = {}  # room -> readings waiting to be sent; latest wins
         self._fallback_rooms: set[str] = set()  # rooms the rule is scoring right now, for the journal
+        self._journaled: dict[str, float] = {}  # room -> the last verdict written to the journal
         self._late_rooms: set[str] = set()  # rooms whose answers arrive after they have expired
         self._in_flight: set[str] = set()  # rooms with a question out; not asked again meanwhile
         self._latencies: list[float] = []  # real seconds per answer, the last few, for pacing
+        self._counts = {"asked": 0, "answered": 0, "failed": 0}  # over the detector's life, for the harness
+        self._all_latencies: list[float] = []  # every answer's real seconds, for the harness
         self._task: asyncio.Task | None = None
 
     # --- the Detector protocol: answers at once, never waits ------------------
@@ -134,6 +137,20 @@ class LLMDetector:
         latency = statistics.median(self._latencies)
         return max(1.0, self._policy.max_age / (2.0 * max(latency, 0.1)))
 
+    def in_charge(self, room: str) -> bool:
+        """Whether the room's score right now is the model's own rather than the rule's."""
+        return self._fresh(room) is not None
+
+    def stats(self) -> dict:
+        """What the model has cost so far: questions, answers, failures and how long answers took."""
+        timed = sorted(self._all_latencies)
+        return {
+            **self._counts,
+            "latency_median_s": round(statistics.median(timed), 2) if timed else None,
+            "latency_max_s": round(timed[-1], 2) if timed else None,
+            "max_speed": self.max_speed(),
+        }
+
     def _fresh(self, room: str) -> Verdict | None:
         verdict = self._verdicts.get(room)
         if verdict is None or not policy_mod.is_fresh(self._policy, verdict.at, self._clock()):
@@ -161,6 +178,7 @@ class LLMDetector:
         """One question, one answer, stored if it parses; otherwise the rule stays in charge."""
         asked_at = self._clock()
         started = time.monotonic()
+        self._counts["asked"] += 1
         try:
             async with self._limit:
                 answering = time.monotonic()
@@ -168,14 +186,20 @@ class LLMDetector:
                     text = await self._completer.complete_json(prompt.messages(features))
                     verdict = parse(text, asked_at)
                 except (LLMError, VerdictError) as exc:
+                    self._counts["failed"] += 1
                     self._log("detector", f"{room}: model unavailable ({exc}); the rule is scoring it")
                     return
+                self._counts["answered"] += 1
                 self._latencies = (self._latencies + [time.monotonic() - answering])[-5:]
+                self._all_latencies.append(self._latencies[-1])
         finally:
             self._in_flight.discard(room)
-        previous = self._verdicts.get(room)
         self._verdicts[room] = verdict
-        if previous is None or abs(previous.p_fire - verdict.p_fire) >= 0.1:
+        # Against the last verdict *journaled*, not the last one given: a score that
+        # creeps up by 0.09 an answer would otherwise never be written down at all.
+        last = self._journaled.get(room)
+        if last is None or abs(last - verdict.p_fire) >= 0.1:
+            self._journaled[room] = verdict.p_fire
             self._log("detector", f"{room}: model says P(fire)={verdict.p_fire:.2f}: {verdict.reason}")
         self._note_lag(room, self._clock() - asked_at, time.monotonic() - started)
 
@@ -206,6 +230,8 @@ class LLMDetector:
         """Journal the moment the rule takes over a room, and the moment it hands back."""
         if falling_back and room not in self._fallback_rooms:
             self._fallback_rooms.add(room)
+            if room in self._verdicts:  # the model had spoken and its word has expired
+                self._log("detector", f"{room}: model verdict expired; the rule is scoring the room")
         elif not falling_back and room in self._fallback_rooms:
             self._fallback_rooms.discard(room)
             self._log("detector", f"{room}: model verdict in use")

@@ -248,3 +248,55 @@ class TestPacing(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestWhatTheHarnessReads(unittest.IsolatedAsyncioTestCase):
+    """`in_charge` and `stats` are what the comparison experiment records."""
+
+    async def test_in_charge_and_stats_follow_the_verdicts(self):
+        completer, clock = FakeCompleter(reply(0.9)), FakeClock()
+        d = detector(completer, clock, max_age=30.0)
+        self.assertFalse(d.in_charge("level0/A1"))
+        self.assertEqual(d.stats()["asked"], 0)
+        d.probability(smoky())
+        await d.refresh_pending()
+        self.assertTrue(d.in_charge("level0/A1"))
+        stats = d.stats()
+        self.assertEqual((stats["asked"], stats["answered"], stats["failed"]), (1, 1, 0))
+        self.assertIsNotNone(stats["latency_median_s"])
+        clock.now = 31.0  # expired
+        self.assertFalse(d.in_charge("level0/A1"))
+
+    async def test_a_failed_answer_is_counted(self):
+        completer, clock = FakeCompleter(error=LLMError("down")), FakeClock()
+        d = detector(completer, clock)
+        d.probability(smoky())
+        await d.refresh_pending()
+        self.assertEqual(d.stats()["failed"], 1)
+        self.assertFalse(d.in_charge("level0/A1"))
+
+
+class TestJournal(unittest.IsolatedAsyncioTestCase):
+    """The journal compares against what it last wrote, so a slow creep is still written down."""
+
+    async def test_creeping_verdicts_reach_the_journal(self):
+        completer, clock, lines = FakeCompleter(reply(0.10)), FakeClock(), []
+        d = LLMDetector(completer, clock, FusionRule(), RefreshPolicy(every=10.0), log=lambda k, m: lines.append(m))
+        for step, p in enumerate((0.10, 0.18, 0.26, 0.34)):  # never 0.1 apart from the one before
+            completer.reply = reply(p)
+            clock.now = step * 10.0
+            d.probability(smoky())
+            await d.refresh_pending()
+        said = [m for m in lines if "model says" in m]
+        self.assertEqual(len(said), 2)  # 0.10, then 0.26 (the first to be 0.1 above 0.10)
+        self.assertIn("P(fire)=0.26", said[1])
+
+    async def test_the_rule_taking_a_room_back_is_journaled(self):
+        completer, clock, lines = FakeCompleter(reply(0.9)), FakeClock(), []
+        d = LLMDetector(completer, clock, FusionRule(), RefreshPolicy(every=10.0, max_age=30.0), log=lambda k, m: lines.append(m))
+        d.probability(smoky())
+        await d.refresh_pending()
+        d.probability(smoky())  # the model's number
+        clock.now = 31.0
+        d.probability(smoky())  # expired: the rule's number
+        self.assertTrue(any("verdict expired" in m for m in lines))

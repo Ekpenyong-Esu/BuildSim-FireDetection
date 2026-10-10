@@ -5,8 +5,10 @@
 Reads experiments/results/results.json (written by run_experiments.py) and writes
 two PNGs into the report's images folder:
 
-    chart_office_fire.png   the office fire as the system saw it (Figure 8)
-    chart_scaling.png       wall time of one tick against monitored rooms (Figure 9)
+    chart_office_fire.png   the office fire as the system saw it
+    chart_scaling.png       wall time of one tick against monitored rooms
+    chart_detectors.png     P(fire) from the rule and from the model, four scenarios
+                            (only when results_llm.json exists, from compare_detectors.py)
 
 Plain matplotlib, nothing else. Edit the functions below to change a chart.
 """
@@ -21,6 +23,7 @@ import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results" / "results.json"
+RESULTS_LLM = HERE / "results" / "results_llm.json"
 IMAGES = HERE.parent / "Embedded_Intelligence_at_the_edge_Project_Proposal" / "images"
 
 # The report's palette.
@@ -112,12 +115,65 @@ def scaling(results: dict) -> None:
     plt.close(fig)
 
 
+def detectors(results: dict, results_llm: dict) -> None:
+    """Four panels of P(fire): the rule's run in blue, the model's in orange.
+
+    In the model's run the rule scores the room whenever the model has no fresh
+    verdict, and those stretches are drawn grey so the reader can see who was
+    speaking. The trace comes from the harness, sampled every 5 s.
+    """
+    panels = (("office-fire", "Office fire"), ("overnight-smoulder", "Overnight smoulder"),
+              ("kitchen-cooking", "Kitchen cooking"), ("blind-spot", "Fire, dead smoke detector"))
+    fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.6), sharex=True, sharey=True)
+    for ax, (preset, title) in zip(axes.flat, panels):
+        rule = series(results, preset)
+        ax.plot(rule["t"], rule["p_fire"], color=READING, lw=1.4, label="fusion rule")
+        run = next((p for p in results_llm["presets"] if p["preset"] == preset), None)
+        if run is not None:
+            trace = run["llm"]["trace"]
+            # Consecutive samples with the same scorer make one segment.
+            start = 0
+            while start < len(trace):
+                end = start
+                while end + 1 < len(trace) and trace[end + 1][2] == trace[start][2]:
+                    end += 1
+                segment = trace[start:end + 2]  # overlap one point so the line is unbroken
+                model = trace[start][2] == "model"
+                ax.plot([r[0] for r in segment], [r[1] for r in segment],
+                        color=TRUTH if model else GREY, lw=1.4 if model else 1.0,
+                        ls="-" if model else ":",
+                        label=("language model" if model else "rule covering for the model") if start == 0 or not any(
+                            l.get_label() == ("language model" if model else "rule covering for the model") for l in ax.lines) else None)
+                start = end + 1
+        for name, level, colour in THRESHOLDS:
+            ax.axhline(level, color=colour, ls="--", lw=0.7)
+        ax.set_title(title, fontsize=9)
+        ax.set_ylim(0, 1.05)
+        ax.set_xlim(0, 1200)
+    for ax in axes[1]:
+        ax.set_xlabel("seconds since ignition")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("P(fire)")
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    for ax in axes.flat[1:]:
+        for h, l in zip(*ax.get_legend_handles_labels()):
+            if l not in labels:
+                handles.append(h); labels.append(l)
+    fig.legend(handles, labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.01))
+    fig.tight_layout(rect=(0, 0.05, 1, 1))
+    fig.savefig(IMAGES / "chart_detectors.png", dpi=200)
+    plt.close(fig)
+
+
 def main() -> None:
     results = load()
     IMAGES.mkdir(exist_ok=True)
     office_fire(results)
     scaling(results)
     print("wrote", IMAGES / "chart_office_fire.png", "and", IMAGES / "chart_scaling.png")
+    if RESULTS_LLM.exists():
+        detectors(results, json.loads(RESULTS_LLM.read_text()))
+        print("wrote", IMAGES / "chart_detectors.png")
 
 
 if __name__ == "__main__":

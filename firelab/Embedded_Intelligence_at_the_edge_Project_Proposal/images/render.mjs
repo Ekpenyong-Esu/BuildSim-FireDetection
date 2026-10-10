@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 const OUT = new URL('.', import.meta.url).pathname;
-const names = ['landscape', 'context', 'container', 'component', 'dynamic', 'state', 'deploy'];
+const names = ['landscape', 'context', 'container', 'component', 'dynamic', 'state', 'deploy', 'llm'];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let page;
 for (let i = 0; i < 40 && !page; i++) { try { page = (await (await fetch('http://127.0.0.1:9333/json')).json()).find(t => t.type === 'page'); } catch {} if (!page) await sleep(1000); }

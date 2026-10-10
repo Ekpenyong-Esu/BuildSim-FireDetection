@@ -100,14 +100,15 @@ export LLM_API_KEY=...
 export LLM_MODEL=the-model-your-endpoint-serves
 ```
 
-The tick loop never waits for the model. Questions go out in the background, at
-most one per room every ten simulated seconds, most suspicious room first, and
-only for rooms where something is happening; the rule scores any room the model
-has no fresh verdict for, and the journal records each hand-over. A verdict is
+The tick loop never waits for the model. Questions go out in the background,
+one at a time, at most one per room every ten simulated seconds, most suspicious
+room first, and only for rooms where something is happening; the rule scores any
+room the model has no fresh verdict for, and the journal records each hand-over. A verdict is
 only used while its readings are less than a minute old (simulated), so the
 engine caps the speed dial at what the model has shown it can keep up with,
 typically a few times real time, and says so in the journal. Switch back to the
-rule and the cap lifts. The alarm ladder and the interlocks are the
+rule and the cap lifts. `experiments/compare_detectors.py` scores the report's
+scenarios with the model and `experiments/README.md` says how to read the result. The alarm ladder and the interlocks are the
 same whichever detector is installed, so a wrong model still cannot trap anyone
 or release water without heat. The code is in `adapters/llm/`, one file per job.
 

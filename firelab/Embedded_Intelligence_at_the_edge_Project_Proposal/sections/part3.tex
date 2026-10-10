@@ -1,4 +1,4 @@
-\section{6. Simulating the sensor values (the physical model)}
+\section{6. Simulating the sensor values (the physical model)}\label{sec:physics}
 
 BuildSim provides the rooms but nothing that changes, so the fire, the air in every
 room, the sensors and the people are all simulated here. The aim was never physical
@@ -114,15 +114,18 @@ ISO 13571; walking out through a smoke-logged corridor costs, and keeps costing
 afterwards. A room stops being escapable at 60\,°C or when smoke reduces visibility
 below 10\,m, and the scoreboard counts those rooms as lost.
 
-\section{7. Autonomous services and data engineering}
+\section{7. Autonomous services and data engineering}\label{sec:services}
 
-\subsection{7.1 The autonomous service}
+\subsection{7.1 The autonomous service}\label{sec:service}
 
 The intelligence runs once per tick over every monitored room, in three steps that
 each see only the output of the one before: readings become features, features
-become a probability, and the probability drives a state machine. It is
-the simplest thing I found that meets the requirements, and the reasons it is not
-something cleverer are given at the end.
+become a probability, and the probability drives a state machine. The middle step
+has two implementations, a hand-written rule and a language model, and the
+operator can switch between them while a fire is burning. The rule is the
+simplest thing I found that meets the requirements; the model is there to find
+out what a second opinion costs and buys, and the end of this section says how it
+is kept from slowing the loop down.
 
 \textbf{Features.} Each monitored room keeps a rolling 120\,s window of readings
 per modality. From it come the latest smoke, CO and temperature; the smoke rate of
@@ -132,7 +135,7 @@ the share of monitored neighbours that also see smoke; and the coverage, how man
 modalities reported at all. Nothing here reads a room's true state, and the test
 suite fails if that ever changes.
 
-\textbf{The detector.} The shipped detector is a hand-written fusion rule. Each
+\textbf{The rule.} The default detector is a hand-written fusion rule. Each
 feature contributes a bounded, weighted term, the terms are summed with a negative
 bias, and the sum passes through a logistic function:
 \begin{align*}
@@ -153,7 +156,7 @@ The detector is a protocol with two methods, \code{probability} and
 \code{explain}, and the second is not optional. The explanation is the calculation:
 the contributions are the terms above, the dashboard draws them as bars under the
 heading ``Why 99\,\%'', and a detector that could not say why would be one nobody
-could sign off. A trained model would have to implement the same two methods.
+could sign off. The model has to implement the same two methods, and does.
 
 \textbf{The alarm ladder.} The agent is one state machine per room, driven only
 by the probability and the clock:
@@ -197,17 +200,69 @@ and the building is as safe as it was without the system. If a person
 disagrees, supervised mode shows every decision and carries out none, and a manual
 command from the panel passes through the same interlocks and is journalled with
 the same reasons. With no working sensor in a room, the detector has no opinion
-rather than a low one, so an uninstrumented room is never marked safe.
+rather than a low one, so an uninstrumented room is never marked safe. None of
+this changes when the model is the detector, which is the reason the interlocks
+were kept outside the intelligence in the first place.
 
-\textbf{Why not a learned model.} The proposal planned one. The rule caught both
-fire kinds and raised no false alarm at any noise level, with no training data
-needed and a full explanation for every number. The course asks for the simplest
-approach that meets the requirement, and this is it. The comparison the proposal
-promised remains the obvious next experiment, and the CSV export exists so that
-labelled runs can be recorded for it; the ``Why'' bars would then be the baseline a
-model has to beat on explainability as well as accuracy.
+\textbf{The second detector: a language model.} The proposal planned to compare
+the rule with an isolation forest. I built the comparison with a language model
+instead, for two reasons. The only labelled data to train a forest on would have
+been this simulator's own output, so the forest would have learned my physics
+rather than fires. And a model that answers in words can be asked to explain
+itself, which is the requirement a trained detector usually fails. The adapter in
+\code{adapters/llm/} implements the same two-method protocol as the rule and sends
+one room's readings, the same features the rule sees and nothing else, to any
+OpenAI-compatible chat endpoint. The system prompt tells the model it sees only
+the sensors, never the room, and lists what separates a fire from a nuisance in
+the same terms the rule encodes: a flaming fire gets worse in all three
+modalities, a smoulder is dense smoke and high CO with no heat, cooking is warm
+and smoky with CO under 25\,ppm, dust and steam are smoke alone, a lone sensor
+that disagrees with its neighbours is probably broken. The reply is one JSON
+object with a probability, a list of weighted evidence and a one-sentence reason,
+parsed strictly: anything malformed is refused, not repaired.
 
-\subsection{7.2 The data pipeline}
+The engineering is in what happens around the call, because the tick has 250\,ms
+and the endpoint I had takes about eight seconds. Figure~\ref{fig:llm} shows the
+arrangement. \code{probability()} never waits. It returns the model's last
+verdict for the room if that verdict is younger than 60 simulated seconds, and
+the rule's number otherwise, and at most queues a question. A worker task beside
+the tick loop sends the queued questions one at a time, the most suspicious room
+first by the rule's own score, at most once per room every ten simulated seconds
+and never for a room whose sensors show nothing. A quiet building costs nothing.
+A verdict is stamped with the time the readings it saw were taken, not the time
+it arrived, which is what makes the 60\,s expiry mean something. The journal
+records each hand-over in both directions, every verdict that moves the score by
+a tenth, and the model's reason with it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{images/llm.png}
+\caption{How the language model scores a room without holding the tick up. The tick only ever reads a cache or the rule; the worker fills the cache in the background; a measured answer time of about 8\,s caps the clock near 3$\times$ real time.}
+\label{fig:llm}
+\end{figure}
+
+\textbf{Pacing.} The first time I ran the model at forty times real time,
+nothing happened: every answer arrived 320 simulated seconds after it was asked
+for, every verdict had expired on arrival, the rule scored every room, and the
+panel said ``llm''. That is the failure mode to design against, and the fix is
+not a longer expiry. A verdict a minute old is a verdict about a room that has
+since doubled its smoke. Instead the detector measures how long answers take and
+reports the largest speed at which a verdict still arrives with half its life
+left, $60 / (2 \times \text{latency})$; the engine caps the speed dial there
+every tick and writes one journal line saying so. With the endpoint used here
+that is 3$\times$. The endpoint answers requests one after another, so asking
+about two rooms at once only doubled the latency and halved that cap, which is
+why one question is in flight at a time and the fire room gets it. Switch back
+to the rule and the cap lifts.
+
+\textbf{What the comparison is for.} The rule is the baseline the model has to
+beat on three counts: whether it catches the same fires and ignores the same
+nuisances, how much later, and whether its ``Why'' is as auditable as a sum of
+terms. Section~11 reports all three. The model's evidence is drawn as the same
+bars, with one extra bar for the verdict itself on the rule's logit scale, so
+the two are judged on the same screen.
+
+\subsection{7.2 The data pipeline}\label{sec:pipeline}
 
 Readings flow through a short in-memory pipeline that serves four consumers at
 once: the detector, the control panel, the scoreboard and the CSV export. It is
@@ -225,9 +280,10 @@ step with a clock running forty times faster than the wall.
 \item \textbf{The flight recorder.} Every 5 simulated seconds, one row per monitored
   room: time, true temperature, smoke and CO, the three readings, and P(fire). Each
   room keeps its last 240 rows, about twenty minutes, which is what the charts show.
-\item \textbf{The journal.} Every state change, every command with its reason, and
-  every refusal with the interlock's reason; the last 200 lines. This is where the
-  lessons show up.
+\item \textbf{The journal.} Every state change, every command with its reason,
+  every refusal with the interlock's reason, and every detector verdict that moved
+  a room's score by a tenth, with the rule's top three terms or the model's
+  reason; the last 200 lines. This is where the lessons show up.
 \item \textbf{The scoreboard.} Judged once per new alarm against the source labels:
   a catch with its latency, a miss after 300\,s unconfirmed, or a false alarm with
   the nuisance that caused it. Smoke that came through the door from a real fire
@@ -242,9 +298,9 @@ score; a dropout leaves gaps the window tolerates; a stuck value flattens the ra
 term. Retention is short by design. Anything longer than twenty minutes is
 exported, not stored, and a restart starts clean.
 
-\section{8. Behaviour}
+\section{8. Behaviour}\label{sec:behaviour}
 
-\subsection{8.1 Key scenario, dynamic diagram}
+\subsection{8.1 Key scenario, dynamic diagram}\label{sec:dynamic}
 
 Figure~\ref{fig:dynamic} is a C4 dynamic diagram of the office fire from
 Section~2, with the times measured in the run reported in Section~11. It shows
@@ -264,7 +320,7 @@ only because A3505 happened to be empty and on nobody's route; had a student bee
 inside, step~7 would have refused the door, journalled why, and kept the request
 pending until they left.
 
-\subsection{8.2 Process lifecycle, state machine}
+\subsection{8.2 Process lifecycle, state machine}\label{sec:statemachine}
 
 Every monitored room has one of these, and its transitions are the code in
 \code{domain/agent.py}. The dwells are on the arrows.
@@ -282,7 +338,11 @@ water climbs straight back to \textsc{confirmed}. Standing down needs the
 probability to stay at or below 0.25 for 90\,s and then a further 90\,s of quiet
 before the room stops being flagged as an incident, so a sensor that recovers for a
 moment cannot reopen a door onto a fire. The process itself has a lifecycle of its
-own outside this diagram: on startup the service loads the floors from BuildSim and
-scatters the population; if BuildSim stops answering, the service marks itself
-disconnected, keeps simulating, stops publishing, and waits for a reload rather
-than crashing.
+own outside this diagram: on startup the service loads the floors from BuildSim,
+installs the detector the configuration names, starting the model's worker task
+if it is the model, and scatters the population; if BuildSim stops answering, the
+service marks itself disconnected, keeps simulating, stops publishing, and waits
+for a reload rather than crashing. Changing the detector while running stops one
+worker and starts the other under the tick lock, so no tick sees half a swap, and
+the rooms' alarm states carry over untouched because the agent never knew which
+detector it was listening to.

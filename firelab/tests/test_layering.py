@@ -34,6 +34,16 @@ def _imports(path: Path) -> set[str]:
     return names
 
 
+def _relative_imports(path: Path) -> set[str]:
+    """Every module one file imports from its own package tree, e.g. `from ...domain import x` -> "domain"."""
+    names: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, ast.ImportFrom) and node.level > 0:
+            base = node.module or ""
+            names |= {(base + "." + alias.name).strip(".") for alias in node.names}
+    return names
+
+
 def _attributes(path: Path) -> set[str]:
     """Every attribute name read anywhere in one file, e.g. `x.smoke` -> "smoke"."""
     return {
@@ -58,6 +68,16 @@ class TestLayering(unittest.TestCase):
     def test_intelligence_never_reads_the_truth(self):
         read = _attributes(ROOT / "app" / "engine" / "intelligence.py")
         self.assertEqual(read & {"temperature", "smoke", "co"}, set())
+
+    # The model is a second detector and sees what the rule sees: the feature
+    # vector. Nothing under adapters/llm may reach the world, the sources or the
+    # sensors, where the truth lives, nor the engine that holds them.
+    def test_the_model_adapter_sees_readings_only(self):
+        allowed = {"domain.detector.Contribution", "domain.detector.Detector", "domain.features.Features"}
+        for path in sorted((ROOT / "adapters" / "llm").glob("*.py")):
+            with self.subTest(module=path.name):
+                outside = {name for name in _relative_imports(path) if name.startswith(("domain", "app", "adapters"))}
+                self.assertEqual(outside - allowed, set())
 
     # Only the adapters may speak HTTP, so nothing else may import the client.
     def test_only_adapters_talk_to_buildsim(self):

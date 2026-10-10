@@ -44,6 +44,9 @@
 % Section formatting
 \titleformat{\section}{\large\bfseries\color{primaryblue}}{}{0em}{}[\titlerule]
 \titleformat{\subsection}{\normalsize\bfseries\color{primaryblue}}{}{0em}{}
+% The class numbers sections as "4.2." with a trailing dot; references want "4.2".
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
  
 \pagestyle{fancy}
 \fancyhf{}

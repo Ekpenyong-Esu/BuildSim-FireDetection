@@ -1,0 +1,22 @@
+%% How the language model scores a room without ever holding the tick up
+sequenceDiagram
+  participant INT as Intelligence zone<br/>(every tick)
+  participant DET as LLM detector
+  participant RULE as Fusion rule
+  participant WRK as Worker task<br/>(background)
+  participant EP as Model endpoint<br/>(HTTPS)
+  INT->>DET: 1: probability(features)<br/>for each monitored room
+  Note over DET: 2: quiet room (no smoke, CO or heat)?<br/>nothing to ask, the rule scores it
+  Note over DET: 3: due (10 s since last asked) and no<br/>question out? queue these readings
+  alt a verdict younger than 60 s
+    DET-->>INT: 4a: the model's P(fire), at once
+  else none, or expired
+    DET->>RULE: 4b: probability(features)
+    RULE-->>INT: the rule's P(fire), and the journal<br/>notes the hand-over
+  end
+  WRK->>WRK: 5: every 250 ms real: take what is queued,<br/>most suspicious room first
+  WRK->>EP: 6: system prompt + one room's readings,<br/>one question in flight
+  EP-->>WRK: 7: about 8 s later: p_fire, evidence, reason as JSON
+  Note over WRK: 8: parse strictly, a malformed reply is<br/>refused, the rule stays in charge
+  WRK->>DET: 9: store the verdict, stamped with the<br/>time it was asked, journal "model says"
+  Note over DET: 10: latency measured: max speed = 60 s / (2 x 8 s), about 3x.<br/>The engine caps the speed dial there and says so
