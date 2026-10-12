@@ -1,0 +1,56 @@
+flowchart TB
+    subgraph BSIN["BuildSim :9090 (provided)"]
+        BSR["GET /healthz<br/>GET /api/building/floors/{level}<br/>GET /api/building/cross-floor-edges"]
+        BSW["PUT room-layers · effects · alerts · doors<br/>PUT entities · occupancy · sensors/{id}/value<br/>PUT sessions/{id}/highlights · route"]
+        VIEW["BuildSim viewer"]
+        BSW --> VIEW
+    end
+
+    UI["firelab UI · ui/ (Svelte)"]
+
+    subgraph APP["firelab :8090"]
+        API["app/api/*<br/>REST: clock, scenario, sensors,<br/>config, manual commands"]
+        LOAD["engine/building.load<br/>world_builder → World<br/>walkways → Walkways"]
+
+        subgraph TICK["engine/core._tick: every 0.25 s real × speed factor"]
+            direction TB
+            WORLD["WORLD · truth.advance<br/>domain/sources + physics<br/>heat, smoke, CO per room"]
+            SENSE["SENSING · truth.sense<br/>domain/sensing<br/>lag, bias, noise, faults"]
+            EXPOSE["truth.expose<br/>CO dose on occupants"]
+            FEAT["INTELLIGENCE · intelligence.think<br/>domain/features.extract<br/>readings only, never truth"]
+            DET{"Detector<br/>P(fire)"}
+            AGENT["domain/agent<br/>state machine, proposes commands"]
+            ACT["ACTUATION · actuation.apply<br/>domain/interlocks allow / refuse"]
+            REC["recording + scoring"]
+            EVAC["app/evacuation<br/>Walkways Dijkstra, walk occupants"]
+            PUB["engine/publishing<br/>adapters/publisher/*<br/>every 1 s simulated"]
+
+            WORLD --> SENSE --> EXPOSE --> FEAT --> DET --> AGENT --> ACT
+            ACT -->|"sprinkler, fire doors"| WORLD
+            ACT --> REC --> EVAC --> PUB
+        end
+
+        SNAP["app/snapshot → SSE /api/events"]
+    end
+
+    subgraph LLMZ["LLM detector · adapters/llm"]
+        LDET["LLMDetector.probability<br/>fresh verdict, else rule"]
+        WORK["background worker<br/>policy → prompt → client"]
+        PARSE["verdict.parse<br/>P(fire) + reason"]
+    end
+    EP["LLM endpoint<br/>OpenAI-compatible"]
+    RULE["domain/detector.FusionRule<br/>fallback"]
+
+    BSR --> LOAD --> WORLD
+    UI -->|"REST"| API
+    API -->|"ignite, deploy, faults"| WORLD
+    API -->|"manual command"| ACT
+    DET --- LDET
+    LDET -.->|"schedule question"| WORK
+    WORK -->|"readings"| EP
+    EP -->|"JSON"| PARSE
+    PARSE -.->|"cache verdict, 60 s"| LDET
+    LDET -->|"no fresh verdict"| RULE
+    EVAC -.->|"fallback GET /api/graph/route"| BSR
+    PUB --> BSW
+    TICK --> SNAP -->|"SSE"| UI

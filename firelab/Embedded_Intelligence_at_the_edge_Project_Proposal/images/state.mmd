@@ -1,14 +1,15 @@
+%%{init: {"theme": "base", "themeVariables": {"noteBkgColor": "#fff4d6", "noteBorderColor": "#f59e0b", "noteTextColor": "#3d2c00", "lineColor": "#4b5563", "edgeLabelBackground": "#ffffff", "fontFamily": "Trebuchet MS, Arial, sans-serif"}}}%%
 %% The per-room alarm state machine (domain/agent.py)
 stateDiagram-v2
   direction TB
   [*] --> NORMAL
   NORMAL --> INVESTIGATING: P >= 0.35
   INVESTIGATING --> NORMAL: P < 0.25
-  INVESTIGATING --> PRE_ALARM: P >= 0.55 held 20 s
+  INVESTIGATING --> PRE_ALARM: P >= 0.55 for 20 s
   PRE_ALARM --> INVESTIGATING: P < 0.35
-  PRE_ALARM --> CONFIRMED: P >= 0.75 after 25 s here
-  CONFIRMED --> SUPPRESSED: sprinkler running, P < 0.75 for 25 s
-  SUPPRESSED --> CONFIRMED: P >= 0.75, burning on
+  PRE_ALARM --> CONFIRMED: P >= 0.75 after 25 s
+  CONFIRMED --> SUPPRESSED: sprinkler on, P < 0.75 for 25 s
+  SUPPRESSED --> CONFIRMED: P >= 0.75 again
   CONFIRMED --> CLEARING: P <= 0.25 for 90 s
   SUPPRESSED --> CLEARING: P <= 0.25 for 90 s
   CLEARING --> NORMAL: quiet for 90 s
@@ -21,3 +22,15 @@ stateDiagram-v2
     on entry: sprinkler off,
     door open, stand down
   end note
+  classDef normal fill:#dcfce7,stroke:#16a34a,color:#14532d
+  classDef investigating fill:#fef9c3,stroke:#ca8a04,color:#713f12
+  classDef prealarm fill:#ffedd5,stroke:#ea580c,color:#7c2d12
+  classDef confirmed fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,font-weight:bold
+  classDef suppressed fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+  classDef clearing fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+  class NORMAL normal
+  class INVESTIGATING investigating
+  class PRE_ALARM prealarm
+  class CONFIRMED confirmed
+  class SUPPRESSED suppressed
+  class CLEARING clearing

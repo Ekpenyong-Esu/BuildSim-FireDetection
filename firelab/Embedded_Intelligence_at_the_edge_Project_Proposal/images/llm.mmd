@@ -1,22 +1,27 @@
+%%{init: {"theme": "base", "themeVariables": {"actorBkg": "#1c68c4", "actorBorder": "#0b3d7a", "actorTextColor": "#ffffff", "actorLineColor": "#9ca3af", "signalColor": "#374151", "signalTextColor": "#111827", "noteBkgColor": "#fff4d6", "noteBorderColor": "#f59e0b", "noteTextColor": "#3d2c00", "labelBoxBkgColor": "#1c68c4", "labelBoxBorderColor": "#0b3d7a", "labelTextColor": "#ffffff", "loopTextColor": "#111827", "fontFamily": "Trebuchet MS, Arial, sans-serif"}}}%%
 %% How the language model scores a room without ever holding the tick up
 sequenceDiagram
-  participant INT as Intelligence zone<br/>(every tick)
+  participant INT as Tick loop<br/>(every tick)
   participant DET as LLM detector
   participant RULE as Fusion rule
-  participant WRK as Worker task<br/>(background)
-  participant EP as Model endpoint<br/>(HTTPS)
-  INT->>DET: 1: probability(features)<br/>for each monitored room
-  Note over DET: 2: quiet room (no smoke, CO or heat)?<br/>nothing to ask, the rule scores it
-  Note over DET: 3: due (10 s since last asked) and no<br/>question out? queue these readings
-  alt a verdict younger than 60 s
-    DET-->>INT: 4a: the model's P(fire), at once
-  else none, or expired
-    DET->>RULE: 4b: probability(features)
-    RULE-->>INT: the rule's P(fire), and the journal<br/>notes the hand-over
+  participant WRK as Worker<br/>(background)
+  participant EP as Language model<br/>(HTTPS)
+  rect rgb(232, 240, 252)
+    INT->>DET: 1: P(fire) for each room?
+    Note over DET: 2: quiet room? nothing to ask
+    Note over DET: 3: 10 s since last asked? queue the readings
+    alt answer younger than 60 s
+      DET-->>INT: 4a: the model's P(fire), at once
+    else no answer, or too old
+      DET->>RULE: 4b: ask the rule
+      RULE-->>INT: the rule's P(fire)
+    end
   end
-  WRK->>WRK: 5: every 250 ms real: take what is queued,<br/>most suspicious room first
-  WRK->>EP: 6: system prompt + one room's readings,<br/>one question in flight
-  EP-->>WRK: 7: about 8 s later: p_fire, evidence, reason as JSON
-  Note over WRK: 8: parse strictly, a malformed reply is<br/>refused, the rule stays in charge
-  WRK->>DET: 9: store the verdict, stamped with the<br/>time it was asked, journal "model says"
-  Note over DET: 10: latency measured: max speed = 60 s / (2 x 8 s), about 3x.<br/>The engine caps the speed dial there and says so
+  rect rgb(240, 232, 252)
+    WRK->>WRK: 5: every 250 ms: take the queue,<br/>most suspicious room first
+    WRK->>EP: 6: one room's readings, one question at a time
+    EP-->>WRK: 7: about 8 s later: P(fire), evidence, reason
+    Note over WRK: 8: check the reply. A bad one is thrown away
+    WRK->>DET: 9: keep the answer, write it to the journal
+  end
+  Note over DET: 10: speed limit = 60 s / (2 x 8 s), about 3x

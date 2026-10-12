@@ -34,6 +34,16 @@
 
 % Colors
 \definecolor{primaryblue}{RGB}{30, 80, 162}
+\definecolor{tablehead}{RGB}{221, 231, 246}
+\definecolor{tablerule}{RGB}{205, 212, 224}
+% Tables: blue frame rules, a tinted header row, and a thin grey line between rows.
+\usepackage{colortbl}
+\arrayrulecolor{primaryblue}
+\newcommand{\rowline}{\arrayrulecolor{tablerule}\specialrule{0.4pt}{0pt}{0pt}\arrayrulecolor{primaryblue}}
+\newcommand{\colsep}{\hskip -0.2pt{\color{tablerule}\vrule width 0.4pt}\hskip -0.2pt}  % zero net width, so column widths still add up
+\setlength{\aboverulesep}{0pt}
+\setlength{\belowrulesep}{0pt}
+\renewcommand{\arraystretch}{1.3}
 \definecolor{lightgray}{RGB}{245, 245, 245}
 \definecolor{tpgreen}{RGB}{0, 128, 0}
 \definecolor{fpred}{RGB}{200, 0, 0}

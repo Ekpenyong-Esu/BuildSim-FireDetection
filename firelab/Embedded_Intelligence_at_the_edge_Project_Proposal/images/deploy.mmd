@@ -1,29 +1,30 @@
-%% Deployment view: two processes, two tabs, loopback only; one optional call out
+%%{init: {"flowchart": {"wrappingWidth": 320}}}%%
+%% Deployment view: two processes and two browser tabs on one laptop, one call out
 flowchart LR
-  subgraph LAPTOP["Laptop, loopback network"]
+  subgraph LAPTOP["Laptop (127.0.0.1 only)"]
     direction LR
-    subgraph FIRE["this project"]
+    subgraph FIRE["firelab (this project)"]
       direction TB
-      PANEL["<b>Control panel</b><br/>static Svelte bundle in a browser tab,<br/>served by the service"]
-      SVC["<b>firelab service</b><br/>uvicorn, Python 3.10, 127.0.0.1:8090<br/>one asyncio process; a tick every 250 ms;<br/>the model's worker task beside it"]
+      PANEL["<b>Control panel</b><br/>Svelte app in a browser tab"]
+      SVC["<b>firelab service</b><br/>Python 3.10, uvicorn, port 8090<br/>one process, a tick every 250 ms"]
       PANEL -- "REST + SSE" --> SVC
     end
     subgraph BSIDE["BuildSim"]
       direction TB
-      BS["<b>BuildSim</b><br/>Go binary, 127.0.0.1:9090<br/>building state; serves its own viewer"]
-      VIEWER["<b>3D viewer</b><br/>browser tab served by BuildSim"]
+      BS["<b>BuildSim</b><br/>Go binary, port 9090"]
+      VIEWER["<b>3D viewer</b><br/>browser tab"]
       BS -- WebSocket --> VIEWER
     end
-    FIRE -- "REST (service to BuildSim)" --> BSIDE
+    FIRE -- REST --> BSIDE
   end
-  LLM["<b>Language model endpoint</b><br/>canopus.eislab.se, HTTPS<br/>OpenAI-compatible chat API, qwen3.8-27b<br/>optional: without it, or when it is slow,<br/>the rule scores the rooms and the clock is capped"]
-  SVC -. "one room's readings, a JSON verdict;<br/>in the background, never on the tick" .-> LLM
-  classDef cont fill:#438cde,stroke:#0b3d7a,color:#ffffff
-  classDef ext fill:#999999,stroke:#666666,color:#ffffff
-  classDef cloud fill:#f3f3f3,stroke:#999999,stroke-dasharray:5 4,color:#333333
+  LLM["<b>Language model</b><br/>canopus.eislab.se, HTTPS<br/>qwen3.8-27b"]
+  FIRE -.-> LLM
+  classDef cont fill:#1c68c4,stroke:#0b3d7a,color:#ffffff
+  classDef ext fill:#6b7280,stroke:#4b5563,color:#ffffff
+  classDef model fill:#7c3aed,stroke:#5b21b6,color:#ffffff
   class SVC,PANEL cont
   class BS,VIEWER ext
-  class LLM cloud
-  style LAPTOP fill:#ffffff,stroke:#1c68c4,stroke-dasharray:6 4
+  class LLM model
+  style LAPTOP fill:#ffffff,stroke:#374151,stroke-dasharray:6 4
   style FIRE fill:#eef4fc,stroke:#1c68c4
-  style BSIDE fill:#f3f3f3,stroke:#999999
+  style BSIDE fill:#f3f4f6,stroke:#6b7280

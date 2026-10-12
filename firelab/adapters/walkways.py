@@ -1,4 +1,4 @@
-"""Find routes for people who need to leave the building.
+"""Find routes for people who need to leave the building using the Dijkstra's shortest-path algorithm.
 
 The evacuation code calls this file when it places people or avoids a burning
 room. It uses the same walkable map that BuildSim uses.

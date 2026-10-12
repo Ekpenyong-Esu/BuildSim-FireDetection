@@ -4,7 +4,7 @@ The engine gives ``update`` the fire score and current simulation time. This
 file returns possible commands, but does not change the building. Interlocks
 check the commands before anything happens.
 
-The state machine is: NORMAL -> INVESTIGATING -> PRE_ALARM -> CONFIRMED -> SUPPRESSED.
+The state machine is: NORMAL -> INVESTIGATING -> PRE_ALARM -> CONFIRMED -> SUPPRESSED -> CLEARING.
 
 The agent issues commands. It never writes actuator state, and it never sees
 the truth - only P(fire) from the detector. A command it asks for stays asked
@@ -143,7 +143,7 @@ def _on_enter(agent: RoomAgent) -> list[Command]:
     reason = f"P(fire)={agent.probability:.2f} in {agent.space}"
     if agent.state == "CONFIRMED":
         return [
-            Com mand("sprinkler", agent.space, "on", reason),
+            Command("sprinkler", agent.space, "on", reason),
             Command("fire_door", agent.space, "closed", reason),
             Command("evacuate", agent.space, "start", reason),
         ]

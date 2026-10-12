@@ -1,73 +1,80 @@
 \section{6. Simulating the sensor values (the physical model)}\label{sec:physics}
 
-BuildSim provides the rooms but nothing that changes, so the fire, the air in every
-room, the sensors and the people are all simulated here. The aim was never physical
-fidelity. It was a model with enough structure that a decision made on its readings
-means something: fires that keep growing, nuisances that peak and fade, smoke that
-leaves through doors and climbs stairwells, and, above all, actuator commands that
-change the next reading so that the loop closes.
+BuildSim provides the rooms but nothing that changes. So I simulate the fire, the
+air in every room, the sensors and the people here. I never aimed for physical
+accuracy. I wanted a model with enough structure that a decision based on its
+readings means something. Fires keep growing. Cooking, dust and steam peak and fade.
+Smoke leaves through doors and climbs stairwells. Above all, actuator commands
+change the next reading, so the loop closes.
 
 \textbf{Sources.} A source is a scripted event with a kind, a room and a start
-time. The kind is also the ground-truth label the scoreboard uses, and nothing
-downstream of the sensors may read it. Each kind declares what it emits at time $e$
-since ignition, as a heat release rate and the smoke and CO the room would settle
-to if nothing else happened:
+time. The kind is also the true label that the scoreboard uses. Nothing after the
+sensors may read it. Each kind states what it gives off at time $e$ after ignition.
+This is a heat release rate, plus the smoke and CO levels the room would settle at
+if nothing else happened:
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.16}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.16}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.34}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.34}}@{}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.16}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.34}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.34}}@{}}
 \toprule
+\rowcolor{tablehead}
 \textbf{Kind} & \textbf{Label} & \textbf{Emission} & \textbf{What makes it hard} \\
 \midrule
 \endhead
-flaming & fire & $q = \min(\alpha e^2, q_{\max})$ with the standard $t^2$ growth coefficients (slow 0.0029 to ultrafast 0.1876\,kW/s$^2$); smoke $0.06\sqrt{q}$, CO $4\sqrt{q}$ & The easy case: everything corroborates \\
-smouldering & fire & 3\,kW, smoke 0.9\,1/m and CO 900\,ppm, all ramping with $1-e^{-e/300}$ & Almost no heat, so the sprinkler interlock refuses water \\
+flaming & fire & $q = \min(\alpha e^2, q_{\max})$ with the standard $t^2$ growth coefficients (slow 0.0029 to ultrafast 0.1876\,kW/s$^2$); smoke $0.06\sqrt{q}$, CO $4\sqrt{q}$ & The easy case: all sensors agree \\
+\rowline
+smouldering & fire & 3\,kW, smoke 0.9\,1/m and CO 900\,ppm, all rising as $1-e^{-e/300}$ & Almost no heat, so the safety rules (interlocks) refuse sprinkler water \\
+\rowline
 cooking & nuisance & 12\,kW, smoke 0.35, CO 25\,ppm, as a bump that rises over 3\,min and fades over 15 & Warm and smoky, but the CO never comes \\
+\rowline
 dust & nuisance & smoke 0.5, a 20\,s bump; no heat, no CO & Fools a smoke detector on its own \\
-steam & nuisance & smoke 0.7, a 30\,s bump; no heat, no CO & As dust, denser and shorter \\
+\rowline
+steam & nuisance & smoke 0.7, a 30\,s bump; no heat, no CO & Like dust, but denser and shorter \\
 \bottomrule
 \end{longtable}
 
-The shape over time is what matters. A real fire keeps getting worse; a nuisance grows, holds
-and fades. That difference over time, together with the ratio of CO to smoke, is
-what the detector has to pick up.
+The shape over time is what matters. A real fire keeps getting worse. Cooking, dust
+and steam grow, hold and fade. The detector has to pick up that difference over
+time, together with the ratio of CO to smoke.
 
-\textbf{Room physics.} Every space is one lumped node with a true temperature
-$T$, smoke obscuration $S$ and CO concentration $C$. Each step of $\Delta t$ seconds
-has two phases. First each room relaxes towards where its own source is pushing it:
+\textbf{Room physics.} I model every space as one lumped node. It has a true
+temperature $T$, a smoke obscuration $S$ (how much the smoke blocks light) and a CO
+concentration $C$. Each step of $\Delta t$ seconds has two phases. First, each room
+moves towards the level its own source pushes it to:
 \[
   T \leftarrow T^{\ast} + (T - T^{\ast})\,e^{-\Delta t/\tau_T}, \qquad
   T^{\ast} = T_{\text{out}} + \min\!\Big(140\,\big(q/V\big)^{2/3},\; 900\Big),
 \]
-with the same first-order approach for smoke and CO towards their equilibrium
-values, and time constants $\tau_T = 90$\,s, $\tau_S = 45$\,s, $\tau_C = 60$\,s.
-$V$ is the room's volume, its floor area from the plan times a 3\,m ceiling, so a
-lecture theatre dilutes a fire and a cupboard does not, and the sub-linear rise
-with heat density is capped at post-flashover temperatures. Then neighbouring rooms
-trade what they hold through every doorway and stairwell:
+Smoke and CO move towards their own equilibrium values in the same first-order way.
+The time constants are $\tau_T = 90$\,s, $\tau_S = 45$\,s and $\tau_C = 60$\,s.
+$V$ is the room's volume: its floor area from the plan times a 3\,m ceiling. So a
+lecture theatre dilutes a fire and a cupboard does not. The temperature rises less
+than linearly with heat density, and it is capped at post-flashover temperatures.
+Then neighbouring rooms swap what they hold through every doorway and stairwell:
 \[
   \Delta X_{a \to b} = \min\!\big(g\,k_X\,\Delta t,\; 0.5\big)\,(X_a - X_b),
   \qquad g = \text{conductance} \times \text{openness},
 \]
-for $X \in \{T, S, C\}$ with diffusion rates $k_S = 0.35$, $k_C = 0.30$,
-$k_T = 0.12$. The conductance of a doorway comes from BuildSim's walkable graph and
-is 0.6 for a stairwell, which is how smoke climbs floors. The share a room gives away
-in one step is capped across all of its doorways together, because a corridor with
-twenty doors would otherwise hand out several times what it holds and the building
-would fill with smoke nobody produced. That was a real bug, found by running the
-building at high speed.
+for $X \in \{T, S, C\}$, with diffusion rates $k_S = 0.35$, $k_C = 0.30$ and
+$k_T = 0.12$. The conductance of a doorway comes from BuildSim's walkable graph. It
+is 0.6 for a stairwell, and that is how smoke climbs floors. The share a room gives
+away in one step is capped across all its doorways together. Without the cap, a
+corridor with twenty doors would hand out several times what it holds. The building
+would then fill with smoke that nobody produced. That was a real bug. I found it by
+running the building at high speed.
 
 \textbf{Closing the loop.} Two actuator states live inside the physics. An active
 sprinkler multiplies the room's heat release by 0.25 and its smoke equilibrium by
-0.4. A closed fire door sets the openness of every coupling into that room to
-0.15, because a real fire door leaks. Both are written by the actuation zone and
-read by the next physics step, so a command issued at tick $n$ changes the reading
-at tick $n+1$. Section~11 measures what that buys.
+0.4. A closed fire door sets the openness of every link into that room to 0.15,
+because a real fire door leaks. The actuation zone writes both states, and the next
+physics step reads them. So a command issued at tick $n$ changes the reading at tick
+$n+1$. Section~11 measures what this gains.
 
 \textbf{Sensors.} A reading is never the truth. Every device applies the same
-chain, in this order, each step with its own per-modality parameters:
+chain of steps, in this order. Each step has its own parameters for each sensor
+type:
 
 \begin{center}
 \code{lag → calibration bias → noise → quantisation → clamp → fault}
@@ -75,274 +82,296 @@ chain, in this order, each step with its own per-modality parameters:
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.16}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}@{}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}
+  !{\colsep}>{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.14}}@{}}
 \toprule
+\rowcolor{tablehead}
 \textbf{Modality} & \textbf{Lag $\tau$} & \textbf{Noise $\sigma$} & \textbf{Quantum} & \textbf{Range} & \textbf{Interval} & \textbf{Unit} \\
 \midrule
 \endhead
 smoke & 12\,s & 0.010 & 0.005 & 0--3 & 5\,s & 1/m \\
+\rowline
 CO & 25\,s & 3.0 & 1 & 0--2000 & 5\,s & ppm \\
+\rowline
 temperature & 30\,s & 0.15 & 0.1 & $-20$--250 & 5\,s & °C \\
 \bottomrule
 \end{longtable}
 
-Temperature lags most because a heat detector has thermal mass. The clamp at
-250\,°C is why the dashboard shows a reading of 250 against a truth of 648 in a
-developed fire: the detector is saturated, as a real one would be. Noise is scaled
-by one live setting, 0 for a perfect instrument and 3 for a badly behaved one, and
-the evaluation sweeps it. A device can also be given one of four faults: \emph{stuck}
-repeats its last value, \emph{dropout} skips 40\,\% of samples, \emph{drift} adds an
-error that grows without bound, and \emph{dead} reports nothing at all. Faults are
-injected from the Rooms table and are what the two hardest presets are built on.
+Temperature lags most because a heat detector has thermal mass. In a developed
+fire, the dashboard shows a reading of 250 while the truth is 648. That is the
+clamp at 250\,°C: the detector is saturated, as a real one would be. One live
+setting scales the noise. It is 0 for a perfect instrument and 3 for a badly
+behaved one, and the evaluation sweeps it. A device can also be given one of four
+faults. With \emph{stuck}, it repeats its last value. With \emph{dropout}, it skips
+40\,\% of samples. With \emph{drift}, it adds an error that grows without limit.
+With \emph{dead}, it reports nothing at all. Faults are set from the Rooms table.
+The two hardest presets are built on them.
 
-\textbf{People.} The proposal's daily occupancy schedule was not built, because
-nothing in fire detection depends on how many people are in a room at nine in the
-morning. What matters is where people are when the alarm sounds, so the population
-is scattered once over the routable rooms with a seeded generator: by default 100
-students, 10 lecturers, 5 staff, 5 security guards and 10 visitors, 130 people in
-all. Each role walks at its own multiple of the configured 1.3\,m/s. The difference
-is familiarity rather than fitness: a guard who has drilled the routes is 15\,\%
-faster than a student, a visitor who has never been here 15\,\% slower. Once
-evacuating, a person follows the waypoints of their route, carrying with them a
-fractional effective CO dose accumulated from every room they pass through, after
-ISO 13571; walking out through a smoke-logged corridor costs, and keeps costing
-afterwards. A room stops being escapable at 60\,°C or when smoke reduces visibility
-below 10\,m, and the scoreboard counts those rooms as lost.
+\textbf{People.} I did not build the daily occupancy schedule from the proposal.
+Nothing in fire detection depends on how many people are in a room at nine in the
+morning. What matters is where people are when the alarm sounds. So I scatter the
+population once over the routable rooms, using a seeded random generator. The
+default is 100 students, 10 lecturers, 5 staff, 5 security guards and 10 visitors:
+130 people in all. Each role walks at its own multiple of the configured 1.3\,m/s.
+The difference is about knowing the building, not fitness. A guard who has drilled
+the routes is 15\,\% faster than a student. A visitor who has never been here is
+15\,\% slower. Once evacuating, a person follows the waypoints of their route. Each
+person carries a fractional effective CO dose, following ISO 13571. This is a
+running total of the CO they have breathed in every room they pass through.
+Walking out through a smoke-filled corridor adds to it, and the dose stays with
+them afterwards. A room stops being escapable at 60\,°C, or when smoke cuts
+visibility below 10\,m. The scoreboard counts those rooms as lost.
 
 \section{7. Autonomous services and data engineering}\label{sec:services}
 
 \subsection{7.1 The autonomous service}\label{sec:service}
 
-The intelligence runs once per tick over every monitored room, in three steps that
-each see only the output of the one before: readings become features, features
-become a probability, and the probability drives a state machine. The middle step
-has two implementations, a hand-written rule and a language model, and the
-operator can switch between them while a fire is burning. The rule is the
-simplest thing I found that meets the requirements; the model is there to find
-out what a second opinion costs and buys, and the end of this section says how it
-is kept from slowing the loop down.
+The intelligence runs once per tick over every monitored room. It has three steps,
+and each step sees only the output of the one before. Readings become features.
+Features become a probability. The probability drives a state machine. The middle
+step has two versions: a hand-written rule and a language model. The operator can
+switch between them while a fire is burning. The rule is the simplest thing I found
+that meets the requirements. I added the model to find out what a second opinion
+costs and what it gains. The end of this section explains how I keep it from
+slowing the loop down.
 
 \textbf{Features.} Each monitored room keeps a rolling 120\,s window of readings
-per modality. From it come the latest smoke, CO and temperature; the smoke rate of
-rise per minute; the temperature rise above the building's 20\,°C baseline; the
-ratio of CO to smoke, which is high for a smoulder and near zero for dust or steam;
-the share of monitored neighbours that also see smoke; and the coverage, how many
-modalities reported at all. Nothing here reads a room's true state, and the test
-suite fails if that ever changes.
+for each sensor type. From this window I take the latest smoke, CO and temperature.
+I also compute the smoke rate of rise per minute, and the temperature rise above
+the building's 20\,°C baseline. Another feature is the ratio of CO to smoke. It is
+high for a smoulder and near zero for dust or steam. The last two features are the
+share of monitored neighbours that also see smoke, and the coverage. Coverage means
+how many sensor types reported at all. Nothing here reads a room's true state. The
+test suite fails if that ever changes.
 
-\textbf{The rule.} The default detector is a hand-written fusion rule. Each
-feature contributes a bounded, weighted term, the terms are summed with a negative
-bias, and the sum passes through a logistic function:
+\textbf{The rule.} The default detector is a hand-written fusion rule. A fusion
+rule combines several sensor readings into one score. Each feature adds a weighted
+term with an upper limit. The terms are summed with a negative bias. The sum then
+passes through a logistic function, which squeezes any number into a value between
+0 and 1. The result, $P(\text{fire})$, is the detector's estimate of how likely it
+is that the room is on fire:
 \begin{align*}
   z &= -3.4 + 3.2\,\min(S,1.5) + 1.8\,\tfrac{\max(C-25,\,0)}{125}
        + 1.6\,\min\!\big(\tfrac{C/S}{250},\,2.5\big)\,\gamma
        + 0.55\,\tfrac{\min(\Delta T,\,60)}{10} + 1.4\,\dot S + 0.8\,N, \\
   P(\text{fire}) &= \sigma(z)\cdot\big(0.55 + 0.45\,\tfrac{\min(\text{cov},\,3)}{3}\big),
 \end{align*}
-where $\gamma = \min(S/0.15, 1)$ gates the ratio until there is smoke to divide by,
-$\dot S$ is the clipped smoke rate, $N$ the neighbour agreement, and the last factor
-holds the score back when fewer than three modalities are reporting. CO starts
-counting only above the 25\,ppm that cooking peaks at, which is what separates a
-frying pan from a smoulder. Every term is bounded so that no single modality can
-saturate the sum on its own, which is why a dead smoke detector does not blind the
-system and why a runaway one does not alarm it (Section~11).
+where $\gamma = \min(S/0.15, 1)$ keeps the ratio term switched off until there is
+enough smoke to divide by. $\dot S$ is the clipped smoke rate and $N$ is the
+neighbour agreement. The last factor holds the score back when fewer than three
+sensor types are reporting. CO only starts to count above 25\,ppm, which is where
+cooking peaks. That is what separates a frying pan from a smoulder. Every term has
+an upper limit, so no single sensor type can push the sum to the top on its own.
+That is why a dead smoke detector does not blind the system. It is also why a
+runaway one does not set off the alarm (Section~11).
 
 The detector is a protocol with two methods, \code{probability} and
-\code{explain}, and the second is not optional. The explanation is the calculation:
-the contributions are the terms above, the dashboard draws them as bars under the
-heading ``Why 99\,\%'', and a detector that could not say why would be one nobody
-could sign off. The model has to implement the same two methods, and does.
+\code{explain}. The second one is not optional. The explanation is the calculation
+itself. The contributions are the terms above. The dashboard draws them as bars
+under the heading ``Why 99\,\%''. Nobody could sign off a detector that cannot say
+why. The model has to implement the same two methods, and it does.
 
-\textbf{The alarm ladder.} The agent is one state machine per room, driven only
-by the probability and the clock:
+\textbf{The alarm ladder.} The agent is one state machine per room. Only the
+probability and the clock drive it. The last column is the waiting time:
 
 \begin{center}
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}l!{\colsep}l!{\colsep}l@{}}
 \toprule
+\rowcolor{tablehead}
 \textbf{Transition} & \textbf{Condition} & \textbf{Dwell} \\
 \midrule
 \textsc{normal} → \textsc{investigating} & $P \ge 0.35$ & none \\
+\rowline
 \textsc{investigating} → \textsc{pre-alarm} & $P \ge 0.55$ held & 20\,s \\
+\rowline
 \textsc{pre-alarm} → \textsc{confirmed} & $P \ge 0.75$ and in pre-alarm for & 25\,s \\
+\rowline
 \textsc{confirmed} → \textsc{suppressed} & sprinkler running and $P < 0.75$ for & 25\,s \\
+\rowline
 any alarm → \textsc{clearing} & $P \le 0.25$ held & 90\,s \\
+\rowline
 \textsc{clearing} → \textsc{normal} & quiet for & 90\,s \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The dwells are the false-alarm defence. A single threshold would flicker on sensor
-noise and open and close fire doors all day; holding a level for a fixed time costs
-45\,s on a clear fire and buys silence on cooking, dust and drifting sensors.
-Standing down takes far longer than raising the alarm did, and that is intended. The
-thresholds and dwells are live settings, so the trade-off can be explored from the
-panel.
+The waiting times are the defence against false alarms. A single threshold would
+flicker on sensor noise and open and close fire doors all day. Holding a level for
+a fixed time costs 45\,s on a clear fire. In return, the system stays silent on
+cooking, dust and drifting sensors. Standing down takes far longer than raising the
+alarm did, and that is on purpose. The thresholds and waiting times are live
+settings, so you can explore the trade-off from the panel.
 
 \textbf{What it asks for.} Only two states issue commands. Entering
 \textsc{confirmed} asks for the sprinkler on, the fire door closed and the building
-evacuated; entering \textsc{clearing} asks for the reverse. Every command carries a
-reason string, ``P(fire)=0.91 in A3505'', that goes into the journal. The agent
-never writes actuator state. Its requests go to the interlocks, and a request the
-interlocks refuse stays pending and is offered again every tick, because ``not yet''
-must not become ``never''. In the smouldering run the sprinkler was refused at 201\,s
-for lack of heat and released at 219\,s when the room crossed 35\,°C, and nobody had
-to ask twice.
+evacuated. Entering \textsc{clearing} asks for the reverse. Every command carries a
+reason string, such as ``P(fire)=0.91 in A3505'', that goes into the journal. The
+agent never writes actuator state. Its requests go to the safety rules. If the
+safety rules refuse a request, it stays pending and is offered again every tick.
+``Not yet'' must not become ``never''. In the smouldering run, the sprinkler was
+refused at 201\,s because there was not enough heat. It was released at 219\,s,
+when the room passed 35\,°C. Nobody had to ask twice.
 
-\textbf{Failure and safety.} If the intelligence is wrong, the interlocks hold: no
-water without heat, no locked door ever, no closed door on an occupied room or an
-escape route. If it is unavailable, nothing moves: actuators keep their last state
-and the building is as safe as it was without the system. If a person
-disagrees, supervised mode shows every decision and carries out none, and a manual
-command from the panel passes through the same interlocks and is journalled with
-the same reasons. With no working sensor in a room, the detector has no opinion
-rather than a low one, so an uninstrumented room is never marked safe. None of
-this changes when the model is the detector, which is the reason the interlocks
-were kept outside the intelligence in the first place.
+\textbf{Failure and safety.} If the intelligence is wrong, the safety rules still
+hold. There is no water without heat. No door is ever locked. No door closes on an
+occupied room or an escape route. If the intelligence is unavailable, nothing
+moves. Actuators keep their last state, and the building is as safe as it was
+without the system. If a person disagrees, supervised mode shows every decision but
+carries out none. A manual command from the panel passes through the same safety
+rules. It is logged in the journal with the same reasons. If a room has no working
+sensor, the detector gives no opinion rather than a low one. So a room without
+sensors is never marked safe. None of this changes when the model is the detector.
+That is why I kept the safety rules outside the intelligence in the first place.
 
 \textbf{The second detector: a language model.} The proposal planned to compare
-the rule with an isolation forest. I built the comparison with a language model
-instead, for two reasons. The only labelled data to train a forest on would have
-been this simulator's own output, so the forest would have learned my physics
-rather than fires. And a model that answers in words can be asked to explain
-itself, which is the requirement a trained detector usually fails. The adapter in
-\code{adapters/llm/} implements the same two-method protocol as the rule and sends
-one room's readings, the same features the rule sees and nothing else, to any
-OpenAI-compatible chat endpoint. The system prompt tells the model it sees only
-the sensors, never the room, and lists what separates a fire from a nuisance in
-the same terms the rule encodes: a flaming fire gets worse in all three
-modalities, a smoulder is dense smoke and high CO with no heat, cooking is warm
-and smoky with CO under 25\,ppm, dust and steam are smoke alone, a lone sensor
-that disagrees with its neighbours is probably broken. The reply is one JSON
-object with a probability, a list of weighted evidence and a one-sentence reason,
-parsed strictly: anything malformed is refused, not repaired.
+the rule with an isolation forest, a standard machine-learning method for spotting
+unusual data. I built the comparison with a language model instead, for two
+reasons. First, the only labelled data to train a forest on would have been this
+simulator's own output. The forest would have learned my physics, not fires.
+Second, a model that answers in words can be asked to explain itself. Trained
+detectors usually fail that requirement. The adapter in \code{adapters/llm/}
+implements the same two-method protocol as the rule. It sends one room's readings
+to any OpenAI-compatible chat endpoint. It sends the same features the rule sees,
+and nothing else. The system prompt tells the model that it sees only the sensors,
+never the room. It also lists what separates a fire from cooking, dust or steam, in
+the same terms the rule uses. A flaming fire gets worse on all three sensor types.
+A smoulder is dense smoke and high CO with no heat. Cooking is warm and smoky, with
+CO under 25\,ppm. Dust and steam are smoke alone. A lone sensor that disagrees with
+its neighbours is probably broken. The reply is one JSON object with a probability,
+a list of weighted evidence and a one-sentence reason. The adapter parses it
+strictly. It refuses anything malformed instead of repairing it.
 
-The engineering is in what happens around the call, because the tick has 250\,ms
-and the endpoint I had takes about eight seconds. Figure~\ref{fig:llm} shows the
-arrangement. \code{probability()} never waits. It returns the model's last
-verdict for the room if that verdict is younger than 60 simulated seconds, and
-the rule's number otherwise, and at most queues a question. A worker task beside
-the tick loop sends the queued questions one at a time, the most suspicious room
-first by the rule's own score, at most once per room every ten simulated seconds
-and never for a room whose sensors show nothing. A quiet building costs nothing.
-A verdict is stamped with the time the readings it saw were taken, not the time
-it arrived, which is what makes the 60\,s expiry mean something. The journal
-records each hand-over in both directions, every verdict that moves the score by
-a tenth, and the model's reason with it.
+The real engineering is around the call. The tick has 250\,ms, and the endpoint I
+had takes about eight seconds to answer. Figure~\ref{fig:llm} shows the setup.
+\code{probability()} never waits. If the model's last answer for the room is
+younger than 60 simulated seconds, it returns that answer. Otherwise it returns the
+rule's number. At most, it queues a question. A worker task runs beside the tick
+loop and sends the queued questions one at a time. The most suspicious room goes
+first, ranked by the rule's own score. Each room is asked at most once every ten
+simulated seconds. A room whose sensors show nothing is never asked, so a quiet
+building costs nothing. Each answer is stamped with the time its readings were
+taken, not the time it arrived. That is what makes the 60\,s expiry mean something.
+The journal records each hand-over in both directions. It also records every
+answer that moves the score by a tenth, together with the model's reason.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\linewidth]{images/llm.png}
-\caption{How the language model scores a room without holding the tick up. The tick only ever reads a cache or the rule; the worker fills the cache in the background; a measured answer time of about 8\,s caps the clock near 3$\times$ real time.}
+\caption{How the language model scores a room without holding up the tick. The tick only ever reads a cache or the rule. The worker fills the cache in the background. I measured an answer time of about 8\,s, and this caps the clock near 3$\times$ real time.}
 \label{fig:llm}
 \end{figure}
 
-\textbf{Pacing.} The first time I ran the model at forty times real time,
-nothing happened: every answer arrived 320 simulated seconds after it was asked
-for, every verdict had expired on arrival, the rule scored every room, and the
-panel said ``llm''. That is the failure mode to design against, and the fix is
-not a longer expiry. A verdict a minute old is a verdict about a room that has
-since doubled its smoke. Instead the detector measures how long answers take and
-reports the largest speed at which a verdict still arrives with half its life
-left, $60 / (2 \times \text{latency})$; the engine caps the speed dial there
-every tick and writes one journal line saying so. With the endpoint used here
-that is 3$\times$. The endpoint answers requests one after another, so asking
-about two rooms at once only doubled the latency and halved that cap, which is
-why one question is in flight at a time and the fire room gets it. Switch back
-to the rule and the cap lifts.
+\textbf{Pacing.} The first time I ran the model at forty times real time, nothing
+happened. Every answer arrived 320 simulated seconds after the question. Every
+answer had expired by the time it arrived. So the rule scored every room, while the
+panel said ``llm''. This is the failure I had to design against. The fix is not a
+longer expiry. An answer a minute old is about a room that has since doubled its
+smoke. Instead, the detector measures how long answers take. It then reports the
+highest speed at which an answer still arrives with half its life left,
+$60 / (2 \times \text{latency})$. Every tick, the engine caps the speed dial there
+and writes one journal line about it. With the endpoint I used, that is 3$\times$.
+The endpoint answers requests one after another. So asking about two rooms at once
+only doubled the latency and halved the cap. That is why only one question is in
+flight at a time, and the fire room gets it. Switch back to the rule and the cap
+lifts.
 
-\textbf{What the comparison is for.} The rule is the baseline the model has to
-beat on three counts: whether it catches the same fires and ignores the same
-nuisances, how much later, and whether its ``Why'' is as auditable as a sum of
-terms. Section~11 reports all three. The model's evidence is drawn as the same
-bars, with one extra bar for the verdict itself on the rule's logit scale, so
-the two are judged on the same screen.
+\textbf{What the comparison is for.} The rule is the baseline that the model has
+to beat on three counts. Does it catch the same fires and ignore the same cooking,
+dust and steam? How much later does it act? Is its ``Why'' as easy to check as a
+sum of terms? Section~11 reports all three. The model's evidence is drawn as the
+same bars. There is one extra bar for the model's answer itself, on the rule's
+logit scale (the scale of $z$ before the logistic function). So the two are judged
+on the same screen.
 
 \subsection{7.2 The data pipeline}\label{sec:pipeline}
 
-Readings flow through a short in-memory pipeline that serves four consumers at
-once: the detector, the control panel, the scoreboard and the CSV export. It is
-small. A time-series database and a broker were in the proposal, and
-were dropped because every one of them would have been another process to keep in
-step with a clock running forty times faster than the wall.
+Readings flow through a short in-memory pipeline. It serves four consumers at once:
+the detector, the control panel, the scoreboard and the CSV export. It is small.
+The proposal included a time-series database and a message broker. I dropped both.
+Each one would have been another process to keep in step with a clock running
+forty times faster than real time.
 
 \begin{itemize}[leftmargin=1.4em, itemsep=2pt]
-\item \textbf{Ingestion.} Every device samples the truth at its own interval and
+\item \textbf{Ingestion.} Every device samples the truth at its own interval. It
   appends the reading to its room's window. The window keeps 120\,s of simulated
-  time per modality, because that is all the detector is allowed to look at.
-\item \textbf{Features and score.} Once per tick the features are extracted, the
-  detector scores the room, the contributions are kept for the ``Why'' panel, and the
-  agent steps.
-\item \textbf{The flight recorder.} Every 5 simulated seconds, one row per monitored
-  room: time, true temperature, smoke and CO, the three readings, and P(fire). Each
-  room keeps its last 240 rows, about twenty minutes, which is what the charts show.
-\item \textbf{The journal.} Every state change, every command with its reason,
-  every refusal with the interlock's reason, and every detector verdict that moved
-  a room's score by a tenth, with the rule's top three terms or the model's
-  reason; the last 200 lines. This is where the lessons show up.
-\item \textbf{The scoreboard.} Judged once per new alarm against the source labels:
-  a catch with its latency, a miss after 300\,s unconfirmed, or a false alarm with
-  the nuisance that caused it. Smoke that came through the door from a real fire
-  next door is not a false alarm; a fire on another floor is no excuse.
+  time per sensor type, because that is all the detector may look at.
+\item \textbf{Features and score.} Once per tick, the features are extracted and
+  the detector scores the room. The contributions are kept for the ``Why'' panel,
+  and the agent takes a step.
+\item \textbf{The flight recorder.} Every 5 simulated seconds, it stores one row
+  per monitored room. A row holds the time, the true temperature, smoke and CO, the
+  three readings, and P(fire). Each room keeps its last 240 rows, about twenty
+  minutes. This is what the charts show.
+\item \textbf{The journal.} It logs every state change, and every command with its
+  reason. It logs every refusal with the safety rule's reason. It also logs every
+  detector answer that moved a room's score by a tenth. That line holds the rule's
+  top three terms or the model's reason. The journal keeps the last 200 lines. This
+  is where the lessons show up.
+\item \textbf{The scoreboard.} It judges each new alarm once, against the source
+  labels. The result is a catch with its latency, or a miss after 300\,s without
+  confirmation. It can also be a false alarm, together with the cooking, dust or
+  steam that caused it. Smoke that came through the door from a real fire next door
+  is not a false alarm. A fire on another floor is no excuse.
 \item \textbf{Out.} The snapshot is rebuilt once per tick and pushed to every open
-  panel over SSE. The whole recorder, labelled, is one GET away as CSV.
+  panel over SSE. The whole recorder, with labels, is one GET request away as CSV.
 \end{itemize}
 
-\textbf{Data quality} is handled at the source rather than cleaned afterwards,
-because the project exists to see what the intelligence does with bad data. A dead device stops contributing and the coverage factor lowers the
-score; a dropout leaves gaps the window tolerates; a stuck value flattens the rate
-term. Retention is short by design. Anything longer than twenty minutes is
-exported, not stored, and a restart starts clean.
+\textbf{Data quality} is handled at the source, not cleaned afterwards. The
+project exists to see what the intelligence does with bad data. A dead device stops
+contributing, and the coverage factor lowers the score. A dropout leaves gaps that
+the window tolerates. A stuck value flattens the rate term. Retention is short on
+purpose. Anything beyond twenty minutes is exported, not stored, and a restart
+starts clean.
 
 \section{8. Behaviour}\label{sec:behaviour}
 
 \subsection{8.1 Key scenario, dynamic diagram}\label{sec:dynamic}
 
 Figure~\ref{fig:dynamic} is a C4 dynamic diagram of the office fire from
-Section~2, with the times measured in the run reported in Section~11. It shows
-what the static diagrams cannot: the tick order, the dwells, and the moment the
-loop closes.
+Section~2. It uses the times measured in the run reported in Section~11. It shows
+what the static diagrams cannot: the tick order, the waiting times, and the moment
+the loop closes.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1.00\linewidth]{images/dynamic.png}
-\caption{C4 Dynamic diagram of the office fire, with the times measured in Section~11. Steps 3 to 5 are the dwells; step 7 is where the interlocks decide; step 10 is the loop closing.}
+\caption{C4 Dynamic diagram of the office fire, with the times measured in Section~11. Steps 3 to 5 are the waiting times. Step 7 is where the safety rules decide. Step 10 is where the loop closes.}
 \label{fig:dynamic}
 \end{figure}
 
-Two things in the order matter. The response is issued and applied in the same
-tick that confirms, so nothing waits for the next reading. And the fire door closed
-only because A3505 happened to be empty and on nobody's route; had a student been
-inside, step~7 would have refused the door, journalled why, and kept the request
-pending until they left.
+Two things in the order matter. First, the response is issued and applied in the
+same tick that confirms the fire. Nothing waits for the next reading. Second, the
+fire door closed only because A3505 happened to be empty and on nobody's route. If
+a student had been inside, step~7 would have refused to close the door. It would
+have logged why in the journal and kept the request pending until they left.
 
 \subsection{8.2 Process lifecycle, state machine}\label{sec:statemachine}
 
-Every monitored room has one of these, and its transitions are the code in
-\code{domain/agent.py}. The dwells are on the arrows.
+Every monitored room has one of these state machines. Its transitions are the code
+in \code{domain/agent.py}. The waiting times are on the arrows.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.72\linewidth]{images/state.png}
-\caption{The per-room alarm state machine. Only two states ask for anything; every other arrow only changes what the room believes.}
+\caption{The per-room alarm state machine. Only two states ask for anything. Every other arrow only changes what the room believes.}
 \label{fig:state}
 \end{figure}
 
-\textsc{suppressed} is still an alarm: the fire is being held, not out, and the
-confirmed state's outstanding requests stand. A fire that burns on through the
-water climbs straight back to \textsc{confirmed}. Standing down needs the
-probability to stay at or below 0.25 for 90\,s and then a further 90\,s of quiet
-before the room stops being flagged as an incident, so a sensor that recovers for a
-moment cannot reopen a door onto a fire. The process itself has a lifecycle of its
-own outside this diagram: on startup the service loads the floors from BuildSim,
-installs the detector the configuration names, starting the model's worker task
-if it is the model, and scatters the population; if BuildSim stops answering, the
-service marks itself disconnected, keeps simulating, stops publishing, and waits
-for a reload rather than crashing. Changing the detector while running stops one
-worker and starts the other under the tick lock, so no tick sees half a swap, and
-the rooms' alarm states carry over untouched because the agent never knew which
-detector it was listening to.
+\textsc{suppressed} is still an alarm. The fire is being held, not put out, and the
+requests from the confirmed state still stand. A fire that keeps burning through
+the water climbs straight back to \textsc{confirmed}. To stand down, the
+probability must stay at or below 0.25 for 90\,s. Then the room needs a further
+90\,s of quiet before it stops being flagged as an incident. So a sensor that
+recovers for a moment cannot reopen a door onto a fire. The process also has its
+own lifecycle, outside this diagram. On startup, the service loads the floors from
+BuildSim. It installs the detector named in the configuration. If that detector is
+the model, it also starts the model's worker task. Then it scatters the population.
+If BuildSim stops answering, the service does not crash. It marks itself
+disconnected, keeps simulating, stops publishing, and waits for a reload. Changing
+the detector while running stops one worker and starts the other under the tick
+lock. So no tick ever sees half a swap. The rooms' alarm states carry over
+untouched, because the agent never knew which detector it was listening to.

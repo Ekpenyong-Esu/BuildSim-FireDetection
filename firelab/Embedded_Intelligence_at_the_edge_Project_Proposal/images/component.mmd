@@ -1,47 +1,45 @@
 %% C4 Component diagram (Level 3): inside the firelab service.
-%% Edges between the three groups are drawn group to group so that each
-%% group keeps its own left-to-right layout.
+%% Edges between the groups go group to group, so each group keeps its own row.
 flowchart TB
-  subgraph TRUTH["May read the truth"]
+  subgraph TRUTH["Sees the truth"]
     direction LR
-    SRC["<b>Sources</b><br/>fires and nuisances;<br/>the ground-truth label"]
-    PHY["<b>World / physics</b><br/>heat, smoke, CO per room;<br/>diffusion through doors"]
-    SEN["<b>Sensing</b><br/>lag, bias, noise,<br/>quantise, clamp, faults"]
-    SCO["<b>Scoreboard</b><br/>catches, misses, false alarms,<br/>RSET, tenability"]
-    SRC -- emissions --> PHY
-    PHY -- truth --> SEN
-    SRC -- labels --> SCO
+    SRC["<b>Sources</b><br/>fires, cooking,<br/>dust, steam"]
+    PHY["<b>Physics</b><br/>heat, smoke, CO<br/>per room"]
+    SEN["<b>Sensing</b><br/>lag, noise, faults"]
+    SCO["<b>Scoreboard</b><br/>catches, misses,<br/>false alarms, RSET"]
+    SRC --> PHY --> SEN
+    SRC -. labels .-> SCO
   end
-  subgraph READ["Readings only: beyond the truth boundary"]
+  subgraph READ["Sees sensor readings only"]
     direction LR
-    FEA["<b>Features</b><br/>120 s window per room;<br/>neighbour agreement"]
-    DET["<b>Detector</b><br/>one protocol, two detectors:<br/>the fusion rule, or the LLM adapter"]
-    LLMA["<b>LLM adapter</b><br/>readings to a prompt; verdicts cached 60 s;<br/>asks in the background; the rule covers the rest"]
-    AGT["<b>Room agent</b><br/>alarm ladder with dwells;<br/>proposes commands"]
-    FEA -- vector --> DET
-    DET -- "P(fire)" --> AGT
-    DET -- "features, when due" --> LLMA
-    LLMA -- "fresh verdict, or the rule's number" --> DET
+    FEA["<b>Features</b><br/>last 120 s per room"]
+    DET["<b>Detector</b><br/>fusion rule or LLM"]
+    AGT["<b>Room agent</b><br/>alarm state machine"]
+    LLMA["<b>LLM adapter</b><br/>asks in the background,<br/>keeps answers 60 s"]
+    FEA --> DET -- "P(fire)" --> AGT
+    DET <--> LLMA
   end
-  subgraph ACT["Acting and showing"]
+  subgraph ACT["Acts and shows"]
     direction LR
-    ILK["<b>Interlocks</b><br/>heat corroboration; never lock;<br/>never seal people in"]
-    ACTU["<b>Actuation</b><br/>sprinkler, door openness,<br/>evacuate; the journal"]
-    EVA["<b>Evacuation</b><br/>Dijkstra on the walkable graph<br/>minus alarming rooms"]
-    PUB["<b>Publisher + API</b><br/>BuildSim payloads;<br/>snapshot; SSE; CSV"]
-    ILK -- allowed --> ACTU
-    ACTU -- evacuate --> EVA
-    EVA -- "route, people" --> PUB
+    ILK["<b>Safety rules</b><br/>water needs heat,<br/>never seal people in"]
+    ACTU["<b>Actuation</b><br/>sprinkler, doors,<br/>evacuate"]
+    EVA["<b>Evacuation</b><br/>shortest safe route"]
+    PUB["<b>Publisher + API</b><br/>BuildSim, panel, CSV"]
+    ILK -- allowed --> ACTU --> EVA --> PUB
   end
-  EP["<b>Language model endpoint</b><br/>[external, HTTPS, optional]"]
-  TRUTH -- "readings (Sensing to Features)" --> READ
-  READ -- "proposed commands (Agent to Interlocks); states to the Scoreboard" --> ACT
-  ACT -- "sprinkler on/off and door openness written into the world: the loop closes here" --> TRUTH
-  LLMA -. "one room's readings; JSON verdict back,<br/>about 8 s later, off the tick" .-> EP
-  classDef comp fill:#85b6eb,stroke:#0b3d7a,color:#000000
-  classDef ext fill:#999999,stroke:#666666,color:#ffffff
-  class SRC,PHY,SEN,SCO,FEA,DET,LLMA,AGT,ILK,ACTU,EVA,PUB comp
-  class EP ext
-  style TRUTH fill:#fff4ee,stroke:#e25822,stroke-dasharray:6 4
-  style READ fill:#eef4fc,stroke:#1c68c4,stroke-dasharray:6 4
-  style ACT fill:#eef4fc,stroke:#1c68c4,stroke-dasharray:6 4
+  EP["<b>Language model</b><br/>external, HTTPS"]
+  TRUTH -- readings --> READ
+  READ -- "proposed commands" --> ACT
+  TRUTH === |"sprinkler and doors<br/>feed back into the world"| ACT
+  READ -. "one room at a time" .-> EP
+  classDef truth fill:#fde3d3,stroke:#e25822,color:#5a1e05
+  classDef read fill:#d9f2e3,stroke:#16a34a,color:#0f3d22
+  classDef act fill:#dbe8fb,stroke:#1c68c4,color:#0b2e5c
+  classDef model fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+  class SRC,PHY,SEN,SCO truth
+  class FEA,DET,LLMA,AGT read
+  class ILK,ACTU,EVA,PUB act
+  class EP model
+  style TRUTH fill:#fff7f2,stroke:#e25822,stroke-dasharray:6 4
+  style READ fill:#f3fbf6,stroke:#16a34a,stroke-dasharray:6 4
+  style ACT fill:#f3f7fd,stroke:#1c68c4,stroke-dasharray:6 4

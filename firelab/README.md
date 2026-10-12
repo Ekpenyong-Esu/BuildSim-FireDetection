@@ -13,7 +13,8 @@ open: firelab on <http://127.0.0.1:8090> to control the simulation, BuildSim on
 > at the same time — both replace the whole collection on every write.
 
 > New to the code? Follow [READING_ORDER.md](READING_ORDER.md) — every file
-> numbered in the order to read it, folder by folder.
+> numbered in the order to read it, folder by folder. For running it in the lab,
+> see [lab-quickstart.md](lab-quickstart.md).
 
 ## Quick start
 
