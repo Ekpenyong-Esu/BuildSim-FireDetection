@@ -6,7 +6,7 @@ flowchart LR
     subgraph FIRE["firelab (this project)"]
       direction TB
       PANEL["<b>Control panel</b><br/>Svelte app in a browser tab"]
-      SVC["<b>firelab service</b><br/>Python 3.10, uvicorn, port 8090<br/>one process, a tick every 250 ms"]
+      SVC["<b>firelab service</b><br/>Python 3.10, uvicorn, port 8090<br/>one asyncio process, a tick every 250 ms"]
       PANEL -- "REST + SSE" --> SVC
     end
     subgraph BSIDE["BuildSim"]

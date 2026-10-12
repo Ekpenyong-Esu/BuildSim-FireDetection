@@ -1,6 +1,6 @@
-\section{4. Architecture}\label{sec:architecture}
+\section{Architecture}\label{sec:architecture}
 
-\subsection{4.1 Context diagram (C4 Level 1)}\label{sec:context}
+\subsection{Context diagram (C4 Level 1)}\label{sec:context}
 
 The context view sets the system's boundary. Everything the system knows about the
 building comes through BuildSim's REST API. Everything it does to the building goes
@@ -19,11 +19,12 @@ the building depends on the endpoint answering.
 \label{fig:context}
 \end{figure}
 
-\subsection{4.2 Container diagram (C4 Level 2)}\label{sec:container}
+\subsection{Container diagram (C4 Level 2)}\label{sec:container}
 
-The container view opens the box. Five parts run separately, and only one of them is
-my code. The fifth, the model endpoint, is the only one not on the laptop. It is
-also the only one the system runs fine without.
+The container view opens the box. Five parts run separately, and two of them are my
+code: the control panel in the browser and the firelab service. BuildSim and its 3D
+viewer are provided. The fifth, the model endpoint, is the only one not on the
+laptop. It is also the only one the system runs fine without.
 
 \begin{figure}[H]
 \centering
@@ -41,7 +42,28 @@ publisher before moving on. A slow dashboard could stall the physics. Inside one
 process, the tick loop does four things in a fixed order under one lock. It moves the
 world forward, samples the sensors, thinks and acts. ``Now'' is one number. The
 price is that the zones share a process, so a crash in one takes down the others.
-Section~13 says what that costs and what would change if the system left the laptop.
+Section~\ref{sec:risks} says what that costs and what would change if the system left the laptop.
+
+\textbf{How one process does several things at once.} I built the service on
+Python's \code{asyncio}. Think of it as one worker that juggles many small jobs.
+Whenever a job has to wait, the worker puts it down and picks up another. Most of
+the work here is waiting: for BuildSim to reply, for the model to reply, or for a
+browser to collect the next update. Four jobs share the worker:
+\begin{itemize}[nosep]
+  \item the tick, which wakes every 250\,ms and moves the fire forward;
+  \item the web API, which answers the control panel and streams live updates to
+    each open browser tab;
+  \item the publisher, which sends all its updates to BuildSim at once (six fixed
+    ones plus one per sensor), so it only waits as long as the slowest one;
+  \item the model's helper, which asks the language model its questions in the
+    background.
+\end{itemize}
+I chose one worker instead of several threads because two jobs can then never
+change the same data at the same moment. A job can only be paused at a point
+where it waits. The tick also holds a lock while it runs, so a button press can
+never change the building halfway through a tick. The downside is that a slow job
+that never waits holds everyone up. That is why the tick must finish within
+250\,ms, and why experiment E5 measures how many rooms fit in that time.
 
 \textbf{What keeps the zones apart} is the package layering, since there are no
 process boundaries. There are three packages. \code{domain} is pure: standard library
@@ -62,12 +84,12 @@ not mine, and other users share it. It answers in about eight real seconds, whil
 the tick has 250 milliseconds. Those two facts shaped the adapter in front of it.
 The service never waits for the model and asks it about one room at a time. It uses
 an answer for at most a minute of simulated time. It also slows the clock to what the
-measured answer time allows, so answers do not go stale (Section~7.1). I chose an
+measured answer time allows, so answers do not go stale (Section~\ref{sec:service}). I chose an
 OpenAI-compatible chat API because every hosted and local model server speaks it.
 So the endpoint, the key and the model name are three environment variables, and
 nothing in the code names a vendor.
 
-\subsection{4.3 Component diagram (C4 Level 3): inside the firelab service}\label{sec:component}
+\subsection{Component diagram (C4 Level 3): inside the firelab service}\label{sec:component}
 
 The service is the one container complex enough to need its own picture. Its
 components are the four zones of one tick, plus the parts around them. The three
@@ -85,8 +107,8 @@ layering test checks that it imports nothing that could tell it the truth.
 \label{fig:component}
 \end{figure}
 
-\textbf{Component responsibilities.} Each component has one job. I also give the
-reason it is separate, because that is the question the oral examination will ask.
+\textbf{Component responsibilities.} Each component has one job. The last column
+says why it is a separate component.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.15}}
@@ -124,7 +146,7 @@ Publisher + API & Turns engine state into BuildSim payloads and the UI snapshot.
 \bottomrule
 \end{longtable}
 
-\subsection{4.4 Design decisions and justifications}\label{sec:decisions}
+\subsection{Design decisions and justifications}\label{sec:decisions}
 
 Each row names the option I took, the alternative I considered, the requirement it
 serves and the price paid. A decision with no rejected alternative would only be an
@@ -142,6 +164,8 @@ assumption.
 \midrule
 \endhead
 Process model & One tick loop, four zones, one lock & One container per zone over MQTT (the proposal) & Waiting times and rates need one simulated clock. At 40$\times$, a reading sent through a broker is stale when it arrives (NFR-01, NFR-03) & No fault isolation between zones. Splitting them is a future step \\
+\rowline
+Concurrency & \code{asyncio}: one worker that switches between jobs while they wait & Several threads; one process per job & The work is mostly waiting on the network. With one worker, two jobs never change the same data at once, and the tick's lock covers the rest (NFR-01, NFR-03) & A slow job that never waits holds everyone up, so the tick must finish within 250\,ms \\
 \rowline
 Zone separation & Import layering checked by a test & Trust the code review & The truth is one attribute away from the detector. A test lets me check that the code keeps away from it (NFR-04) & A test to maintain as modules move \\
 \rowline
@@ -165,7 +189,7 @@ Route search & My own Dijkstra search over BuildSim's graph, with alarming rooms
 \rowline
 Sensor emulation & Lag, bias, noise, quantisation, clamp, faults per device & Truth plus Gaussian noise & The interesting failures (saturation, stuck, dead) are not noise. The temperature clamp at 250\,°C is what a real heat detector does (NFR-02) & More parameters to defend \\
 \rowline
-Physics & Lumped node per room, first-order relaxation, door-gated diffusion & CFD; zone model with layers & Enough structure to close the loop and get the trends right. Cheap enough for 956 rooms 40 times a second (NFR-01) & The fire room overheats when sealed. No oxygen limit (Section~13) \\
+Physics & Lumped node per room, first-order relaxation, door-gated diffusion & CFD; zone model with layers & Enough structure to close the loop and get the trends right. Cheap enough for 956 rooms 40 times a second (NFR-01) & The fire room overheats when sealed. No oxygen limit (Section~\ref{sec:risks}) \\
 \rowline
 Storage & In-memory rolling windows; CSV export & Time-series database; ThingsBoard & The detector may only see 120\,s, and the charts only need 20 minutes. A database would be one more process to keep in step with the clock (NFR-01) & History is lost on restart. Long runs are exported, not stored \\
 \rowline
@@ -175,7 +199,7 @@ BuildSim writes & Once per simulated second, complete collections, 24 sensor val
 \bottomrule
 \end{longtable}
 
-\section{5. Interfaces and communication}\label{sec:interfaces}
+\section{Interfaces and communication}\label{sec:interfaces}
 
 I use four patterns, each where it fits. \textbf{REST} carries every command and
 every call to BuildSim. Each is a one-to-one request, and the caller must know the
@@ -186,7 +210,7 @@ channel to its viewer. I use it, but I did not build it. \textbf{HTTPS chat
 completions} carry one room's readings to the language model and a JSON answer back.
 A background task makes the call, with a 30\,s timeout and one retry. The result
 goes into a cache, never into a tick. There is no pub/sub, for the reason given in
-Section~4.2.
+Section~\ref{sec:container}.
 
 \textbf{Naming.} Everywhere, a room's address is \code{level/name}, for instance
 \code{level2/A3505}. I do this because a bare name is not unique across storeys. A

@@ -1,4 +1,4 @@
-\section{1. Summary}\label{sec:summary}
+\section{Summary}\label{sec:summary}
 
 This system watches an office building for fire. It acts on what it finds without
 waiting for a person. Emulated smoke, carbon monoxide and temperature detectors
@@ -77,7 +77,7 @@ building the system taught me something the proposal did not know.
   safety rule decides. The request stands until it is safe to carry out.
 \end{itemize}
 
-\section{2. Use case and building context (BuildSim)}\label{sec:usecase}
+\section{Use case and building context (BuildSim)}\label{sec:usecase}
 
 \textbf{The building.} The system runs on the A-building at Luleå University of
 Technology, as BuildSim models it. It has three storeys, 956 named spaces, 1005
@@ -144,13 +144,13 @@ or when it is slow, the rule scores every room.
 \label{fig:landscape}
 \end{figure}
 
-\section{3. Requirements}\label{sec:requirements}
+\section{Requirements}\label{sec:requirements}
 
 Every requirement is a testable statement with a fixed ID. Functional requirements
 (FR) say what the system does. Safety requirements (SR) say what it must never do,
 whatever the agent decides. Non-functional requirements (NFR) say how well it must
 work. The last column names the test or experiment that checks each one. The test
-plan in Section~10 and the results in Section~11 close the loop.
+plan in Section~\ref{sec:testplan} and the results in Section~\ref{sec:evaluation} close the loop.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.08}}
@@ -212,6 +212,6 @@ falls back to the second. The safety requirements apply whichever detector is
 installed. That is why I keep the safety rules outside the intelligence.
 
 \textbf{Traceability.} The five architecture viewpoints map onto this document.
-They are context (Section~4.1), functional (4.2 and 4.3), information (Sections~5
-to~7), behavioural (Section~8) and deployment (Section~9). Each requirement names the
+They are context (Section~\ref{sec:context}), functional (Sections~\ref{sec:container} and~\ref{sec:component}), information
+(Sections~\ref{sec:interfaces} to~\ref{sec:services}), behavioural (Section~\ref{sec:behaviour}) and deployment (Section~\ref{sec:deployment}). Each requirement names the
 design that meets it and the test that proves it.

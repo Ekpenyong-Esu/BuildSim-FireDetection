@@ -1,4 +1,4 @@
-\section{6. Simulating the sensor values (the physical model)}\label{sec:physics}
+\section{Simulating the sensor values (the physical model)}\label{sec:physics}
 
 BuildSim provides the rooms but nothing that changes. So I simulate the fire, the
 air in every room, the sensors and the people here. I never aimed for physical
@@ -70,7 +70,7 @@ sprinkler multiplies the room's heat release by 0.25 and its smoke equilibrium b
 0.4. A closed fire door sets the openness of every link into that room to 0.15,
 because a real fire door leaks. The actuation zone writes both states, and the next
 physics step reads them. So a command issued at tick $n$ changes the reading at tick
-$n+1$. Section~11 measures what this gains.
+$n+1$. Section~\ref{sec:evaluation} measures what this gains.
 
 \textbf{Sensors.} A reading is never the truth. Every device applies the same
 chain of steps, in this order. Each step has its own parameters for each sensor
@@ -126,9 +126,9 @@ Walking out through a smoke-filled corridor adds to it, and the dose stays with
 them afterwards. A room stops being escapable at 60\,°C, or when smoke cuts
 visibility below 10\,m. The scoreboard counts those rooms as lost.
 
-\section{7. Autonomous services and data engineering}\label{sec:services}
+\section{Autonomous services and data engineering}\label{sec:services}
 
-\subsection{7.1 The autonomous service}\label{sec:service}
+\subsection{The autonomous service}\label{sec:service}
 
 The intelligence runs once per tick over every monitored room. It has three steps,
 and each step sees only the output of the one before. Readings become features.
@@ -167,7 +167,7 @@ sensor types are reporting. CO only starts to count above 25\,ppm, which is wher
 cooking peaks. That is what separates a frying pan from a smoulder. Every term has
 an upper limit, so no single sensor type can push the sum to the top on its own.
 That is why a dead smoke detector does not blind the system. It is also why a
-runaway one does not set off the alarm (Section~11).
+runaway one does not set off the alarm (Section~\ref{sec:evaluation}).
 
 The detector is a protocol with two methods, \code{probability} and
 \code{explain}. The second one is not optional. The explanation is the calculation
@@ -282,12 +282,12 @@ lifts.
 \textbf{What the comparison is for.} The rule is the baseline that the model has
 to beat on three counts. Does it catch the same fires and ignore the same cooking,
 dust and steam? How much later does it act? Is its ``Why'' as easy to check as a
-sum of terms? Section~11 reports all three. The model's evidence is drawn as the
+sum of terms? Section~\ref{sec:evaluation} reports all three. The model's evidence is drawn as the
 same bars. There is one extra bar for the model's answer itself, on the rule's
 logit scale (the scale of $z$ before the logistic function). So the two are judged
 on the same screen.
 
-\subsection{7.2 The data pipeline}\label{sec:pipeline}
+\subsection{The data pipeline}\label{sec:pipeline}
 
 Readings flow through a short in-memory pipeline. It serves four consumers at once:
 the detector, the control panel, the scoreboard and the CSV export. It is small.
@@ -327,19 +327,19 @@ the window tolerates. A stuck value flattens the rate term. Retention is short o
 purpose. Anything beyond twenty minutes is exported, not stored, and a restart
 starts clean.
 
-\section{8. Behaviour}\label{sec:behaviour}
+\section{Behaviour}\label{sec:behaviour}
 
-\subsection{8.1 Key scenario, dynamic diagram}\label{sec:dynamic}
+\subsection{Key scenario, dynamic diagram}\label{sec:dynamic}
 
 Figure~\ref{fig:dynamic} is a C4 dynamic diagram of the office fire from
-Section~2. It uses the times measured in the run reported in Section~11. It shows
+Section~\ref{sec:usecase}. It uses the times measured in the run reported in Section~\ref{sec:evaluation}. It shows
 what the static diagrams cannot: the tick order, the waiting times, and the moment
 the loop closes.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1.00\linewidth]{images/dynamic.png}
-\caption{C4 Dynamic diagram of the office fire, with the times measured in Section~11. Steps 3 to 5 are the waiting times. Step 7 is where the safety rules decide. Step 10 is where the loop closes.}
+\caption{C4 Dynamic diagram of the office fire, with the times measured in Section~\ref{sec:evaluation}. Steps 3 to 5 are the waiting times. Step 7 is where the safety rules decide. Step 10 is where the loop closes.}
 \label{fig:dynamic}
 \end{figure}
 
@@ -349,7 +349,7 @@ fire door closed only because A3505 happened to be empty and on nobody's route. 
 a student had been inside, step~7 would have refused to close the door. It would
 have logged why in the journal and kept the request pending until they left.
 
-\subsection{8.2 Process lifecycle, state machine}\label{sec:statemachine}
+\subsection{Process lifecycle, state machine}\label{sec:statemachine}
 
 Every monitored room has one of these state machines. Its transitions are the code
 in \code{domain/agent.py}. The waiting times are on the arrows.

@@ -1,9 +1,9 @@
-\section{9. Deployment and component placement}\label{sec:deployment}
+\section{Deployment and component placement}\label{sec:deployment}
 
 Everything that matters runs on one laptop. So deployment is about how the
 system is built from processes, not where they sit in the world. There are two
 processes and two browser tabs. They talk only through the interfaces of
-Section~5. One optional call leaves the machine. When the language model is the
+Section~\ref{sec:interfaces}. One optional call leaves the machine. When the language model is the
 chosen detector, it runs on a shared server on the university network.
 
 \begin{figure}[H]
@@ -17,7 +17,7 @@ chosen detector, it runs on a shared server on the university network.
 runs from the physics, through the sensors, to the safety rules (interlocks) and
 back. It touches nothing outside the machine except BuildSim over loopback. In a
 real building, this process is the edge node. It must keep working when the
-internet does not. It must also answer within the tick budget, which Section~11
+internet does not. It must also answer within the tick budget, which Section~\ref{sec:evaluation}
 measures. The model endpoint puts that idea to the test. It is off the edge, it
 is slow, and someone else runs it. So the adapter treats it as advice, not as
 something the system depends on. The rule scores every room the model has not
@@ -42,7 +42,7 @@ BuildSim without a restart. If BuildSim is down at startup, the service says so 
 its journal and sits idle until a reload. If BuildSim goes away mid-run, the
 service marks itself disconnected and stops writing. It keeps simulating.
 
-\section{10. Test plan}\label{sec:testplan}
+\section{Test plan}\label{sec:testplan}
 
 Two kinds of evidence back the requirements. The first is the unit suite: 162
 tests and 98 subtests in 22 files. It runs in three seconds with nothing else
@@ -52,7 +52,7 @@ the experiments (E1 to E7). They drive the real engine tick by tick against the
 loaded building, with publishing switched off. They use the same seed every time
 and write their measurements to \code{experiments/results/}. E7, the model
 comparison, is the only one that also needs the endpoint and a wall clock.
-Section~11 reports them.
+Section~\ref{sec:evaluation} reports them.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.12}}
@@ -72,7 +72,7 @@ T-3 & \code{test\_interlocks}: water is refused below 35\,°C. Lock is always re
 \rowline
 T-4 & \code{test\_sensing}: lag, rounding (quantisation), clamping and each of the four faults behave as specified & NFR-02 & unit, passes \\
 \rowline
-T-5 & \code{test\_physics}, \code{test\_sources}: relaxation, the diffusion cap, sprinkler factors, the $t^2$ curve & Section~6 & unit, passes \\
+T-5 & \code{test\_physics}, \code{test\_sources}: relaxation, the diffusion cap, sprinkler factors, the $t^2$ curve & Section~\ref{sec:physics} & unit, passes \\
 \rowline
 T-6 & \code{test\_evacuation}, \code{test\_walkways}, \code{test\_multifloor}: clear routes avoid danger, upper floors reach a ground-floor exit, and the drawn route starts at the fire & FR-05 & unit, passes \\
 \rowline
@@ -90,7 +90,7 @@ T-12 & \code{test\_pacing}: the rule has no speed limit. A slow detector caps th
 \rowline
 E1 & Each of the six presets in A3505 for 20 simulated minutes: state times, score, response, peak truth & FR-01 to FR-04, SR-01 & Table~\ref{tab:presets}, Figure~\ref{fig:office} \\
 \rowline
-E2 & The office fire with the agent's commands dropped (supervised mode), then with the sprinkler alone & Section~6 loop & Table~\ref{tab:contain} \\
+E2 & The office fire with the agent's commands dropped (supervised mode), then with the sprinkler alone & Section~\ref{sec:physics} loop & Table~\ref{tab:contain} \\
 \rowline
 E3 & Office fire and kitchen cooking at sensor noise 0, 1, 2, 3$\times$ & FR-03, NFR-03 & Table~\ref{tab:noise} \\
 \rowline
@@ -104,7 +104,7 @@ E7 & The six presets, cooking at 2 and 3$\times$ noise, and the fire with a stuc
 \bottomrule
 \end{longtable}
 
-\section{11. Evaluation and experiments}\label{sec:evaluation}
+\section{Evaluation and experiments}\label{sec:evaluation}
 
 This section reports what I measured. The experiment harness in
 \code{experiments/run\_experiments.py} measured every number below. It ran on the
@@ -413,7 +413,7 @@ Model answers never used when out of date & typical answer 7--21\,s; simulation 
 \end{tabular}}
 \end{table}
 
-\section{12. Dashboard}\label{sec:dashboard}
+\section{Dashboard}\label{sec:dashboard}
 
 The dashboard is two browser tabs. They are meant to be read together, and each
 has its own job. The BuildSim viewer shows the building. It has heat maps of the
@@ -458,7 +458,7 @@ speed dial then shows the cap the model sets. Everything on the panel arrives ov
 the event stream, one snapshot per tick. The whole record can be saved as a
 labelled CSV.
 
-\section{13. Risks and critical reflection}\label{sec:risks}
+\section{Risks and critical reflection}\label{sec:risks}
 
 The system does what the requirements ask. But the evaluation found five things
 that deserve more doubt than a tick mark gives them.
@@ -483,13 +483,14 @@ the fire room.} Closing the doors halved the smoke next door, which is right. It
 also raised the fire room from 309 to 648\,°C. That comes from the model: water
 only reduces the heat the fire releases, and a sealed room cannot run out of
 oxygen. In a zone model, the sprinkler would cool the hot gas layer and the fire
-would starve. The relative comparisons in Section~11 stand, but the absolute
+would starve. The relative comparisons in Section~\ref{sec:evaluation} stand, but the absolute
 temperatures should not be quoted. The 35\,°C bar in the sprinkler safety rule is
 also low, and the smoulder passed it in 18\,s. A rate-of-rise condition, which
 checks how fast the temperature climbs, would be easier to defend.
 
 \textbf{One process is the right call for a simulator and the wrong one for a
-building.} My proposal planned nine containers, and this report has one. The
+building.} My proposal planned nine containers, and this report has two: the
+control panel and one backend service that holds all four zones. The
 reason, one simulated clock, is genuine, and the layering test keeps the zones
 separable. But nothing here shows fault isolation. A fire safety system that dies
 with its physics engine would not be certified. The way to split it is known and

@@ -142,4 +142,5 @@ chart, edit `plot_results.py`; the `series` helper there is the only place that
 knows the column order of a time-series row.
 
 The numbers quoted in the prose of the report are typed into the text, so after
-a change to the engine, read Section 11 against the new charts and update them.
+a change to the engine, read the report's "Evaluation and experiments" section
+against the new charts and update them.

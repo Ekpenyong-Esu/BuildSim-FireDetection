@@ -4,7 +4,7 @@ flowchart LR
   subgraph SYS["firelab (this project)"]
     direction TB
     UI["<b>Control panel</b><br/>[Svelte 5, browser tab]<br/>scenario, sensors, rooms,<br/>scorecard, journal"]
-    SVC["<b>firelab service</b><br/>[Python 3, FastAPI]<br/>the tick loop: physics, sensing,<br/>detector, actions, evacuation"]
+    SVC["<b>firelab service</b><br/>[Python 3, FastAPI + asyncio]<br/>the tick loop: physics, sensing,<br/>detector, actions, evacuation"]
     UI -- "commands (REST)<br/>live state (SSE)" --> SVC
   end
   BS["<b>BuildSim</b><br/>[Go, port 9090]<br/>building state, equipment"]

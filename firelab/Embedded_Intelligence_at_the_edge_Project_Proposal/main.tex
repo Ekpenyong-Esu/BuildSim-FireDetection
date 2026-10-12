@@ -51,9 +51,9 @@
 \definecolor{tnblue}{RGB}{0, 0, 180}
 \newcommand{\code}[1]{\texttt{\scriptsize #1}}
  
-% Section formatting
-\titleformat{\section}{\large\bfseries\color{primaryblue}}{}{0em}{}[\titlerule]
-\titleformat{\subsection}{\normalsize\bfseries\color{primaryblue}}{}{0em}{}
+% Section formatting: LaTeX numbers the headings; never type a number into a title.
+\titleformat{\section}{\large\bfseries\color{primaryblue}}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{primaryblue}}{\thesubsection}{0.5em}{}
 % The class numbers sections as "4.2." with a trailing dot; references want "4.2".
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
